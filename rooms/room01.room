@@ -6,8 +6,8 @@
 @conn 255 255 2 255
 @spawn 56 104
 @bg 0
-@belt 0
-@ramp 0 0 0
+@belt -1
+@ramp 1 0 0
 @hguard 0
 @vguard 0
 

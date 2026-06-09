@@ -108,6 +108,10 @@ GetPlayerInput
     jsr ScanJoystick
     lda #0
     sta jumpIsPressed
+    lda on_ground
+    beq player_input_done
+    lda belt_active
+    bne player_input_try_jump
         ; left (Z)
     ldx #$ef
     ldy #$02

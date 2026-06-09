@@ -3,8 +3,6 @@ try_touch
     sta typ
     cmp #TILE_SOLID
     beq do_block
-    cmp #TILE_PLATFORM
-    beq do_block
     lda #0
     rts
 do_block
@@ -28,11 +26,53 @@ try_touch_below
     rts
 do_belt
     lda belt_spd
+    beq do_belt_zero
+
+    lda belt_active
+    bne do_belt_conveyor
+
+    ; Check opposite key based on belt_spd
+    lda belt_spd
+    bpl check_left_pressed
+
+    ; belt_spd is negative (pushes left), so check if RIGHT is pressed
+    jsr ScanJoystick
+    ldx #$f7
+    ldy #$04
+    jsr ScanKeyRow
+    ora stickright
+    beq do_belt_release
+    lda #1
     sta xadd
-	sta lastxmove
-    bne do_block_below
+    jmp do_block_below
+
+check_left_pressed
+    ; belt_spd is positive (pushes right), so check if LEFT is pressed
+    jsr ScanJoystick
+    ldx #$ef
+    ldy #$02
+    jsr ScanKeyRow
+    ora stickleft
+    beq do_belt_release
+    lda #-1
+    sta xadd
+    jmp do_block_below
+
+do_belt_release
+    lda #1
+    sta belt_active
+
+do_belt_conveyor
+    lda belt_spd
+    sta xadd
+    sta lastxmove
+    jmp do_block_below
+
+do_belt_zero
     lda #0
     sta xadd
+    jmp do_block_below
+
 do_block_below
     lda #1
     rts
@@ -41,26 +81,59 @@ do_block_below
     rts
 
 try_ramp
-    lda on_ground
-    beq +
+    lda was_on_ground
+    beq try_ramp_done
     lda ramp_type
-    beq +
+    beq try_ramp_done
+    
+    ; Check if either foot (72 or 73) is on a ramp
     ldy #72
     jsr GetCollision
     cmp #TILE_RAMP
-    bne +
+    beq check_direction
+    ldy #73
+    jsr GetCollision
+    cmp #TILE_RAMP
+    bne try_ramp_done
+
+check_direction
+    ; Determine if we go up or down based on ramp_type and xadd
+    lda ramp_type
+    cmp #RAMP_UP_RIGHT
+    bne check_up_left
+
+    ; UP_RIGHT ramp
     lda xadd
-    beq +
-    bpl ramp_right
+    beq try_ramp_done
+    bpl ramp_go_up      ; If moving right, go UP
+    bmi ramp_go_down    ; If moving left, go DOWN
+
+check_up_left
+    ; UP_LEFT ramp
+    lda xadd
+    beq try_ramp_done
+    bmi ramp_go_up      ; If moving left, go UP
+    bpl ramp_go_down    ; If moving right, go DOWN
+
+ramp_go_up
     lda py
-    dec py
-    dec py
+    sec
+    sbc #2              ; Move up by 2 pixels
+    sta py
+    ldx px
+    ldy py
+    jsr ConvertXYToScreenAddr
     rts
-ramp_right
+
+ramp_go_down
     lda py
-    dec py
-    dec py
-+
+    clc
+    adc #2              ; Move down by 2 pixels
+    sta py
+    ldx px
+    ldy py
+    jsr ConvertXYToScreenAddr
+try_ramp_done
     rts
 
 CollideLeftRight
@@ -97,7 +170,7 @@ collide_right
     lda xadd
     beq end_collide_left_right
     lda px
-    cmp #84
+    cmp #88
     beq end_collide_left_right
     lda px
     and #$03
@@ -124,6 +197,12 @@ end_collide_left_right
     rts
 
 Collide
+    lda xadd
+    sta tmp_xadd
+    lda on_ground
+    bne +
+    sta belt_active
++
 	lda #0
 	sta $900c
 	lda on_ground
@@ -454,8 +533,8 @@ try_killed
 	bcs kill_player
 	rts
 kill_player
-    lda #1
-    sta dead
+    ; lda #1      ; Stubbed out hazard/guardian death collision
+    ; sta dead
 dont_kill_player
     rts
 

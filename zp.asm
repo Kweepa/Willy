@@ -68,6 +68,8 @@ vguard_count    = $4b
 game_time       = $4c
 game_time_hi    = $4d
 last_py         = $4e
+belt_active     = $4f
+tmp_xadd        = $30
 
 ts              = $50
 

@@ -14,6 +14,7 @@ ResetMap
     sta dead
     sta left_right_ctr
 	sta up_down_ctr
+	sta belt_active
 	rts
 
 DrawMap
