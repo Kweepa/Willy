@@ -72,8 +72,17 @@ def parse_room(text: str) -> dict:
                 if not m:
                     continue
                 idx = int(m.group(1))
-                bs = parse_byte_list(m.group(2))
+                content = m.group(2).strip()
+                invert = False
+                if ";" in content:
+                    left, right = content.split(";", 1)
+                    if "INVERT" in right.upper():
+                        invert = True
+                    content = left.strip()
+                bs = parse_byte_list(content)
                 if idx < 6 and len(bs) == 8:
+                    if invert:
+                        bs = [b ^ 0xFF for b in bs]
                     room["tileudg"][idx] = bytes(bs)
         elif block == "guardianbmp":
             bs = []
