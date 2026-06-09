@@ -1,0 +1,36 @@
+BLACK = 0
+WHITE = 1
+RED = 2
+CYAN = 3
+PURPLE = 4
+GREEN = 5
+BLUE = 6
+YELLOW = 7
+
+TILE_EMPTY = 0
+TILE_PLATFORM = 1
+TILE_SOLID = 2
+TILE_HAZARD = 3
+TILE_RAMP = 4
+TILE_CONVEYOR = 5
+
+ITEM_CHR = 67
+
+RASTERLINE_PAL      = $66
+RASTERLINE_NTSC     = $54
+
+udg_base = $1c00
+guardian_udgs = udg_base + GUARDIAN_CHR*8
+player_udg = udg_base + 58*8
+propfont_udg = udg_base + 68*8
+
+PLAY_CHR = 58
+HEAD_CHR = 64
+GUARDIAN_CHR = 22
+
+GUARDIAN_HORIZONTAL = 0
+GUARDIAN_VERTICAL = 17
+
+RAMP_NONE = 0
+RAMP_UP_RIGHT = 1
+RAMP_UP_LEFT = 2
