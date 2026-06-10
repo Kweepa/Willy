@@ -88,7 +88,7 @@ try_ramp
     jmp try_ramp_done
 +
     jsr GetRampY
-    bcc try_ramp_done
+    bcc try_ramp_fail
 
     sta py
     ldx px
@@ -99,6 +99,59 @@ try_ramp
     lda #27
     sta inairtime
 try_ramp_done
+    clc
+    rts
+
+try_ramp_fail
+    ; Check if there is a flat floor just below him to transition onto
+    lda py
+    clc
+    adc #7
+    and #$f8
+    sta ramp_tmp                 ; Use ramp_tmp as py_aligned
+
+    ; Check if py_aligned - py is <= 3 (meaning we are stepping down 1, 2, or 3 pixels)
+    sec
+    sbc py
+    cmp #4
+    bcs try_ramp_restore_ptr            ; If distance is >= 4, don't snap!
+
+    ; Let's check if there is a flat floor under px, py_aligned
+    ldx px
+    ldy ramp_tmp                 ; py_aligned
+    jsr ConvertXYToScreenAddr    ; This sets map_ptr for py_aligned
+
+    ldy #72                      ; Row below feet when py is aligned
+    jsr try_touch_below
+    bne snap_to_flat
+    
+    ; If px is not aligned, also check the right column!
+    lda px
+    and #$03
+    beq try_ramp_restore_ptr
+    iny                          ; ldy #73
+    jsr try_touch_below
+    bne snap_to_flat
+
+try_ramp_restore_ptr
+    ; Restore map_ptr for original px, py
+    ldx px
+    ldy py
+    jsr ConvertXYToScreenAddr
+    clc
+    rts
+
+snap_to_flat
+    lda ramp_tmp
+    sta py
+    ldx px
+    ldy py
+    jsr ConvertXYToScreenAddr    ; Restore map_ptr for new py
+    lda #1
+    sta on_ground
+    lda #27
+    sta inairtime
+    clc
     rts
 
 GetRampY
@@ -713,136 +766,3 @@ ColFlash
 	inx
 	bne -
 	rts
-
-PrintDebug
-    ; Save registers
-    txa
-    pha
-    tya
-    pha
-
-    ; Set scr_ptr to $1f80 (start of row 16)
-    lda #$80
-    sta scr_ptr
-    lda #$1f
-    sta scr_ptr+1
-
-    ; Set color RAM at $9780 (row 16) to yellow
-    ldy #0
-    lda #YELLOW
--
-    sta $9780,y
-    iny
-    cpy #24
-    bne -
-
-    ldy #0
-    ; Print 'X' (ROM screen code 24 + 128 = 152)
-    lda #152
-    sta (scr_ptr),y
-    iny
-    lda px
-    jsr PrintDecimal            ; increments Y by 3
-
-    ; Print 'Y' (ROM screen code 25 + 128 = 153)
-    lda #153
-    sta (scr_ptr),y
-    iny
-    lda py
-    jsr PrintDecimal            ; increments Y by 3
-
-    ; Print 'L' (ROM screen code 12 + 128 = 140)
-    lda #140
-    sta (scr_ptr),y
-    iny
-    lda last_py
-    jsr PrintDecimal            ; increments Y by 3
-
-    ; Print 'P' (ROM screen code 16 + 128 = 144)
-    lda #144
-    sta (scr_ptr),y
-    iny
-    lda newy
-    jsr PrintDecimal            ; increments Y by 3
-
-    ; Print 'G' (ROM screen code 7 + 128 = 135)
-    lda #135
-    sta (scr_ptr),y
-    iny
-    lda on_ground
-    clc
-    adc #176                    ; Character code for ROM '0' is 176
-    sta (scr_ptr),y
-    iny
-
-    ; Print 'A' (ROM screen code 1 + 128 = 129)
-    lda #129
-    sta (scr_ptr),y
-    iny
-    lda inairtime
-    jsr PrintDecimal            ; increments Y by 3
-
-    ; Print 'R' (ROM screen code 18 + 128 = 146) to print the ramp_tmp column
-    lda #146
-    sta (scr_ptr),y
-    iny
-    lda ramp_tmp
-    jsr PrintDecimal
-
-    ; Print 'F' (ROM screen code 6 + 128 = 134) to print the ramp_tmp1 row
-    lda #134
-    sta (scr_ptr),y
-    iny
-    lda ramp_tmp1
-    jsr PrintDecimal
-
-    ; Restore registers
-    pla
-    tay
-    pla
-    tax
-    rts
-
-PrintDecimal
-    ; Input: Accumulator = value to print
-    ; Output: prints 3 characters (hundreds, tens, ones) at (scr_ptr),y
-    ; Destroys: A, X
-    ldx #0                      ; Hundreds count
--
-    cmp #100
-    bcc +
-    sec
-    sbc #100
-    inx
-    jmp -
-+
-    pha
-    txa
-    clc
-    adc #176                    ; ROM '0' is 176
-    sta (scr_ptr),y
-    iny
-    pla
-    
-    ldx #0                      ; Tens count
--
-    cmp #10
-    bcc +
-    sec
-    sbc #10
-    inx
-    jmp -
-+
-    pha
-    txa
-    clc
-    adc #176                    ; ROM '0' is 176
-    sta (scr_ptr),y
-    iny
-    pla
-    
-    clc
-    adc #176                    ; ROM '0' is 176
-    sta (scr_ptr),y
-    iny
-    rts
