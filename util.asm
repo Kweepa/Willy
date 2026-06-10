@@ -60,18 +60,18 @@ ClearScreen
     bne -
     rts
 
+x24pytab
+    !word -24
 x24tab
-!word 0,24,48,72,96,120,144,168,192,216,240,264,288,312,336,360,384,408
+    !word 0,24,48,72,96,120,144,168,192,216,240,264,288,312,336,360,384,408,432
 
 ConvertXYToScreenAddr
     tya
-    sec
-    sbc #8
     lsr
     lsr
     and #$fe
     tay
-    lda x24tab,y
+    lda x24pytab,y
     sta tmp
     txa
     lsr
@@ -81,7 +81,7 @@ ConvertXYToScreenAddr
     sta scr_ptr
     sta map_ptr
     sta col_ptr
-    lda x24tab + 1,y
+    lda x24pytab + 1,y
     adc #>screen_base
     sta scr_ptr + 1
     adc #((>map_base) - (>screen_base))
