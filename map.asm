@@ -38,6 +38,10 @@ DrawMap
     rts
 
 AnimateBelts
+    ; could replace these first two lines with nop or rts which would save 3 bytes
+    ; if we already had to populate left_right_ctr from room metadata
+    ; alternatively we could stream in the code per room, which would reduce this to 15 bytes
+    ; or less if we can combine several functions
     lda left_right_ctr
     bne no_belt_animate
     lda belt_spd
