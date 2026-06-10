@@ -151,59 +151,50 @@ GetConnByte
     lda (conn_ptr),y
     rts
 
-; flags: bits 0-1 conn index, bit 2=py (0=px), bit 3=ge (0=eq)
+; row: coord(0=px,1=py), cmp(0=le,1=ge), threshold, conn, entry_px, entry_py
 edge_tbl
-    !byte $09, EDGE_EAST_PX, EDGE_EAST_ENTRY_PX, $ff
-    !byte $03, 0, EDGE_EAST_PX, $ff
-    !byte $04, 8, $ff, 112
-    !byte $0c, 112, $ff, 16
+    !byte 0, 1, EDGE_EAST_PX, 1, EDGE_EAST_ENTRY_PX, $ff
+    !byte 0, 0, 0, 3, EDGE_EAST_PX, $ff
+    !byte 1, 0, 8, 0, $ff, 112
+    !byte 1, 1, 112, 2, $ff, 16
+EDGE_ROW_SIZE = 6
 
 CheckRoomEdge
     ldx #0
 -
-    lda edge_tbl,x
-    sta tmp+1
     lda edge_tbl+1,x
-    sta tmp
-    lda tmp+1
-    and #$04
-    beq +
-    lda py
+    sta tmp+1
+    lda edge_tbl,x
+    bne +
+    lda px
     jmp ++
 +
-    lda px
+    lda py
 ++
-    pha
-    lda tmp+1
-    and #$08
+    cmp edge_tbl+2,x
+    ldy tmp+1
     beq +
-    pla
-    cmp tmp
-    bcs edge_hit
-    jmp edge_next
+    bcc edge_next
+    jmp edge_hit
 +
-    pla
-    cmp tmp
-    bne edge_next
+    bcs edge_next
 edge_hit
-    lda tmp+1
-    and #$03
-    tay
+    ldy edge_tbl+3,x
     jsr GetConnByte
     cmp #$ff
     beq edge_next
     sta map
-    lda edge_tbl+2,x
+    lda edge_tbl+4,x
     sta entry_px
-    lda edge_tbl+3,x
+    lda edge_tbl+5,x
     sta entry_py
     jmp do_room_change
 edge_next
     txa
     clc
-    adc #4
+    adc #EDGE_ROW_SIZE
     tax
-    cpx #16
+    cpx #EDGE_ROW_SIZE*4
     bcc -
     jmp edge_done
 do_room_change
