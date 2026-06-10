@@ -12,7 +12,7 @@
 ;   +$398 UI pad 24 ($1F98, HUD row 17)
 ;   +$3B0 meta slot 48 (u16 len LE + meta + pad) @ $1FB0
 ;
-; Debug borders on failure: RED = LOAD/OPEN failed, GREEN = verify failed.
+; Debug borders on failure: PURPLE = LOAD/OPEN failed, GREEN = verify failed.
 ; After a successful load, check VIC: $9002=$98, $9005=$FF (see InitScreen24).
 ;
 
@@ -134,7 +134,7 @@ RelocateCollision
 
 LoadRoomErrorOpen
     jsr InitScreen24
-    lda #RED | 8
+    lda #PURPLE | 8
     sta $900f                   ; border/background
 -
     jmp -

@@ -1,5 +1,5 @@
 ResetGame
-    lda #2
+    lda #1
     sta map
     lda #3
     sta men
@@ -151,11 +151,11 @@ GetConnByte
     lda (conn_ptr),y
     rts
 
-; row: coord(0=px,1=py), cmp(0=le,1=ge), threshold, conn, entry_px, entry_py
+; row: coord(0=px,1=py), cmp(0=le,1=ge), limit+1 for le / limit for ge, conn, entry_px, entry_py
 edge_tbl
     !byte 0, 1, EDGE_EAST_PX, 1, EDGE_EAST_ENTRY_PX, $ff
-    !byte 0, 0, 0, 3, EDGE_EAST_PX, $ff
-    !byte 1, 0, 8, 0, $ff, 112
+    !byte 0, 0, 1, 3, EDGE_EAST_PX, $ff
+    !byte 1, 0, 9, 0, $ff, 112
     !byte 1, 1, 112, 2, $ff, 16
 EDGE_ROW_SIZE = 6
 
