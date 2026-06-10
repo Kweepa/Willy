@@ -7,7 +7,16 @@ ResetGame
     sta game_time
     sta game_time_hi
     sta items_left
+    lda #1
+    sta initial_room_load       ; first room load uses @spawn from meta
 	rts
+
+SaveSpawn
+    lda px
+    sta spawn_px
+    lda py
+    sta spawn_py
+    rts
 
 ResetMap
     lda #0
@@ -34,7 +43,25 @@ DrawMap
     lda #51
     sta inairtime
     sta last_py
+    lda initial_room_load
+    bne drawmap_first_room
+    lda spawn_px
+    sta px
+    lda spawn_py
+    sta py
+    lda #0
+    sta use_room_spawn
     jsr LoadRoom
+    rts
+drawmap_first_room
+    lda #1
+    sta use_room_spawn          ; new game — @spawn from room meta
+    jsr LoadRoom
+    jsr SaveSpawn
+    lda #0
+    sta use_room_spawn
+    lda #0
+    sta initial_room_load
     rts
 
 AnimateBelts
@@ -154,7 +181,7 @@ GetConnByte
 ; row: coord(0=px,1=py), cmp(0=le,1=ge), limit+1 for le / limit for ge, conn, entry_px, entry_py
 edge_tbl
     !byte 0, 1, EDGE_EAST_PX, 1, EDGE_EAST_ENTRY_PX, $ff
-    !byte 0, 0, 1, 3, EDGE_EAST_PX, $ff
+    !byte 0, 0, 1, 3, EDGE_WEST_ENTRY_PX, $ff
     !byte 1, 0, 9, 0, $ff, 112
     !byte 1, 1, 112, 2, $ff, 16
 EDGE_ROW_SIZE = 6
@@ -198,7 +225,6 @@ edge_next
     bcc -
     jmp edge_done
 do_room_change
-    jsr LoadRoom
     lda entry_px
     cmp #$ff
     beq +
@@ -209,6 +235,10 @@ do_room_change
     beq +
     sta py
 +
+    lda #0
+    sta use_room_spawn          ; edge transition — px/py already set, not @spawn
+    jsr LoadRoom
+    jsr SaveSpawn
     lda #51
     sta inairtime
 edge_done

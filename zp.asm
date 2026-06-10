@@ -34,8 +34,8 @@ lastxmove       = $27
 was_on_ground   = $28
 inairtime       = $29
 men             = $2a
-menx            = $2b
-items_total     = $2d
+menx            = $84          ; was $2b (TXTTAB) — unused, kept off BASIC ZP
+items_total     = $85          ; was $2d (VARTAB) — must not clobber KERNAL LOAD
 stream_ptr      = $52
 stream_ptr_hi   = $53
 
@@ -44,11 +44,6 @@ arr3			= $31
 totalinairtime  = $51
 
 rasterline      = $36
-stickleft       = $37
-stickright      = $38
-stickup         = $39
-stickfire       = $3a
-stickcontribute = $3b
 jumpIsPressed   = $3c
 music_index     = $3d
 music_delay     = $3e
@@ -75,6 +70,10 @@ entry_px        = $59
 entry_py        = $5a
 map             = $5b
 conn_ptr        = $5c          ; -> conn bytes in loaded room meta at $1C3A+
+use_room_spawn  = $5f          ; 1 = ParseRoomMeta sets px/py from @spawn
+initial_room_load = $86        ; 1 = first DrawMap after ResetGame (use @spawn)
+spawn_px        = $87          ; respawn position (game start or last room entry)
+spawn_py        = $88
 
 ramp_tmp        = $54
 ramp_tmp1       = $55

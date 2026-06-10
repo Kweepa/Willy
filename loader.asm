@@ -9,14 +9,11 @@
 ;   +$68  tile_colors 6 (colour for tile types 0-5)
 ;   +$6E  padding 402
 ;   +$200 tiles 384 + room_name 24
-;   +$398 UI pad 24 ($1F98, HUD row 17)
+;   +$398 UI pad 24 ($1F98)
 ;   +$3B0 meta slot 48 (u16 len LE + meta + pad) @ $1FB0
 ;
-; Debug borders on failure: PURPLE = LOAD/OPEN failed, GREEN = verify failed.
-; After a successful load, check VIC: $9002=$98, $9005=$FF (see InitScreen24).
-;
 
-room_lfn = 1
+room_lfn = 15                 ; not 1 — BASIC reserves low LFNs after SYS
 
 room_name
     !text "ROOM00"
@@ -25,13 +22,13 @@ LoadRoom
     jsr BuildRoomFilename       ; map -> "ROOM01" .. "ROOM63"
     jsr LoadRoomPrg
     bcc +
-    jmp LoadRoomErrorOpen
+    jmp LoadRoomError
 +
     ; KERNAL LOAD resets VIC to 22-col / ROM charset — restore before using RAM
     jsr InitScreen24
     jsr VerifyRoomUdg           ; $1C00 must be 0 (empty-tile UDG byte)
     bcc +
-    jmp LoadRoomErrorScreen
+    jmp LoadRoomError
 +
     jsr ParseRoomMeta           ; spawn, ramp, items from meta in loaded image ($1C3A)
     jsr RelocateMetadata        ; Optional copy to $1FB0 for fast-loader path
@@ -53,23 +50,27 @@ BuildRoomFilename
 
 ; LOAD "ROOMnn",8,1 — PRG 2-byte header sets load address to $1C00
 LoadRoomPrg
+    sei
     jsr $ff86                   ; CLALL — close all open files
+    jsr $ffcc                   ; CLRCHN — clear IEC channel
     lda #6                      ; SETNAM: filename length
     ldx #<room_name
     ldy #>room_name
     jsr $ffbd                   ; SETNAM — A=len, XY=filename
-    lda #room_lfn               ; SETLFS: logical file 1
-    ldx #8                      ; SETLFS: device 8 (disk)
-    ldy #1                      ; SETLFS: secondary address 1 (LOAD)
+    lda #room_lfn
+    ldx #8
+    ldy #1                      ; SA 1 for LOAD ",8,1"
     jsr $ffba                   ; SETLFS
     lda #0                      ; LOAD: A=0 load (not verify)
     ldx #<image_base            ; optional load addr if file is not PRG
     ldy #>image_base
     jsr $ffd5                   ; LOAD — carry set on error
+    cli
     bcs load_fail
     clc
     rts
 load_fail
+    cli
     sec
     rts
 
@@ -132,17 +133,7 @@ RelocateCollision
     bne --
     rts
 
-LoadRoomErrorOpen
-    jsr InitScreen24
-    lda #PURPLE | 8
-    sta $900f                   ; border/background
--
-    jmp -
-
-LoadRoomErrorScreen
-    jsr InitScreen24
-    lda #GREEN | 8
-    sta $900f
+LoadRoomError
 -
     jmp -
 
@@ -173,12 +164,19 @@ meta_bg
     ora #8                      ; Ensure Normal Mode (bit 3 set to 1)
     sta $900f                   ; @border colour
     iny
+    lda use_room_spawn
+    beq skip_room_spawn
     lda (arr),y
     sta px
     iny
     lda (arr),y
     sta py
     iny
+    jmp spawn_meta_done
+skip_room_spawn
+    iny
+    iny
+spawn_meta_done
     lda (arr),y
     sta belt_spd
     iny

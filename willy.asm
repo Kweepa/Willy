@@ -34,11 +34,9 @@ do_belt
     bpl check_left_pressed
 
     ; belt_spd is negative (pushes left), so check if RIGHT is pressed
-    jsr ScanJoystick
     ldx #$f7
     ldy #$04
     jsr ScanKeyRow
-    ora stickright
     beq do_belt_release
     lda #1
     sta xadd
@@ -46,11 +44,9 @@ do_belt
 
 check_left_pressed
     ; belt_spd is positive (pushes right), so check if LEFT is pressed
-    jsr ScanJoystick
     ldx #$ef
     ldy #$02
     jsr ScanKeyRow
-    ora stickleft
     beq do_belt_release
     lda #-1
     sta xadd
