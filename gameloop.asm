@@ -13,6 +13,7 @@ main_loop
     jsr MoveGuardians
     jsr GetPlayerInput
     jsr Collide
+    jsr PrintDebug
     jsr TryPickupItem
     jsr CheckRoomEdge
     jsr AnimateBelts

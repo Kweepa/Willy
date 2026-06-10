@@ -16,8 +16,6 @@ try_touch_below
     beq ++
     cmp #TILE_CONVEYOR
     beq do_belt
-    cmp #TILE_RAMP
-    beq do_block_below
     cmp #TILE_PLATFORM
     beq do_block_below
     cmp #TILE_SOLID
@@ -82,59 +80,173 @@ do_block_below
 
 try_ramp
     lda was_on_ground
-    beq try_ramp_done
+    bne +
+    jmp try_ramp_done
++
     lda ramp_type
-    beq try_ramp_done
-    
-    ; Check if either foot (72 or 73) is on a ramp
-    ldy #72
-    jsr GetCollision
-    cmp #TILE_RAMP
-    beq check_direction
-    ldy #73
-    jsr GetCollision
-    cmp #TILE_RAMP
-    bne try_ramp_done
+    bne +
+    jmp try_ramp_done
++
+    jsr GetRampY
+    bcc try_ramp_done
 
-check_direction
-    ; Determine if we go up or down based on ramp_type and xadd
-    lda ramp_type
-    cmp #RAMP_UP_RIGHT
-    bne check_up_left
-
-    ; UP_RIGHT ramp
-    lda xadd
-    beq try_ramp_done
-    bpl ramp_go_up      ; If moving right, go UP
-    bmi ramp_go_down    ; If moving left, go DOWN
-
-check_up_left
-    ; UP_LEFT ramp
-    lda xadd
-    beq try_ramp_done
-    bmi ramp_go_up      ; If moving left, go UP
-    bpl ramp_go_down    ; If moving right, go DOWN
-
-ramp_go_up
-    lda py
-    sec
-    sbc #2              ; Move up by 2 pixels
     sta py
     ldx px
     ldy py
     jsr ConvertXYToScreenAddr
-    rts
-
-ramp_go_down
-    lda py
-    clc
-    adc #2              ; Move down by 2 pixels
-    sta py
-    ldx px
-    ldy py
-    jsr ConvertXYToScreenAddr
+    lda #1
+    sta on_ground
+    lda #27
+    sta inairtime
 try_ramp_done
     rts
+
+GetRampY
+    ; Save X and Y
+    txa
+    pha
+    tya
+    pha
+
+    ; Calculate mid_col = (px + 3) >> 2
+    lda px
+    clc
+    adc #3
+    lsr
+    lsr
+    sta ramp_tmp
+    
+    ; Calculate feet_row = (py + 16) >> 3
+    lda py
+    clc
+    adc #16
+    lsr
+    lsr
+    lsr
+    sta ramp_tmp1
+    
+    ; 1. Check feet_row
+    ldx ramp_tmp
+    ldy ramp_tmp1
+    jsr ConvertCellToScreenAddr
+    ldy #0
+    jsr GetCollision
+    cmp #TILE_RAMP
+    beq found_ramp
+    
+    ; 2. Check feet_row - 1 (penetration check)
+    ldy ramp_tmp1
+    dey
+    sty ramp_tmp1
+    ldx ramp_tmp
+    jsr ConvertCellToScreenAddr
+    ldy #0
+    jsr GetCollision
+    cmp #TILE_RAMP
+    beq found_ramp
+    
+    ; 3. Check feet_row + 1 (support-from-above check)
+    ldy ramp_tmp1
+    iny
+    iny              ; (since we did dey before, we do iny iny to get to feet_row + 1)
+    sty ramp_tmp1
+    ldx ramp_tmp
+    jsr ConvertCellToScreenAddr
+    ldy #0
+    jsr GetCollision
+    cmp #TILE_RAMP
+    beq found_ramp
+    
+no_ramp
+    pla
+    tay
+    pla
+    tax
+    clc
+    rts
+
+found_ramp
+    ; Let's calculate x_offset = ((px + 3) & 3) * 2
+    lda px
+    clc
+    adc #3
+    and #3
+    asl
+    sta ramp_tmp2
+    
+    ; Calculate y_surface based on ramp_type
+    lda ramp_type
+    cmp #RAMP_UP_RIGHT
+    bne +
+    
+    ; UP_RIGHT ramp: y_surface = 6 - x_offset
+    lda #6
+    sec
+    sbc ramp_tmp2
+    jmp ++
++
+    ; UP_LEFT ramp: y_surface = x_offset
+    lda ramp_tmp2
+++
+    sta ramp_tmp2
+    
+    ; Calculate y_ramp_abs = (feet_row * 8) + y_surface
+    lda ramp_tmp1      ; feet_row of the ramp we found
+    asl
+    asl
+    asl
+    clc
+    adc ramp_tmp2
+    sta ramp_tmp2
+
+    ; Verify if we are allowed to stand/land on the ramp
+    lda was_on_ground
+    beq +
+
+    ; If was_on_ground is true, we must be close to the ramp surface (|py + 16 - y_ramp_abs| <= 3)
+    lda py
+    clc
+    adc #16
+    sec
+    sbc ramp_tmp2                  ; ramp_tmp2 is y_ramp_abs
+    clc
+    adc #3
+    cmp #7
+    bcs not_valid_landing
+    jmp valid_landing
++
+    ; If was_on_ground is false, we must be descending to land on it (newy >= last_py)
+    lda newy
+    cmp last_py
+    bcc not_valid_landing
+
+    ; Penetration check: 0 <= (newy + 16) - ramp_tmp2 <= 3
+    lda newy
+    clc
+    adc #16
+    sec
+    sbc ramp_tmp2                  ; A = (newy + 16) - ramp_tmp2
+    bcc not_valid_landing          ; If carry clear, we are above the ramp (diff < 0)
+    cmp #4                         ; Is diff < 4? (i.e. 0, 1, 2, or 3 pixels)
+    bcs not_valid_landing
+
+valid_landing
+    ; Calculate py_target = y_ramp_abs - 16
+    lda ramp_tmp2
+    sec
+    sbc #16
+    sta ramp_tmp3      ; target py in ramp_tmp3
+    
+    pla
+    tay
+    pla
+    tax
+    lda ramp_tmp3      ; Return target py in Accumulator
+    sec            ; Carry set to indicate ramp found!
+    rts
+
+not_valid_landing
+    jmp no_ramp
 
 CollideLeftRight
     lda left_right_ctr
@@ -197,6 +309,8 @@ end_collide_left_right
     rts
 
 Collide
+    lda py
+    sta last_py
     lda xadd
     sta tmp_xadd
     lda on_ground
@@ -217,6 +331,12 @@ Collide
     sta was_on_ground
     inc inairtime
     lda inairtime
+    cmp #27
+    bcs +
+    lda #0
+    sta was_on_ground
++
+    lda inairtime
     cmp #52
     bne +
     lda #0
@@ -231,7 +351,7 @@ Collide
     jsr CollideLeftRight
     lda py
     and #$f8
-    sta tmp
+    sta align_tmp
 	lda inairtime
 	cmp #51
 	bcc +
@@ -247,26 +367,51 @@ Collide
     bcs collide_down
     lda newy
     and #$f8
-    cmp tmp
-    beq move_up_down
+    cmp align_tmp
+    bne +
+    jmp move_up_down
++
     ldy #0
     jsr try_touch
-    bne hit_above
+    beq +
+    jmp hit_above
++
     lda px
     and #$03
-    beq move_up_down
+    bne +
+    jmp move_up_down
++
     ldy #1
     jsr try_touch
-    bne hit_above
-    beq move_up_down
+    beq +
+    jmp hit_above
++
+    bne +
+    jmp move_up_down
++
 collide_down
+    ; Is there a ramp under his feet? Check this first, regardless of alignment!
+    jsr GetRampY
+    bcc +
+    
+    ; Ramp found! Snap py directly to target py and land!
+    sta py
+    jmp check_jump
++
+    ; Restore map_ptr/scr_ptr/col_ptr corrupted by GetRampY's cell checks
+    ldx px
+    ldy py
+    jsr ConvertXYToScreenAddr
+
     lda py
     and #$07
     beq look_below_2
     lda newy
     and #$f8
-    cmp tmp
-    beq move_up_down
+    cmp align_tmp
+    bne +
+    jmp move_up_down
++
     ldy #96
     jsr try_touch_below
     bne hit_below
@@ -314,6 +459,13 @@ collide_end
     lda newy
     sta py
 collide_dont_move_y
+    lda on_ground
+    beq +
+    lda belt_active
+    bne +                       ; If conveyor is actively pushing us, do NOT clear xadd!
+    lda #0
+    sta xadd
++
     jsr DrawPlayer
     rts
 hit_above
@@ -331,9 +483,19 @@ hit_below
     sta inairtime
     lda #0
     sta yadd
+    
+    jsr GetRampY
+    bcc +
+    
+    ; Landing on a ramp! Set py directly to the target py
+    sta py
+    jmp ++
++
+    ; Landing on flat ground, so snap to flat floor grid!
     lda newy
     and #$f8
     sta newy
+++
     jmp move_up_down
 
 CheckDeathFall
@@ -551,3 +713,136 @@ ColFlash
 	inx
 	bne -
 	rts
+
+PrintDebug
+    ; Save registers
+    txa
+    pha
+    tya
+    pha
+
+    ; Set scr_ptr to $1f80 (start of row 16)
+    lda #$80
+    sta scr_ptr
+    lda #$1f
+    sta scr_ptr+1
+
+    ; Set color RAM at $9780 (row 16) to yellow
+    ldy #0
+    lda #YELLOW
+-
+    sta $9780,y
+    iny
+    cpy #24
+    bne -
+
+    ldy #0
+    ; Print 'X' (ROM screen code 24 + 128 = 152)
+    lda #152
+    sta (scr_ptr),y
+    iny
+    lda px
+    jsr PrintDecimal            ; increments Y by 3
+
+    ; Print 'Y' (ROM screen code 25 + 128 = 153)
+    lda #153
+    sta (scr_ptr),y
+    iny
+    lda py
+    jsr PrintDecimal            ; increments Y by 3
+
+    ; Print 'L' (ROM screen code 12 + 128 = 140)
+    lda #140
+    sta (scr_ptr),y
+    iny
+    lda last_py
+    jsr PrintDecimal            ; increments Y by 3
+
+    ; Print 'P' (ROM screen code 16 + 128 = 144)
+    lda #144
+    sta (scr_ptr),y
+    iny
+    lda newy
+    jsr PrintDecimal            ; increments Y by 3
+
+    ; Print 'G' (ROM screen code 7 + 128 = 135)
+    lda #135
+    sta (scr_ptr),y
+    iny
+    lda on_ground
+    clc
+    adc #176                    ; Character code for ROM '0' is 176
+    sta (scr_ptr),y
+    iny
+
+    ; Print 'A' (ROM screen code 1 + 128 = 129)
+    lda #129
+    sta (scr_ptr),y
+    iny
+    lda inairtime
+    jsr PrintDecimal            ; increments Y by 3
+
+    ; Print 'R' (ROM screen code 18 + 128 = 146) to print the ramp_tmp column
+    lda #146
+    sta (scr_ptr),y
+    iny
+    lda ramp_tmp
+    jsr PrintDecimal
+
+    ; Print 'F' (ROM screen code 6 + 128 = 134) to print the ramp_tmp1 row
+    lda #134
+    sta (scr_ptr),y
+    iny
+    lda ramp_tmp1
+    jsr PrintDecimal
+
+    ; Restore registers
+    pla
+    tay
+    pla
+    tax
+    rts
+
+PrintDecimal
+    ; Input: Accumulator = value to print
+    ; Output: prints 3 characters (hundreds, tens, ones) at (scr_ptr),y
+    ; Destroys: A, X
+    ldx #0                      ; Hundreds count
+-
+    cmp #100
+    bcc +
+    sec
+    sbc #100
+    inx
+    jmp -
++
+    pha
+    txa
+    clc
+    adc #176                    ; ROM '0' is 176
+    sta (scr_ptr),y
+    iny
+    pla
+    
+    ldx #0                      ; Tens count
+-
+    cmp #10
+    bcc +
+    sec
+    sbc #10
+    inx
+    jmp -
++
+    pha
+    txa
+    clc
+    adc #176                    ; ROM '0' is 176
+    sta (scr_ptr),y
+    iny
+    pla
+    
+    clc
+    adc #176                    ; ROM '0' is 176
+    sta (scr_ptr),y
+    iny
+    rts

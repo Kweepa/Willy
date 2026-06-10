@@ -71,6 +71,13 @@ last_py         = $4e
 belt_active     = $4f
 tmp_xadd        = $30
 
+align_tmp       = $58
+
+ramp_tmp        = $54
+ramp_tmp1       = $55
+ramp_tmp2       = $56
+ramp_tmp3       = $57
+
 ts              = $50
 
 num_guardians   = $60
