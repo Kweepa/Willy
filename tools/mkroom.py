@@ -17,7 +17,7 @@ TILE_COLOR_OFF = 80
 PADDING_BYTES = 426
 TILE_OFF = 512
 IMAGE_LOAD = 0x1C00
-ROOM_IMAGE_SIZE = 896
+ROOM_IMAGE_SIZE = 920
 DEFAULT_TILE_COLORS = [0, 1, 3, 2, 5, 4]
 
 
@@ -199,12 +199,25 @@ def build_tile_colors(room: dict) -> bytes:
     return bytes(room["tilecolors"])
 
 
-def build_room_image(room: dict) -> bytes:
-    """RAM image loaded at $1C00 (896 bytes).
+def ascii_to_rom_screen(ch: str) -> int:
+    """Map ASCII to screen codes 128-255 (ROM charset with bit 7 set)."""
+    code = ord(ch)
+    if 65 <= code <= 90:  # A-Z -> screen codes 1-26
+        return code + 64
+    return code + 128  # space, digits, punctuation
 
-    $1C00 UDG (48) | $1C30 meta slot (32) | $1C50 tile_colors (6) | padding (426) | $1E00 tiles (384)
+
+def build_room_image(room: dict) -> bytes:
+    """RAM image loaded at $1C00 (920 bytes).
+
+    $1C00 UDG (48) | $1C30 meta slot (32) | $1C50 tile_colors (6) | padding (426) | $1E00 tiles (384) | $1F80 room_name (24)
     """
     tiles = grid_bytes(room["tilemap"], "tilemap")
+    # Append room name (24 bytes) mapped to ROM characters
+    padded_title = room["title"].upper().center(24)
+    title_bytes = bytes(ascii_to_rom_screen(c) for c in padded_title)
+    tiles += title_bytes
+
     meta = build_meta(room)
     if len(meta) > META_SLOT_BYTES - 2:
         raise ValueError(f"meta too large ({len(meta)} bytes, max {META_SLOT_BYTES - 2})")

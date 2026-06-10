@@ -105,6 +105,13 @@ PaintColors
     iny
     cpy #$80                  ; 256 + 128 = 384 bytes (16 rows)
     bne --
+
+    ldy #24
+    lda #7
+-
+    sta color_base + 383,y
+    dey
+    bne -
     rts
 
 RelocateCollision
