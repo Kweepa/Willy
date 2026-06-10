@@ -8,17 +8,18 @@ from pathlib import Path
 
 WIDTH, HEIGHT = 24, 16
 TILE_BYTES = WIDTH * HEIGHT
-UDG_BYTES = 48
-META_SLOT_BYTES = 32
+UDG_BYTES = 56
+META_SLOT_BYTES = 48
 TILE_COLOR_BYTES = 6
 UDG_OFF = 0
-META_OFF = 48
-TILE_COLOR_OFF = 80
-PADDING_BYTES = 426
+META_OFF = 56
+TILE_COLOR_OFF = 88
+PADDING_BYTES = 402
 TILE_OFF = 512
 IMAGE_LOAD = 0x1C00
 ROOM_IMAGE_SIZE = 920
 DEFAULT_TILE_COLORS = [0, 1, 3, 2, 5, 4]
+DEFAULT_ITEM_UDG = bytes([48, 72, 136, 144, 104, 4, 10, 4])
 
 
 def parse_byte(s: str) -> int:
@@ -56,7 +57,7 @@ def parse_room(text: str) -> dict:
         "tilecolors": list(DEFAULT_TILE_COLORS),
         "items": [],
         "guardians": [],
-        "tileudg": [bytes(8) for _ in range(6)],
+        "tileudg": [bytes(8) for _ in range(6)] + [DEFAULT_ITEM_UDG],
         "guardianbmp": b"",
     }
     block = None
@@ -80,7 +81,7 @@ def parse_room(text: str) -> dict:
                         invert = True
                     content = left.strip()
                 bs = parse_byte_list(content)
-                if idx < 6 and len(bs) == 8:
+                if idx < 7 and len(bs) == 8:
                     if invert:
                         bs = [b ^ 0xFF for b in bs]
                     room["tileudg"][idx] = bytes(bs)
@@ -190,7 +191,7 @@ def build_meta(room: dict) -> bytes:
 
 def build_udg(room: dict) -> bytes:
     out = bytearray()
-    for i in range(6):
+    for i in range(7):
         out.extend(room["tileudg"][i])
     return bytes(out)
 
@@ -210,7 +211,7 @@ def ascii_to_rom_screen(ch: str) -> int:
 def build_room_image(room: dict) -> bytes:
     """RAM image loaded at $1C00 (920 bytes).
 
-    $1C00 UDG (48) | $1C30 meta slot (32) | $1C50 tile_colors (6) | padding (426) | $1E00 tiles (384) | $1F80 room_name (24)
+    $1C00 UDG (56) | $1C38 meta slot (48) | $1C68 tile_colors (6) | padding (402) | $1E00 tiles (384) | $1F80 room_name (24)
     """
     tiles = grid_bytes(room["tilemap"], "tilemap")
     # Append room name (24 bytes) mapped to ROM characters

@@ -107,13 +107,13 @@ descend
 	lsr
 	asl
 	tay
-	lda x24tab,y
+	lda x24rowtab + 2,y
 	clc
 	adc #10
 	sta scr_ptr
-	lda x24tab+1,y
-	adc #>screen_base
-	sta scr_ptr+1
+	lda x24rowtab + 3,y
+	adc #0
+	sta scr_ptr + 1
 	ldy #0
 	lda #15
 	sta (scr_ptr),y

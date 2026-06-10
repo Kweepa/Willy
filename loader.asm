@@ -1,14 +1,14 @@
 ;
 ; LoadRoom — KERNAL LOAD roomnn PRG to image_base ($1C00), then:
-;   copy tiles from tile_src ($1C56) -> screen_base ($1E00)
-;   paint color RAM from tile_color_off ($1C50) lookup (types 0-5)
+;   paint color RAM from tile_color_off lookup (types 0-5)
 ;   copy screen -> map_base ($9400)
 ;
-; PRG image layout (518 bytes at $1C00):
-;   +$00  UDG 48
-;   +$30  meta slot 32 (u16 len LE + meta + pad)
-;   +$50  tile_colors 6 (colour for tile types 0-5)
-;   +$56  tiles 432
+; PRG image layout (920 bytes at $1C00):
+;   +$00  UDG 56 (tile types 0-5 + item at 6)
+;   +$38  meta slot 48 (u16 len LE + meta + pad)
+;   +$68  tile_colors 6 (colour for tile types 0-5)
+;   +$6E  padding 402
+;   +$200 tiles 384 + room_name 24
 ;
 ; Debug borders on failure: RED = LOAD/OPEN failed, GREEN = verify failed.
 ; After a successful load, check VIC: $9002=$98, $9005=$FF (see InitScreen24).
@@ -31,10 +31,10 @@ LoadRoom
     bcc +
     jmp LoadRoomErrorScreen
 +
-    jsr RelocateMetadata        ; Copy $1C30..$1C55 to $1FB0..$1FD5
-    jsr PaintColors             ; color = tile_color_off[tile] (384 bytes)
+    jsr ParseRoomMeta           ; spawn, ramp, items from meta in loaded image ($1C3A)
+    jsr RelocateMetadata        ; Optional copy to $1FB0 for fast-loader path
+    jsr PaintColors             ; color = tile_color_src[tile] (384 bytes)
     jsr RelocateCollision       ; $1E00 -> $9400 (384 bytes)
-    jsr ParseRoomMeta           ; spawn, conns, border ($900F), items, etc.
     jsr DrawItems               ; draw collectibles on screen
     jsr InitPlayerUDGs          ; player sprites into $1C00+$1D00 area
     jsr DrawPlayer
@@ -92,7 +92,7 @@ PaintColors
 -
     lda screen_base,y
     tax
-    lda tile_color_off,x        ; lookup table at tile_color_off
+    lda tile_color_src,x
     sta color_base,y
     iny
     bne -
@@ -144,11 +144,11 @@ LoadRoomErrorScreen
 -
     jmp -
 
-; Meta starts at meta_base+$2 (skip u16 length at $1C30)
+; Meta content in loaded room image (skip u16 length at meta_slot_src)
 ParseRoomMeta
-    lda #<meta_base+$2
+    lda #<meta_content_src
     sta arr
-    lda #>meta_base+$2
+    lda #>meta_content_src
     sta arr+1
     ldy #0
     lda (arr),y                 ; guardian count
@@ -219,24 +219,35 @@ meta_bg
     sta items_left
     sta items_total
 
-    ; Copy items list to items_buf ($D6)
+    ; Copy items list to items_buf ($D6): col, row pairs per item
     lda item_count
     beq skip_item_copy
-    asl                         ; item_count * 2
-    tax
+    sta num
+    ldx #0
 -
     lda (arr),y
-    sta items_buf-1,x
+    sta items_buf,x
     iny
-    dex
+    lda (arr),y
+    sta items_buf+1,x
+    iny
+    inx
+    inx
+    dec num
     bne -
 skip_item_copy
+    lda #0
+    sta inairtime
+    lda #1
+    sta on_ground
+    sta was_on_ground
     rts
 
 RelocateMetadata
-    ldx #37
--   lda $1c30,x
-    sta $1fb0,x
+    ldx #meta_slot_size + tile_color_bytes - 1
+-
+    lda meta_slot_src,x
+    sta meta_base,x
     dex
     bpl -
     rts
@@ -273,24 +284,29 @@ ConvertCellToScreenAddr
     ; Input: X = column, Y = row
     ; Output: scr_ptr, map_ptr, col_ptr
     tya
-    asl                         ; Row * 2 (index into x24tab)
+    asl                         ; row << 1 → index into x24rowtab+2
     tay
-    lda x24tab,y
+    lda x24rowtab + 2,y
     sta scr_ptr
+    lda x24rowtab + 3,y
+    sta scr_ptr + 1
     txa
     clc
     adc scr_ptr
     sta scr_ptr
+    bcc +
+    inc scr_ptr + 1
++
+    lda scr_ptr
     sta map_ptr
     sta col_ptr
-    
-    lda x24tab+1,y
-    adc #>screen_base
-    sta scr_ptr+1
-    adc #((>map_base) - (>screen_base))
-    sta map_ptr+1
-    adc #((>color_base) - (>map_base))
-    sta col_ptr+1
+    lda scr_ptr + 1
+    clc
+    adc #>(map_base - screen_base)
+    sta map_ptr + 1
+    clc
+    adc #>(color_base - map_base)
+    sta col_ptr + 1
     rts
 
 GetCollision
