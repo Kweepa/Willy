@@ -1,16 +1,16 @@
 ; unexpanded JSW layout
 
 image_base = $1c00
-meta_slot_off = $38              ; 56 bytes UDG, then meta slot (matches mkroom META_OFF)
+meta_slot_off = $3b0             ; $1FB0 — above HUD row 17 (mkroom META_OFF 944)
 meta_slot_src = image_base + meta_slot_off
 meta_content_src = meta_slot_src + 2
 meta_base = $1fb0                ; copy destination for fast-loader path
-tile_color_off = image_base + meta_slot_off + meta_slot_size
+tile_color_off = image_base + $68 ; $1C68 (mkroom TILE_COLOR_OFF 88)
 tile_color_src = tile_color_off
 screen_base = $1e00
 map_base = $9400
 color_base = $9600
-room_image_size = $206
+room_image_size = $3e0           ; 992 bytes
 meta_slot_size = $30             ; 48 bytes: u16 len + meta + pad (mkroom META_SLOT_BYTES)
 tile_color_bytes = 6
 

@@ -36,9 +36,9 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@title` | text | Room name (HUD row 16) |
 | `@conn` | N E S W | Neighbours: room number or `FF` (hex ok: `$FF`) |
 | `@spawn` | px py | Willy start (quarter-char X, 2-pixel Y) |
-| `@bg` | 0–7 | Border/background (`36879`) |
+| `@border` | colour | Border/background (`$900f`): BLK WHT RED CYN PUR GRN BLU YEL |
 | `@belt` | speed | Conveyor speed: `-1`, `0`, or `1` |
-| `@ramp` | type row col | `0`=none, `1`=up-right, `2`=up-left |
+| `@ramp` | type | `0`=none, `1`=up-right, `2`=up-left |
 | `@hguard` | index | Horizontal guardian sprite index |
 | `@vguard` | index | Vertical guardian sprite index |
 | `@tilemap` | block | 18 lines × 24 digits |
@@ -61,7 +61,7 @@ Lines starting with `#` are comments. Blank lines ignored.
 | … | 1 | BG color |
 | … | 2 | Spawn px, py |
 | … | 1 | Belt speed (unsigned byte; use 255 for −1) |
-| … | 3 | Ramp type, row, col |
+| … | 1 | Ramp type |
 | … | 2 | H-guardian index, V-guardian index |
 | … | 4 | Conn N, E, S, W |
 | … | var | Title ASCIZ |
@@ -86,9 +86,9 @@ Save as [`rooms/room01.room`](../rooms/room01.room).
 @title The Landing
 @conn FF FF 2 FF
 @spawn 44 56
-@bg 0
+@border BLK
 @belt 0
-@ramp 0 0 0
+@ramp 0
 @hguard 0
 @vguard 0
 
@@ -162,9 +162,9 @@ Save as [`rooms/room02.room`](../rooms/room02.room).
 @title The Cellar
 @conn 1 FF FF FF
 @spawn 44 16
-@bg 6
+@border BLU
 @belt 1
-@ramp 0 0 0
+@ramp 0
 @hguard 0
 @vguard 0
 
@@ -280,9 +280,9 @@ def parse_room(text: str) -> dict:
         "title": "",
         "conn": [0xFF, 0xFF, 0xFF, 0xFF],
         "spawn": (0, 0),
-        "bg": 0,
+        "border": 0,
         "belt": 0,
-        "ramp": (0, 0, 0),
+        "ramp": 0,
         "hguard": 0,
         "vguard": 0,
         "tilemap": [],
@@ -337,12 +337,12 @@ def parse_room(text: str) -> dict:
                 room["conn"] = [parse_byte(x) for x in parts[1:5]]
             elif tag == "spawn":
                 room["spawn"] = (int(parts[1]), int(parts[2]))
-            elif tag == "bg":
-                room["bg"] = int(parts[1])
+            elif tag == "border":
+                room["border"] = parse_vic_color(parts[1])
             elif tag == "belt":
                 room["belt"] = int(parts[1])
             elif tag == "ramp":
-                room["ramp"] = (int(parts[1]), int(parts[2]), int(parts[3]))
+                room["ramp"] = int(parts[1])
             elif tag == "hguard":
                 room["hguard"] = int(parts[1])
             elif tag == "vguard":
@@ -393,11 +393,11 @@ def build_binary(room: dict) -> bytes:
         if len(rec) != 7:
             raise ValueError("guardian record needs 7 fields")
         meta.extend(rec)
-    meta.append(room["bg"] & 0xFF)
+    meta.append(room["border"] & 0xFF)
     meta.append(room["spawn"][0] & 0xFF)
     meta.append(room["spawn"][1] & 0xFF)
     meta.append(belt_byte(room["belt"]))
-    meta.extend(room["ramp"])
+    meta.append(room["ramp"] & 0xFF)
     meta.append(room["hguard"] & 0xFF)
     meta.append(room["vguard"] & 0xFF)
     meta.extend(room["conn"])

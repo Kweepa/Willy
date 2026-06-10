@@ -34,3 +34,7 @@ GUARDIAN_VERTICAL = 17
 RAMP_NONE = 0
 RAMP_UP_RIGHT = 1
 RAMP_UP_LEFT = 2
+
+; px is quarter-char units; 24-col playfield (cols 0-23)
+EDGE_EAST_PX = 92              ; column 23 — was 84 for 22-col Manic Miner port
+EDGE_EAST_ENTRY_PX = 4

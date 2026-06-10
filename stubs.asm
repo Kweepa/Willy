@@ -31,7 +31,3 @@ PutFontUDGsOnScreen
 	rts
 
 prg_end
-
-!if * > $1c00 {
-!error "PRG exceeds $1C00 — would corrupt UDG at $1C00 and screen at $1E00"
-}

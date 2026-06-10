@@ -335,7 +335,7 @@ collide_right
     lda xadd
     beq end_collide_left_right
     lda px
-    cmp #88
+    cmp #EDGE_EAST_PX
     beq end_collide_left_right
     lda px
     and #$03

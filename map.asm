@@ -1,5 +1,5 @@
 ResetGame
-    lda #1
+    lda #2
     sta map
     lda #3
     sta men
@@ -147,7 +147,80 @@ next_item
 exit_pickup
     rts
 
+GetConnByte
+    lda (conn_ptr),y
+    rts
+
+; flags: bits 0-1 conn index, bit 2=py (0=px), bit 3=ge (0=eq)
+edge_tbl
+    !byte $09, EDGE_EAST_PX, EDGE_EAST_ENTRY_PX, $ff
+    !byte $03, 0, EDGE_EAST_PX, $ff
+    !byte $04, 8, $ff, 112
+    !byte $0c, 112, $ff, 16
+
 CheckRoomEdge
+    ldx #0
+-
+    lda edge_tbl,x
+    sta tmp+1
+    lda edge_tbl+1,x
+    sta tmp
+    lda tmp+1
+    and #$04
+    beq +
+    lda py
+    jmp ++
++
+    lda px
+++
+    pha
+    lda tmp+1
+    and #$08
+    beq +
+    pla
+    cmp tmp
+    bcs edge_hit
+    jmp edge_next
++
+    pla
+    cmp tmp
+    bne edge_next
+edge_hit
+    lda tmp+1
+    and #$03
+    tay
+    jsr GetConnByte
+    cmp #$ff
+    beq edge_next
+    sta map
+    lda edge_tbl+2,x
+    sta entry_px
+    lda edge_tbl+3,x
+    sta entry_py
+    jmp do_room_change
+edge_next
+    txa
+    clc
+    adc #4
+    tax
+    cpx #16
+    bcc -
+    jmp edge_done
+do_room_change
+    jsr LoadRoom
+    lda entry_px
+    cmp #$ff
+    beq +
+    sta px
++
+    lda entry_py
+    cmp #$ff
+    beq +
+    sta py
++
+    lda #51
+    sta inairtime
+edge_done
     lda py
     sta last_py
     rts

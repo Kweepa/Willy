@@ -35,7 +35,6 @@ was_on_ground   = $28
 inairtime       = $29
 men             = $2a
 menx            = $2b
-map             = $2c
 items_total     = $2d
 stream_ptr      = $52
 stream_ptr_hi   = $53
@@ -72,6 +71,10 @@ belt_active     = $4f
 tmp_xadd        = $30
 
 align_tmp       = $58
+entry_px        = $59
+entry_py        = $5a
+map             = $5b
+conn_ptr        = $5c          ; -> conn bytes in loaded room meta at $1C3A+
 
 ramp_tmp        = $54
 ramp_tmp1       = $55
@@ -110,11 +113,4 @@ stringrow		= $f0
 vguard_frame    = $f7
 hguard_frame	= $f8
 
-conn_n          = $32
-conn_e          = $33
-conn_s          = $34
-conn_w          = $35
-
 ramp_type       = $fd
-ramp_row        = $fe
-ramp_col        = $ff

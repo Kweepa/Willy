@@ -3,12 +3,14 @@
 ;   paint color RAM from tile_color_off lookup (types 0-5)
 ;   copy screen -> map_base ($9400)
 ;
-; PRG image layout (920 bytes at $1C00):
+; PRG image layout (992 bytes at $1C00):
 ;   +$00  UDG 56 (tile types 0-5 + item at 6)
-;   +$38  meta slot 48 (u16 len LE + meta + pad)
+;   +$38  reserved 48
 ;   +$68  tile_colors 6 (colour for tile types 0-5)
 ;   +$6E  padding 402
 ;   +$200 tiles 384 + room_name 24
+;   +$398 UI pad 24 ($1F98, HUD row 17)
+;   +$3B0 meta slot 48 (u16 len LE + meta + pad) @ $1FB0
 ;
 ; Debug borders on failure: RED = LOAD/OPEN failed, GREEN = verify failed.
 ; After a successful load, check VIC: $9002=$98, $9005=$FF (see InitScreen24).
@@ -169,7 +171,7 @@ meta_bg_zero
 meta_bg
     lda (arr),y
     ora #8                      ; Ensure Normal Mode (bit 3 set to 1)
-    sta $900f                   ; @bg border colour
+    sta $900f                   ; @border colour
     iny
     lda (arr),y
     sta px
@@ -184,34 +186,22 @@ meta_bg
     sta ramp_type
     iny
     lda (arr),y
-    sta ramp_row
-    iny
-    lda (arr),y
-    sta ramp_col
-    iny
-    lda (arr),y
     sta hguard_count
     iny
     lda (arr),y
     sta vguard_count
     iny
-    lda (arr),y
-    sta conn_n
-    iny
-    lda (arr),y
-    sta conn_e
-    iny
-    lda (arr),y
-    sta conn_s
-    iny
-    lda (arr),y
-    sta conn_w
-    iny
--
-    lda (arr),y                 ; skip ASCIZ @title
-    iny
-    tax                         ; test if A is 0
-    bne -
+    tya
+    clc
+    adc arr
+    sta conn_ptr
+    lda arr+1
+    adc #0
+    sta conn_ptr+1
+    tya
+    clc
+    adc #4
+    tay
     lda (arr),y
     sta item_count
     iny
@@ -244,10 +234,16 @@ skip_item_copy
     rts
 
 RelocateMetadata
-    ldx #meta_slot_size + tile_color_bytes - 1
+    ldx #meta_slot_size - 1
 -
     lda meta_slot_src,x
     sta meta_base,x
+    dex
+    bpl -
+    ldx #tile_color_bytes - 1
+-
+    lda tile_color_src,x
+    sta meta_base + meta_slot_size,x
     dex
     bpl -
     rts

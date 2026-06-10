@@ -12,14 +12,27 @@ UDG_BYTES = 56
 META_SLOT_BYTES = 48
 TILE_COLOR_BYTES = 6
 UDG_OFF = 0
-META_OFF = 56
-TILE_COLOR_OFF = 88
+META_RESERVE_BYTES = 48       # pad $1C38-$1C67 (keeps tile_colors at $1C68)
+TILE_COLOR_OFF = 104          # $1C68 (UDG 56 + reserved 48)
 PADDING_BYTES = 402
-TILE_OFF = 512
+TILE_OFF = 512                # $1E00 screen / tilemap
+META_GAP_BYTES = 24           # pad $1F98-$1FAF (HUD row 17), meta above UI
+META_OFF = 920 + META_GAP_BYTES  # $1FB0, after tiles + name + UI row
 IMAGE_LOAD = 0x1C00
-ROOM_IMAGE_SIZE = 920
+ROOM_IMAGE_SIZE = META_OFF + META_SLOT_BYTES  # 992 bytes
 DEFAULT_TILE_COLORS = [0, 1, 3, 2, 5, 4]
 DEFAULT_ITEM_UDG = bytes([48, 72, 136, 144, 104, 4, 10, 4])
+
+VIC_COLOR = {
+    "BLK": 0,
+    "WHT": 1,
+    "RED": 2,
+    "CYN": 3,
+    "PUR": 4,
+    "GRN": 5,
+    "BLU": 6,
+    "YEL": 7,
+}
 
 
 def parse_byte(s: str) -> int:
@@ -36,6 +49,20 @@ def parse_byte(s: str) -> int:
     return v
 
 
+def parse_vic_color(token: str) -> int:
+    """Parse a VIC colour token: name (BLK, WHT, …) or digit 0-7."""
+    s = token.strip().upper()
+    if s in VIC_COLOR:
+        return VIC_COLOR[s]
+    if len(s) == 1 and s.isdigit():
+        v = int(s)
+        if v > 7:
+            raise ValueError(f"tile color out of range 0-7: {v}")
+        return v
+    names = ", ".join(VIC_COLOR)
+    raise ValueError(f"unknown colour {token!r} (use {names})")
+
+
 def parse_byte_list(text: str) -> list[int]:
     """Comma-separated byte list (Skoolkit style): 0, 0, 255, 24."""
     return [parse_byte(part) for part in text.split(",") if part.strip()]
@@ -48,9 +75,9 @@ def parse_room(text: str) -> dict:
         "title": "",
         "conn": [0xFF, 0xFF, 0xFF, 0xFF],
         "spawn": (0, 0),
-        "bg": 0,
+        "border": 0,
         "belt": 0,
-        "ramp": (0, 0, 0),
+        "ramp": 0,
         "hguard": 0,
         "vguard": 0,
         "tilemap": [],
@@ -112,23 +139,20 @@ def parse_room(text: str) -> dict:
                 room["conn"] = [parse_byte(x) for x in parts[1:5]]
             elif tag == "spawn":
                 room["spawn"] = (int(parts[1]), int(parts[2]))
-            elif tag == "bg":
-                room["bg"] = int(parts[1])
+            elif tag == "border":
+                room["border"] = parse_vic_color(parts[1])
             elif tag == "belt":
                 room["belt"] = int(parts[1])
             elif tag == "ramp":
-                room["ramp"] = (int(parts[1]), int(parts[2]), int(parts[3]))
+                room["ramp"] = int(parts[1])
             elif tag == "hguard":
                 room["hguard"] = int(parts[1])
             elif tag == "vguard":
                 room["vguard"] = int(parts[1])
             elif tag == "tilecolors":
-                vals = [int(x) for x in parts[1:7]]
-                if len(vals) != 6:
+                if len(parts[1:]) != 6:
                     raise ValueError("@tilecolors needs 6 values (tile types 0-5)")
-                if any(v > 7 for v in vals):
-                    raise ValueError("tile color out of range 0-7")
-                room["tilecolors"] = vals
+                room["tilecolors"] = [parse_vic_color(x) for x in parts[1:7]]
             continue
         if block == "guardians":
             if line:
@@ -171,15 +195,14 @@ def build_meta(room: dict) -> bytes:
         if len(rec) != 7:
             raise ValueError("guardian record needs 7 fields")
         meta.extend(rec)
-    meta.append(room["bg"] & 0xFF)
+    meta.append(room["border"] & 0xFF)
     meta.append(room["spawn"][0] & 0xFF)
     meta.append(room["spawn"][1] & 0xFF)
     meta.append(belt_byte(room["belt"]))
-    meta.extend(room["ramp"])
+    meta.append(room["ramp"] & 0xFF)
     meta.append(room["hguard"] & 0xFF)
     meta.append(room["vguard"] & 0xFF)
     meta.extend(room["conn"])
-    meta.extend(room["title"].encode("ascii") + b"\x00")
     meta.append(len(room["items"]))
     for col, row in room["items"]:
         meta.append(col & 0xFF)
@@ -209,9 +232,10 @@ def ascii_to_rom_screen(ch: str) -> int:
 
 
 def build_room_image(room: dict) -> bytes:
-    """RAM image loaded at $1C00 (920 bytes).
+    """RAM image loaded at $1C00 (992 bytes).
 
-    $1C00 UDG (56) | $1C38 meta slot (48) | $1C68 tile_colors (6) | padding (402) | $1E00 tiles (384) | $1F80 room_name (24)
+    $1C00 UDG (56) | $1C38 reserved (48) | $1C68 tile_colors (6) | pad (402)
+    $1E00 tiles (384) | $1F80 room_name (24) | $1F98 UI pad (24) | $1FB0 meta (48)
     """
     tiles = grid_bytes(room["tilemap"], "tilemap")
     # Append room name (24 bytes) mapped to ROM characters
@@ -227,7 +251,9 @@ def build_room_image(room: dict) -> bytes:
     udg = build_udg(room)
     tile_colors = build_tile_colors(room)
     padding = b"\x00" * PADDING_BYTES
-    blob = udg + meta_slot + tile_colors + padding + tiles
+    reserved = b"\x00" * META_RESERVE_BYTES
+    meta_gap = b"\x00" * META_GAP_BYTES
+    blob = udg + reserved + tile_colors + padding + tiles + meta_gap + meta_slot
     if len(blob) != ROOM_IMAGE_SIZE:
         raise ValueError(f"room image size {len(blob)} != {ROOM_IMAGE_SIZE}")
     return blob
