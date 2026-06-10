@@ -38,7 +38,26 @@ DrawMap
     rts
 
 AnimateBelts
-	rts
+    lda left_right_ctr
+    bne no_belt_animate
+    lda belt_spd
+    bpl belt_animate_right
+    lda udg_base + TILE_CONVEYOR*8
+    asl
+    rol udg_base + TILE_CONVEYOR*8
+    lda udg_base + TILE_CONVEYOR*8 + 2
+    lsr
+    ror udg_base + TILE_CONVEYOR*8 + 2
+    rts
+belt_animate_right
+    lda udg_base + TILE_CONVEYOR*8
+    lsr
+    ror udg_base + TILE_CONVEYOR*8
+    lda udg_base + TILE_CONVEYOR*8 + 2
+    asl
+    rol udg_base + TILE_CONVEYOR*8 + 2
+no_belt_animate
+    rts
 
 TryPickupItem
     lda item_count
