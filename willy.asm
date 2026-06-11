@@ -634,29 +634,22 @@ DrawPlayer
     ; now or player bitmaps to player udg 3x2
     lda py
     and #$07
-    sta tmp
     tax
 
     lda px
     and #$03
-    asl
-    asl
-    asl
-    asl
-    asl                         ; Shift 5 times (multiplying by 32)
-    clc
-    adc #<player_bmp
-    sta arr
-	lda #>player_bmp
-	adc #0
-	sta arr+1
+    sta tmp
     lda lastxmove
-    and #$80
-    adc arr
-    sta arr
-    lda arr+1
-    adc #0
-    sta arr+1
+    bpl +
+    lda tmp
+    clc
+    adc #4
+    sta tmp
++
+    lda tmp
+    clc
+    adc #PLAYER_SPRITE_FRAME
+    jsr GetSpriteFrameAddr
     lda arr
     clc
     adc #16

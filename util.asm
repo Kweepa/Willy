@@ -75,6 +75,26 @@ ConvertXYToScreenAddr
     sta col_ptr + 1
     rts
 
+; A = frame index 0-15 -> arr = guardian_sprites_base + frame*32
+GetSpriteFrameAddr
+    sta tmp
+    lda #0
+    sta arr+1
+    lda tmp
+    ldx #5
+-
+    asl
+    rol arr+1
+    dex
+    bne -
+    clc
+    adc #<guardian_sprites_base
+    sta arr
+    lda arr+1
+    adc #>guardian_sprites_base
+    sta arr+1
+    rts
+
 UpdateMoveCounters
     dec left_right_ctr
     bpl +

@@ -31,6 +31,9 @@ RASTERLINE_NTSC     = $54 + SCREEN_DOWN_RASTER
 GUARDIAN_HORIZONTAL = 0
 GUARDIAN_VERTICAL = 1
 
+; player frames are indices 8-15 in the 512-byte guardian_sprites_base block
+PLAYER_SPRITE_FRAME = 8
+
 RAMP_NONE = 0
 RAMP_UP_RIGHT = 1
 RAMP_UP_LEFT = 2

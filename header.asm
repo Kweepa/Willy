@@ -1,8 +1,8 @@
 ; unexpanded JSW layout
 
 image_base = $1a60
-guardian_sprites_base = $1a60    ; 256 bytes: up to 8 guardian frames x 32 bytes (32-byte aligned)
-player_bmp = $1b60               ; 256 bytes per room
+guardian_sprites_base = $1a60    ; 512-byte sprite block: 8 guardian + 8 player frames x 32 bytes
+player_bmp = $1b60               ; player frames at indices 8-15 (256 bytes into block)
 meta_content_src = $1f98
 ; Meta payload at meta_content_src (see build_meta in mkroom.py)
 meta_off_guardians = 0

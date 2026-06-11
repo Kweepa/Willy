@@ -93,22 +93,6 @@ erase_guardian_loop
 erase_guardians_done
     rts
 
-GetGuardianSpriteAddr
-    sta tmp
-    lda tmp
-    asl
-    asl
-    asl
-    asl
-    asl
-    clc
-    adc #<guardian_sprites_base
-    sta arr
-    lda #>guardian_sprites_base
-    adc #0
-    sta arr+1
-    rts
-
 GetHorizontalGuardianFrame
     lda hx
     and #$03
@@ -124,7 +108,7 @@ GetHorizontalGuardianFrame
     lda tmp
     clc
     adc tmp_xadd
-    jmp GetGuardianSpriteAddr
+    jmp GetSpriteFrameAddr
 
 bidirectional_frames
     lda hd
@@ -132,13 +116,13 @@ bidirectional_frames
     lda tmp
     clc
     adc #4
-    jmp GetGuardianSpriteAddr
+    jmp GetSpriteFrameAddr
 
 leftward_frames
     lda tmp
     clc
     adc tmp_xadd
-    jmp GetGuardianSpriteAddr
+    jmp GetSpriteFrameAddr
 
 GetVerticalGuardianBmpAddr
     ldx guardian_index
@@ -146,7 +130,7 @@ GetVerticalGuardianBmpAddr
     and guardian_g_fmax,x
     clc
     adc guardian_g_fmin,x
-    jmp GetGuardianSpriteAddr
+    jmp GetSpriteFrameAddr
 
 MoveGuardian
     ldx guardian_index
