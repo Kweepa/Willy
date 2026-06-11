@@ -6,29 +6,60 @@ import re
 import struct
 from pathlib import Path
 
-WIDTH, HEIGHT = 24, 16
+WIDTH, HEIGHT = 24, 17
 TILE_BYTES = WIDTH * HEIGHT
 UDG_BYTES = 56
-META_SLOT_BYTES = 48
 TILE_COLOR_BYTES = 7
 GUARDIAN_SPRITES_BYTES = 256
-GUARDIAN_DATA_BYTES = 48          # 6 guardians × 8 bytes
+PLAYER_BMP_BYTES = 256
+GUARDIAN_DATA_BYTES = 60          # SoA: 10 fields x 6 guardians
 MAX_GUARDIANS = 6
-META_RESERVE_BYTES = 48           # pad $1C38-$1C67 (keeps tile_colors at $1C68)
-TILE_COLOR_OFF = 256 + UDG_BYTES + META_RESERVE_BYTES   # 360 → $1C68
-GUARDIAN_DATA_OFF = TILE_COLOR_OFF + TILE_COLOR_BYTES   # 367 → $1C6F
-PADDING_BYTES = 402
-PADDING_REST = PADDING_BYTES - GUARDIAN_DATA_BYTES - 1  # 353 (room image stays 1248 B)
-TILE_OFF = 768                    # $1E00 screen / tilemap
-META_GAP_BYTES = 24
-META_OFF = 1200                   # $1FB0
-IMAGE_LOAD = 0x1B00
+RUNTIME_UDG_PAD = 336             # $1CB0-$1DFF
+TAIL_BYTES = 104
+META_SIZE = 14
+IMAGE_LOAD = 0x1A78
 SCREEN_BASE = 0x1E00
 MAX_ITEMS = 1
-ROOM_IMAGE_SIZE = META_OFF + META_SLOT_BYTES  # 1248 bytes
+ROOM_IMAGE_SIZE = 0x588           # 1416 bytes ($1A78-$1FFF)
+TILE_CHR_BASE = 15
+ITEM_TILE = 6
+HUD_TITLE_COLS = 15
 DEFAULT_TILE_COLORS = [0, 1, 3, 2, 5, 4, 7]
 DEFAULT_ITEM_UDG = bytes([48, 72, 136, 144, 104, 4, 10, 4])
-ITEM_CHR = 6
+DEFAULT_PLAYER_BMP = bytes([
+    0x06, 0x3E, 0x7C, 0x34, 0x3E, 0x3C, 0x18, 0x3C,
+    0x7E, 0x7E, 0xF7, 0xFB, 0x3C, 0x76, 0x6E, 0x77,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x01, 0x0F, 0x1F, 0x0D, 0x0F, 0x0F, 0x06, 0x0F,
+    0x1F, 0x1B, 0x1B, 0x1D, 0x0F, 0x06, 0x06, 0x07,
+    0x80, 0x80, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
+    0x80, 0x80, 0x80, 0x80, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x03, 0x07, 0x03, 0x03, 0x03, 0x01, 0x03,
+    0x07, 0x07, 0x0F, 0x0F, 0x03, 0x07, 0x06, 0x07,
+    0x60, 0xE0, 0xC0, 0x40, 0xE0, 0xC0, 0x80, 0xC0,
+    0xE0, 0xE0, 0x70, 0xB0, 0xC0, 0x60, 0xE0, 0x70,
+    0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x01, 0x03, 0x07, 0x06, 0x00, 0x01, 0x03, 0x03,
+    0x18, 0xF8, 0xF0, 0xD0, 0xF8, 0xF0, 0x60, 0xF0,
+    0xF8, 0xFC, 0xFE, 0xF6, 0xF8, 0xDA, 0x0E, 0x8C,
+    0x60, 0x7C, 0x3E, 0x2C, 0x7C, 0x3C, 0x18, 0x3C,
+    0x7E, 0x7E, 0xEF, 0xDF, 0x3C, 0x6E, 0x76, 0xEE,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x18, 0x1F, 0x0F, 0x0B, 0x1F, 0x0F, 0x06, 0x0F,
+    0x1F, 0x3F, 0x7F, 0x6F, 0x1F, 0x5B, 0x70, 0x21,
+    0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x80, 0xC0, 0xE0, 0x60, 0x00, 0x80, 0xC0, 0xC0,
+    0x06, 0x07, 0x03, 0x02, 0x07, 0x03, 0x01, 0x03,
+    0x07, 0x07, 0x0E, 0x0D, 0x03, 0x06, 0x07, 0x0E,
+    0x00, 0xC0, 0xE0, 0xC0, 0xC0, 0xC0, 0x80, 0xC0,
+    0xE0, 0xE0, 0xF0, 0xF0, 0xC0, 0xE0, 0x60, 0xE0,
+    0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
+    0x80, 0xF0, 0xF8, 0xB0, 0xF0, 0xF0, 0x60, 0xF0,
+    0xF8, 0xD8, 0xD8, 0xB8, 0xF0, 0x60, 0x60, 0xE0,
+])
 
 VIC_COLOR = {
     "BLK": 0,
@@ -57,6 +88,17 @@ GUARDIAN_DSL_V = re.compile(
     r"(\w+)",
     re.I,
 )
+
+G_OFF_X = 0
+G_OFF_Y = 6
+G_OFF_MIN = 12
+G_OFF_MAX = 18
+G_OFF_VEL = 24
+G_OFF_FMIN = 30
+G_OFF_FMAX = 36
+G_OFF_COLOR = 42
+G_OFF_FRAME = 48
+G_OFF_AXIS = 54
 
 
 def parse_byte(s: str) -> int:
@@ -97,8 +139,8 @@ def parse_velocity(text: str) -> int:
     return v & 0xFF
 
 
-def parse_guardian_line(line: str) -> list[int]:
-    """Parse guardian DSL line into 8-byte record (cur_frame = frame_min)."""
+def parse_guardian_line(line: str) -> dict:
+    """Parse guardian DSL line into SoA field dict."""
     line = line.split(";", 1)[0].strip()
     m = GUARDIAN_DSL_H.match(line)
     if m:
@@ -107,6 +149,7 @@ def parse_guardian_line(line: str) -> list[int]:
         gmin = int(xmin) * 4
         gmax = int(xmax) * 4
         gy = int(hy)
+        axis = 0
     else:
         m = GUARDIAN_DSL_V.match(line)
         if not m:
@@ -116,22 +159,25 @@ def parse_guardian_line(line: str) -> list[int]:
         gy = int(gy)
         gmin = int(ymin)
         gmax = int(ymax)
+        axis = 1
 
     fmin_i = int(fmin)
     fmax_i = int(fmax)
     if not 0 <= fmin_i <= 7 or not 0 <= fmax_i <= 7 or fmin_i > fmax_i:
         raise ValueError(f"frame range out of range 0-7: {fmin}..{fmax}")
 
-    return [
-        gx & 0xFF,
-        gy & 0xFF,
-        gmin & 0xFF,
-        gmax & 0xFF,
-        parse_velocity(vel),
-        ((fmin_i & 0x0F) << 4) | (fmax_i & 0x0F),
-        parse_vic_color(colour),
-        fmin_i,
-    ]
+    return {
+        "x": gx & 0xFF,
+        "y": gy & 0xFF,
+        "min": gmin & 0xFF,
+        "max": gmax & 0xFF,
+        "vel": parse_velocity(vel),
+        "fmin": fmin_i,
+        "fmax": fmax_i,
+        "color": parse_vic_color(colour),
+        "frame": fmin_i,
+        "axis": axis,
+    }
 
 
 def parse_room(text: str) -> dict:
@@ -150,6 +196,7 @@ def parse_room(text: str) -> dict:
         "guardians": [],
         "tileudg": [bytes(8) for _ in range(6)] + [DEFAULT_ITEM_UDG],
         "guardiansprites": b"",
+        "playerbmp": b"",
     }
     block = None
     block_lines = []
@@ -185,6 +232,15 @@ def parse_room(text: str) -> dict:
             room["guardiansprites"] = bytes(bs[:GUARDIAN_SPRITES_BYTES]).ljust(
                 GUARDIAN_SPRITES_BYTES, b"\x00"
             )
+        elif block == "playerbmp":
+            bs = []
+            for line in block_lines:
+                if line.strip().startswith(";"):
+                    continue
+                bs.extend(parse_byte_list(line))
+            room["playerbmp"] = bytes(bs[:PLAYER_BMP_BYTES]).ljust(
+                PLAYER_BMP_BYTES, b"\x00"
+            )
         block = None
         block_lines.clear()
 
@@ -196,7 +252,14 @@ def parse_room(text: str) -> dict:
             flush_block()
             parts = line.split()
             tag = parts[0][1:].lower()
-            if tag in ("tilemap", "tileudg", "guardiansprites", "guardians", "items"):
+            if tag in (
+                "tilemap",
+                "tileudg",
+                "guardiansprites",
+                "playerbmp",
+                "guardians",
+                "items",
+            ):
                 block = tag
                 continue
             if tag == "room":
@@ -227,7 +290,7 @@ def parse_room(text: str) -> dict:
                 room["items"].append((cols[i], cols[i + 1]))
             if len(room["items"]) > MAX_ITEMS:
                 raise ValueError(f"too many items ({len(room['items'])}, max {MAX_ITEMS})")
-        elif block in ("tilemap", "tileudg", "guardiansprites"):
+        elif block in ("tilemap", "tileudg", "guardiansprites", "playerbmp"):
             block_lines.append(line)
     flush_block()
     if len(room["items"]) != MAX_ITEMS:
@@ -245,18 +308,38 @@ def grid_bytes(rows: list, name: str) -> bytes:
             raise ValueError(f"{name} row {r}: expected {WIDTH} cols, got {len(row)} ({row!r})")
         for ch in row:
             v = int(ch)
-            if v > ITEM_CHR:
-                raise ValueError(f"tile out of range 0-{ITEM_CHR}: {v}")
-            out.append(v)
+            if v > ITEM_TILE:
+                raise ValueError(f"tile out of range 0-{ITEM_TILE}: {v}")
+            if r < HEIGHT - 1:
+                out.append(v + TILE_CHR_BASE)
+            else:
+                out.append(0)
     return bytes(out)
 
 
 def stamp_item_tile(tiles: bytearray, room: dict) -> None:
     col, row = room["items"][0]
-    if not 0 <= col < WIDTH or not 0 <= row < HEIGHT:
+    if not 0 <= col < WIDTH or not 0 <= row < HEIGHT - 1:
         raise ValueError(f"item cell out of range: col={col} row={row}")
     idx = row * WIDTH + col
-    tiles[idx] = ITEM_CHR
+    tiles[idx] = ITEM_TILE + TILE_CHR_BASE
+
+
+def ascii_to_rom_screen(ch: str) -> int:
+    """Map ASCII to screen codes 128-255 (ROM charset with bit 7 set)."""
+    code = ord(ch)
+    if 65 <= code <= 90:
+        return code + 64
+    if 48 <= code <= 57:
+        return code + 128
+    return code + 128
+
+
+def stamp_hud_title(tiles: bytearray, room: dict) -> None:
+    title = room["title"].upper().ljust(HUD_TITLE_COLS)[:HUD_TITLE_COLS]
+    base = (HEIGHT - 1) * WIDTH
+    for i, ch in enumerate(title):
+        tiles[base + i] = ascii_to_rom_screen(ch)
 
 
 def belt_byte(speed: int) -> int:
@@ -270,6 +353,8 @@ def derive_ramp_bounds(tilemap: list, ramp_type: int) -> tuple[int, int, int, in
     """Return (col_start, col_end, row_start, row_step) for room meta."""
     cells: list[tuple[int, int]] = []
     for row, line in enumerate(tilemap):
+        if row >= HEIGHT - 1:
+            continue
         for col, ch in enumerate(line.strip()):
             if int(ch) == TILE_RAMP:
                 cells.append((col, row))
@@ -316,7 +401,7 @@ def build_meta(room: dict) -> bytes:
         raise ValueError(f"too many guardians ({len(g)}, max {MAX_GUARDIANS})")
     meta = bytearray()
     meta.append(len(g))
-    meta.append(room["border"] & 0xFF)
+    meta.append(room["border"] | 8)   # full $900F: white bg (bit 3) + border 0-7
     meta.append(room["spawn"][0] & 0xFF)
     meta.append(room["spawn"][1] & 0xFF)
     meta.append(belt_byte(room["belt"]))
@@ -329,16 +414,24 @@ def build_meta(room: dict) -> bytes:
     meta.append(row_start & 0xFF)
     meta.append(row_step & 0xFF)
     meta.extend(room["conn"])
+    if len(meta) != META_SIZE:
+        raise ValueError(f"meta size {len(meta)} != {META_SIZE}")
     return bytes(meta)
 
 
 def build_guardian_data(room: dict) -> bytes:
     out = bytearray(GUARDIAN_DATA_BYTES)
-    for i, rec in enumerate(room["guardians"]):
-        if len(rec) != 8:
-            raise ValueError("guardian record needs 8 fields")
-        off = i * 8
-        out[off : off + 8] = bytes(rec)
+    for i, g in enumerate(room["guardians"]):
+        out[G_OFF_X + i] = g["x"]
+        out[G_OFF_Y + i] = g["y"]
+        out[G_OFF_MIN + i] = g["min"]
+        out[G_OFF_MAX + i] = g["max"]
+        out[G_OFF_VEL + i] = g["vel"]
+        out[G_OFF_FMIN + i] = g["fmin"]
+        out[G_OFF_FMAX + i] = g["fmax"]
+        out[G_OFF_COLOR + i] = g["color"]
+        out[G_OFF_FRAME + i] = g["frame"]
+        out[G_OFF_AXIS + i] = g["axis"]
     return bytes(out)
 
 
@@ -353,50 +446,35 @@ def build_tile_colors(room: dict) -> bytes:
     return bytes(room["tilecolors"])
 
 
-def ascii_to_rom_screen(ch: str) -> int:
-    """Map ASCII to screen codes 128-255 (ROM charset with bit 7 set)."""
-    code = ord(ch)
-    if 65 <= code <= 90:  # A-Z -> screen codes 1-26
-        return code + 64
-    return code + 128  # space, digits, punctuation
+def build_tail(room: dict) -> bytes:
+    tail = bytearray(TAIL_BYTES)
+    meta = build_meta(room)
+    colors = build_tile_colors(room)
+    gdata = build_guardian_data(room)
+    tail[0:14] = meta
+    tail[14:21] = colors
+    tail[21:81] = gdata
+    return bytes(tail)
 
 
 def build_room_image(room: dict) -> bytes:
-    """RAM image loaded at $1B00 (1248 bytes).
-
-    $1B00 sprites (256) | $1C00 UDG (56) | reserved (48) | $1C68 colors (7)
-    $1C6F guardian data (48) | pad (353) | $1E00 tiles (384+24) | meta ($1FB0)
-    """
+    """RAM image loaded at $1A78 (1416 bytes)."""
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap"))
     stamp_item_tile(tiles, room)
-    padded_title = room["title"].upper().center(24)
-    title_bytes = bytes(ascii_to_rom_screen(c) for c in padded_title)
-    tiles += title_bytes
-
-    meta = build_meta(room)
-    if len(meta) > META_SLOT_BYTES - 2:
-        raise ValueError(f"meta too large ({len(meta)} bytes, max {META_SLOT_BYTES - 2})")
-    meta_slot = struct.pack("<H", len(meta)) + meta
-    meta_slot = meta_slot.ljust(META_SLOT_BYTES, b"\x00")
+    stamp_hud_title(tiles, room)
 
     sprites = room["guardiansprites"] or bytes(GUARDIAN_SPRITES_BYTES)
+    player = room["playerbmp"] or DEFAULT_PLAYER_BMP
     udg = build_udg(room)
-    tile_colors = build_tile_colors(room)
-    guardian_data = build_guardian_data(room)
-    padding_rest = b"\x00" * PADDING_REST
-    reserved = b"\x00" * META_RESERVE_BYTES
-    meta_gap = b"\x00" * META_GAP_BYTES
+    tail = build_tail(room)
 
     blob = (
         sprites
+        + player
         + udg
-        + reserved
-        + tile_colors
-        + guardian_data
-        + padding_rest
+        + bytes(RUNTIME_UDG_PAD)
         + tiles
-        + meta_gap
-        + meta_slot
+        + tail
     )
     if len(blob) != ROOM_IMAGE_SIZE:
         raise ValueError(f"room image size {len(blob)} != {ROOM_IMAGE_SIZE}")

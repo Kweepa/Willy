@@ -1,10 +1,10 @@
 ; unexpanded JSW layout
 
-image_base = $1b00
-guardian_sprites_base = $1b00    ; 256 bytes: up to 8 guardian frames x 32 bytes
-meta_slot_src = $1fb0
-meta_content_src = meta_slot_src + 2
-; Meta payload layout at meta_content_src (see build_meta in mkroom.py)
+image_base = $1a78
+guardian_sprites_base = $1a78    ; 256 bytes: up to 8 guardian frames x 32 bytes
+player_bmp = $1b78               ; 256 bytes per room
+meta_content_src = $1f98
+; Meta payload at meta_content_src (see build_meta in mkroom.py)
 meta_off_guardians = 0
 meta_off_border = 1
 meta_off_spawn_px = 2
@@ -16,16 +16,46 @@ meta_off_ramp_col_end = 7
 meta_off_ramp_row = 8
 meta_off_ramp_row_step = 9
 meta_off_conn = 10
-tile_color_off = $1c68
-tile_color_src = tile_color_off
+meta_size = 14
+meta_off_tilecolors = 14
+meta_off_guardian_data = 21
+tile_color_src = meta_content_src + meta_off_tilecolors
+guardian_data_base = meta_content_src + meta_off_guardian_data
+tail_base = $1f98
+tail_size = $68                  ; 104 bytes ($1F98–$1FFF)
+guardian_stride = 6
+g_off_x = 0
+g_off_y = 6
+g_off_min = 12
+g_off_max = 18
+g_off_vel = 24
+g_off_fmin = 30
+g_off_fmax = 36
+g_off_color = 42
+g_off_frame = 48
+g_off_axis = 54
+guardian_g_x = guardian_data_base + g_off_x
+guardian_g_y = guardian_data_base + g_off_y
+guardian_g_min = guardian_data_base + g_off_min
+guardian_g_max = guardian_data_base + g_off_max
+guardian_g_vel = guardian_data_base + g_off_vel
+guardian_g_fmin = guardian_data_base + g_off_fmin
+guardian_g_fmax = guardian_data_base + g_off_fmax
+guardian_g_color = guardian_data_base + g_off_color
+guardian_g_frame = guardian_data_base + g_off_frame
+guardian_g_axis = guardian_data_base + g_off_axis
 screen_base = $1e00
+tile_bytes = 408                 ; 24 x 17
+hud_row_off = 384                ; row 16 * 24
+hud_men_scr = screen_base + hud_row_off + 18
+hud_men_col = color_base + hud_row_off + 18
+hud_item_scr = screen_base + hud_row_off + 21
+hud_item_col = color_base + hud_row_off + 21
 map_base = $9400
 color_base = $9600
-room_image_size = $4e0           ; 1248 bytes
-meta_slot_size = $30             ; 48 bytes: u16 len + meta + pad
+room_image_size = $588           ; 1416 bytes ($1A78–$1FFF)
 tile_color_bytes = 7
-guardian_data_base = $1c6f       ; after 7 tile colour bytes at $1C68
-guardian_record_bytes = 8
+guardian_data_bytes = 60
 max_guardians = 6
 
 basic_start = $1000
@@ -43,4 +73,4 @@ basic_end
 
 cold_start
 warm_start
-    jsr WarmStart
+    jmp WarmStart

@@ -4,10 +4,9 @@ Human-editable room descriptions for the JSW VIC-20 port. Convert with [`tools/m
 
 ## Screen layout
 
-- **24 × 18** cells (432 bytes tilemap, 432 bytes color).
-- **Row 0:** solid ceiling (`2`).
-- **Rows 1–15:** gameplay.
-- **Rows 16–17:** `0` (HUD drawn at runtime).
+- **24 × 17** cells (408 bytes screen at `$1E00`).
+- **Rows 0–15:** gameplay (author in `@tilemap`).
+- **Row 16:** HUD row — left-justified `@title`; men and item count drawn at runtime.
 
 ## Tile digits (tilemap)
 
@@ -20,7 +19,7 @@ Human-editable room descriptions for the JSW VIC-20 port. Convert with [`tools/m
 | `4` | Ramp | Slope (see `@ramp`) |
 | `5` | Conveyor | Uses `@belt` speed |
 
-Char **N** on screen = tile type **N** = collision type **N**. UDG bitmaps for chars 0–5 are in `@tileudg`.
+Author digits **0–6** in `@tilemap`; `mkroom` stores screen codes **15–21** (tile type + 15). UDG bitmaps for tile types 0–6 are in `@tileudg`.
 
 ## Color digits
 
@@ -36,12 +35,13 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@title` | text | Room name (HUD row 16) |
 | `@conn` | N E S W | Neighbours: room number or `FF` (hex ok: `$FF`) |
 | `@spawn` | px py | Willy start (quarter-char X, 2-pixel Y) |
-| `@border` | colour | Border/background (`$900f`): BLK WHT RED CYN PUR GRN BLU YEL |
+| `@border` | colour | Border colour (BLK WHT RED CYN PUR GRN BLU YEL). `mkroom` stores `border \| 8` in meta — full VIC `$900F` byte (white background + border). |
 | `@belt` | speed | Conveyor speed: `-1`, `0`, or `1` |
 | `@ramp` | type | `0`=none, `1`=up-right, `2`=up-left. Col/row bounds are derived at build time from tile `4` placement (one ramp per room). |
 | `@hguard` | index | Horizontal guardian sprite index |
 | `@vguard` | index | Vertical guardian sprite index |
-| `@tilemap` | block | 18 lines × 24 digits |
+| `@tilemap` | block | 17 lines × 24 digits |
+| `@playerbmp` | block | Optional 256-byte Willy sprite (defaults if omitted) |
 | `@colors` | block | 18 lines × 24 digits |
 | `@items` | list | Collectibles: `col row` pairs (screen cells) |
 | `@guardians` | list | `hx hy hl hr hd hc ht` per line (decimal) |
@@ -52,28 +52,35 @@ Lines starting with `#` are comments. Blank lines ignored.
 
 ## Binary layout (output of `mkroom.py`)
 
-| Offset | Size | Content |
-|--------|------|---------|
-| 0 | 432 | Tilemap → LOAD to `$1E00` |
-| 432 | 432 | Colors → LOAD to `$9600` |
-| 864 | 1 | Guardian count |
-| 865 | 7×N | Guardian records |
-| … | 1 | BG color |
-| … | 2 | Spawn px, py |
-| … | 1 | Belt speed (unsigned byte; use 255 for −1) |
-| … | 1 | Ramp type (`0` / `1` up-right / `2` up-left) |
-| … | 1 | Ramp col start (derived from tile `4` in `@tilemap`) |
-| … | 1 | Ramp col end |
-| … | 1 | Ramp row at col start |
-| … | 1 | Ramp row step (`0` horizontal, `1` diagonal down-right, `255` diagonal down-left) |
-| … | 4 | Conn N, E, S, W |
-| … | var | Title ASCIZ |
-| … | 1 | Item count |
-| … | 2×count | Item col, row |
-| … | 48 | Tile UDG bytes (chars 0–5) |
-| … | 128×G | Guardian bitmaps (if `@guardianbmp` present) |
+PRG loads at **`$1A78`** (1416 bytes):
+
+| Offset | Address | Size | Content |
+|--------|---------|------|---------|
+| 0 | `$1A78` | 256 | `@guardiansprites` |
+| 256 | `$1B78` | 256 | `player_bmp` |
+| 512 | `$1C78` | 56 | Tile UDG bytes (screen chr 15–21) |
+| 568 | `$1CB0` | 336 | Runtime UDG pad (zeros) |
+| 904 | `$1E00` | 408 | 24×17 screen (row 16 = HUD + title) |
+| 1312 | `$1F98` | 14 | Meta (guardians, `$900F` border byte, spawn, belt, ramp+bounds, conn) |
+| 1326 | `$1FA6` | 7 | Tile colours |
+| 1333 | `$1FAD` | 60 | Guardian live data (SoA, 10×6 bytes) |
+| 1393 | `$1FE9` | 23 | Reserved |
 
 Split outputs (optional): `ROOMnn.TIL`, `ROOMnn.COL`, `ROOMnn.MET`.
+
+### Meta border byte (`$1F99`) and VIC `$900F`
+
+`$900F` sets **screen background** (bits 3–5) and **border** (bits 0–2) only; it does not affect per-cell color RAM.
+
+Packed value: `(background << 3) | border`. All rooms use white background (`bg = 1`), so meta stores `border | 8`:
+
+| `@border` | Meta byte | `$900F` |
+|-----------|-----------|---------|
+| BLK | 8 | white bg, black border |
+| RED | 10 | white bg, red border |
+| BLU | 14 | white bg, blue border |
+
+Runtime (`ParseRoomMeta`) loads this byte and writes it directly to `$900F` — no `and`/`ora` at load time.
 
 ---
 
@@ -396,7 +403,7 @@ def build_binary(room: dict) -> bytes:
         if len(rec) != 7:
             raise ValueError("guardian record needs 7 fields")
         meta.extend(rec)
-    meta.append(room["border"] & 0xFF)
+    meta.append(room["border"] | 8)
     meta.append(room["spawn"][0] & 0xFF)
     meta.append(room["spawn"][1] & 0xFF)
     meta.append(belt_byte(room["belt"]))

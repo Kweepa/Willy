@@ -1,11 +1,12 @@
-; One-shot boot at end of PRG (overwritten by room UDG load at $1C00+).
-; sei -> VIA #2 IER/T2CL -> stack -> IOINIT -> VIC init24_val -> cli
+; One-shot boot at end of PRG (below $1A78; not overwritten by room load).
+; sei -> VIA #2 IER/T2CL -> stack -> IOINIT -> VIC init24_val -> jmp start_game
+; Must not RTS here: txs clears the SYS return address on the stack.
 ;
 ; Target registers (pause in monitor after WarmStart):
 ;   $9000 = $0A   horizontal centre
 ;   $9001 = $22   vertical centre
 ;   $9002 = $98   24 columns + bit7 (screen at $1E00, color at $9600)
-;   $9003 = $24   18 rows (doubled count in bits 1-6)
+;   $9003 = $22   17 rows (doubled count in bits 1-6)
 ;   $9004 = $00   default (light pen Y)
 ;   $9005 = $FF   screen block $1C00+$200, charset block $1C00
 WarmStart
@@ -29,7 +30,7 @@ WarmStart
     bpl -
 
     cli
-    rts
+    jmp start_game
 
 init24_val
-    !byte $0a, $22, $98, $24, $00, $ff
+    !byte $0a, $22, $98, $22, $00, $ff

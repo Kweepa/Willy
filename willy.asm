@@ -557,7 +557,9 @@ ErasePlayer
 -
 	ldy erase_scr_off,x
 	lda (map_ptr),y
-	and #$0f                    ; mask off random upper nybble from color RAM $9400
+	and #$0f
+	clc
+	adc #TILE_CHR_BASE
 	sta (scr_ptr),y
 	dex
 	bpl -
@@ -725,9 +727,9 @@ try_killed
     jsr PickupItemAtOverlap
     jmp dont_kill_player
 +
-    cmp #TILE_HAZARD
+    cmp #TILE_HAZARD + TILE_CHR_BASE
     beq kill_player
-    cmp #TILE_SOLID
+    cmp #TILE_SOLID + TILE_CHR_BASE
     beq dont_kill_player
     cmp #GUARDIAN_CHR
     bcs kill_player
@@ -738,8 +740,9 @@ PickupItemAtOverlap
     beq pickup_done
     lda draw_player_offsets,y
     tay
-    lda #TILE_EMPTY
+    lda #TILE_EMPTY + TILE_CHR_BASE
     sta (scr_ptr),y
+    lda #TILE_EMPTY
     sta (map_ptr),y
     lda #BLACK
     sta (col_ptr),y
@@ -756,7 +759,7 @@ dont_kill_player
     rts
 
 DeathFlash
-	lda #8
+	lda #(RED + 8)
 	sta $900f
 	rts
 

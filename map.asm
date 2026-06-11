@@ -25,8 +25,6 @@ ResetMap
 	rts
 
 DrawMap
-	lda #8
-	sta $900f
 	ldx #20
 -
     jsr WaitForRaster
@@ -34,9 +32,6 @@ DrawMap
     bne -
     lda #0
     sta dead
-    lda #51
-    sta inairtime
-    sta last_py
     lda initial_room_load
     bne drawmap_first_room
     lda spawn_px
@@ -67,20 +62,20 @@ AnimateBelts
     bne no_belt_animate
     lda meta_content_src + meta_off_belt
     bpl belt_animate_right
-    lda udg_base + TILE_CONVEYOR*8
+    lda udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8
     asl
-    rol udg_base + TILE_CONVEYOR*8
-    lda udg_base + TILE_CONVEYOR*8 + 2
+    rol udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8
+    lda udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8 + 2
     lsr
-    ror udg_base + TILE_CONVEYOR*8 + 2
+    ror udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8 + 2
     rts
 belt_animate_right
-    lda udg_base + TILE_CONVEYOR*8
+    lda udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8
     lsr
-    ror udg_base + TILE_CONVEYOR*8
-    lda udg_base + TILE_CONVEYOR*8 + 2
+    ror udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8
+    lda udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8 + 2
     asl
-    rol udg_base + TILE_CONVEYOR*8 + 2
+    rol udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8 + 2
 no_belt_animate
     rts
 

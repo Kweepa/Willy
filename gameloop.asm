@@ -13,8 +13,7 @@ main_loop
     jsr Collide
     jsr CheckRoomEdge
     jsr AnimateBelts
-    jsr WaitForRasterLineLessThan
-    jsr WaitForRasterLine
+    jsr WaitForRaster
     lda dead
     beq +
 	jsr DeathFlash

@@ -42,8 +42,6 @@ x24rowtab
     !word screen_base + 336
     !word screen_base + 360
     !word screen_base + 384
-    !word screen_base + 408
-    !word screen_base + 432
 
 ConvertXYToScreenAddr
     tya
@@ -91,10 +89,3 @@ UpdateMoveCounters
 	inc vguard_frame
 +
     rts
-
-AddExtraMan
-	inc men
-	rts
-
-EndGame
-	rts

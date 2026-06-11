@@ -14,7 +14,7 @@ for line in lbl.read_text().splitlines():
 
 prg_end = labels.get("prg_end", max(labels.values()))
 load_base = 0x1000
-room_base = 0x1B00
+room_base = 0x1A78
 resident_limit = room_base - load_base
 
 MODULES = [
@@ -25,8 +25,7 @@ MODULES = [
     ("willy", ["try_touch", "Collide", "DrawPlayer"]),
     ("util", ["ClearScreen", "UpdateMoveCounters"]),
     ("input", ["GetPlayerInput", "ScanKeyRow"]),
-    ("spritedata", ["player_bmp", "guardian_bmps"]),
-    ("guardians", ["MulGuardianIndexBy8", "MoveGuardians", "EraseGuardians"]),
+    ("guardians", ["CopyDownGuardianData", "MoveGuardians", "EraseGuardians"]),
     ("warm boot", ["WarmStart", "init24_val"]),
 ]
 
