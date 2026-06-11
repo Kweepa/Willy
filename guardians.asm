@@ -61,9 +61,9 @@ IsVerticalGuardian
 
 EraseBlock
     ldy guard_cell_off,x
-    lda #0
+    lda #TILE_CHR_BASE
     sta (scr_ptr),y
-    lda #1
+    lda #WHITE
     sta (col_ptr),y
     dex
     bpl EraseBlock
