@@ -558,8 +558,7 @@ ErasePlayer
 	ldy erase_scr_off,x
 	lda (map_ptr),y
 	and #$0f
-	clc
-	adc #TILE_CHR_BASE
+	ora #$10
 	sta (scr_ptr),y
 	dex
 	bpl -
@@ -740,7 +739,7 @@ PickupItemAtOverlap
     beq pickup_done
     lda draw_player_offsets,y
     tay
-    lda #TILE_EMPTY + TILE_CHR_BASE
+    lda #TILE_CHR_BASE
     sta (scr_ptr),y
     lda #TILE_EMPTY
     sta (map_ptr),y

@@ -1,7 +1,7 @@
 @room 1
 @title The Bathroom
 @conn 255 255 255 2
-@spawn 56 104
+@spawn 68 104
 @border GRN
 @belt -1
 @ramp 1
@@ -38,13 +38,14 @@
 111111111111111111111111
 000000000000000000000000
 
-@tilecolors WHT RED YEL YEL WHT CYN YEL
+@tilecolors WHT RED YEL YEL WHT CYN
+@itemcolor YEL
 
 @items
 19 13
 
 @guardians
-y=24 x=12(0..20) v=-1 f=0..3 GRN ; horizontal, because y is constant (measured in pixels) and x (measured in tiles) has a range. v starts negative here
+y=24 x=12(0..20) v=-1 f=0..3 GRN # horizontal, because y is constant (measured in pixels) and x (measured in tiles) has a range. v starts negative here
 
 @tileudg
 0: 0, 0, 0, 0, 0, 0, 0, 0

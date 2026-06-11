@@ -20,7 +20,7 @@ MODULES = [
 RAM = [
     ("guardian_sprites_base", 0x1A78, 256, "from room PRG"),
     ("player_bmp", 0x1B78, 256, "from room PRG"),
-    ("tile UDGs chr 15-21", 0x1C78, 56, "from room PRG"),
+    ("tile UDGs chr 15-21", 0x1C78, 56, "chr 15=item, 16-21=tiles"),
     ("guardian_udgs chr 22+", 0x1CB0, 288, "runtime UDG workspace"),
     ("player_udg chr 58+", 0x1DD0, 48, "runtime (6 chars)"),
     ("screen_base", 0x1E00, 408, "24x17 tilemap from room PRG"),

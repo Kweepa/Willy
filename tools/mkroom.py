@@ -9,22 +9,28 @@ from pathlib import Path
 WIDTH, HEIGHT = 24, 17
 TILE_BYTES = WIDTH * HEIGHT
 UDG_BYTES = 56
-TILE_COLOR_BYTES = 7
+TILE_COLOR_BYTES = 6
+ITEM_DRAW_BYTES = 11
+OP_LDA_IMM = 0xA9
+OP_STA_ABS = 0x8D
+OP_RTS = 0x60
 GUARDIAN_SPRITES_BYTES = 256
 PLAYER_BMP_BYTES = 256
 GUARDIAN_DATA_BYTES = 60          # SoA: 10 fields x 6 guardians
 MAX_GUARDIANS = 6
 RUNTIME_UDG_PAD = 336             # $1CB0-$1DFF
 TAIL_BYTES = 104
-META_SIZE = 14
+META_SIZE = 14 + ITEM_DRAW_BYTES
 IMAGE_LOAD = 0x1A78
 SCREEN_BASE = 0x1E00
+COLOR_BASE = 0x9600
 MAX_ITEMS = 1
 ROOM_IMAGE_SIZE = 0x588           # 1416 bytes ($1A78-$1FFF)
-TILE_CHR_BASE = 15
-ITEM_TILE = 6
+TILE_CHR_BASE = 16
+TILE_CONVEYOR = 5
+ITEM_CHR = 15
 HUD_TITLE_COLS = 15
-DEFAULT_TILE_COLORS = [0, 1, 3, 2, 5, 4, 7]
+DEFAULT_TILE_COLORS = [0, 1, 3, 2, 5, 4]
 DEFAULT_ITEM_UDG = bytes([48, 72, 136, 144, 104, 4, 10, 4])
 DEFAULT_PLAYER_BMP = bytes([
     0x06, 0x3E, 0x7C, 0x34, 0x3E, 0x3C, 0x18, 0x3C,
@@ -141,7 +147,6 @@ def parse_velocity(text: str) -> int:
 
 def parse_guardian_line(line: str) -> dict:
     """Parse guardian DSL line into SoA field dict."""
-    line = line.split(";", 1)[0].strip()
     m = GUARDIAN_DSL_H.match(line)
     if m:
         hy, x_tile, xmin, xmax, vel, fmin, fmax, colour = m.groups()
@@ -192,6 +197,7 @@ def parse_room(text: str) -> dict:
         "ramp": 0,
         "tilemap": [],
         "tilecolors": list(DEFAULT_TILE_COLORS),
+        "itemcolor": 7,
         "items": [],
         "guardians": [],
         "tileudg": [bytes(8) for _ in range(6)] + [DEFAULT_ITEM_UDG],
@@ -246,7 +252,7 @@ def parse_room(text: str) -> dict:
 
     for raw in lines:
         line = raw.split("#", 1)[0].strip()
-        if not line:
+        if not line or line.startswith(";"):
             continue
         if line.startswith("@"):
             flush_block()
@@ -277,9 +283,13 @@ def parse_room(text: str) -> dict:
             elif tag == "ramp":
                 room["ramp"] = int(parts[1])
             elif tag == "tilecolors":
-                if len(parts[1:]) != 7:
-                    raise ValueError("@tilecolors needs 7 values (tile types 0-6)")
-                room["tilecolors"] = [parse_vic_color(x) for x in parts[1:8]]
+                if len(parts[1:]) != TILE_COLOR_BYTES:
+                    raise ValueError(
+                        f"@tilecolors needs {TILE_COLOR_BYTES} values (tile types 0-5)"
+                    )
+                room["tilecolors"] = [parse_vic_color(x) for x in parts[1:7]]
+            elif tag == "itemcolor":
+                room["itemcolor"] = parse_vic_color(parts[1])
             continue
         if block == "guardians":
             if line:
@@ -308,21 +318,13 @@ def grid_bytes(rows: list, name: str) -> bytes:
             raise ValueError(f"{name} row {r}: expected {WIDTH} cols, got {len(row)} ({row!r})")
         for ch in row:
             v = int(ch)
-            if v > ITEM_TILE:
-                raise ValueError(f"tile out of range 0-{ITEM_TILE}: {v}")
+            if v > TILE_CONVEYOR:
+                raise ValueError(f"tile out of range 0-{TILE_CONVEYOR}: {v}")
             if r < HEIGHT - 1:
                 out.append(v + TILE_CHR_BASE)
             else:
-                out.append(0)
+                out.append(TILE_CHR_BASE)
     return bytes(out)
-
-
-def stamp_item_tile(tiles: bytearray, room: dict) -> None:
-    col, row = room["items"][0]
-    if not 0 <= col < WIDTH or not 0 <= row < HEIGHT - 1:
-        raise ValueError(f"item cell out of range: col={col} row={row}")
-    idx = row * WIDTH + col
-    tiles[idx] = ITEM_TILE + TILE_CHR_BASE
 
 
 def ascii_to_rom_screen(ch: str) -> int:
@@ -414,9 +416,34 @@ def build_meta(room: dict) -> bytes:
     meta.append(row_start & 0xFF)
     meta.append(row_step & 0xFF)
     meta.extend(room["conn"])
+    meta.extend(build_item_draw(room))
     if len(meta) != META_SIZE:
         raise ValueError(f"meta size {len(meta)} != {META_SIZE}")
     return bytes(meta)
+
+
+def build_item_draw(room: dict) -> bytes:
+    """11 bytes: lda #ITEM_CHR / sta screen / lda #color / sta color_ram / rts."""
+    col, row = room["items"][0]
+    if not 0 <= col < WIDTH or not 0 <= row < HEIGHT - 1:
+        raise ValueError(f"item cell out of range: col={col} row={row}")
+    cell_off = row * WIDTH + col
+    scr_addr = SCREEN_BASE + cell_off
+    col_addr = COLOR_BASE + cell_off
+    color = room["itemcolor"] & 0xFF
+    code = bytearray()
+    code.append(OP_LDA_IMM)
+    code.append(ITEM_CHR)
+    code.append(OP_STA_ABS)
+    code.extend(struct.pack("<H", scr_addr))
+    code.append(OP_LDA_IMM)
+    code.append(color)
+    code.append(OP_STA_ABS)
+    code.extend(struct.pack("<H", col_addr))
+    code.append(OP_RTS)
+    if len(code) != ITEM_DRAW_BYTES:
+        raise ValueError(f"item draw code size {len(code)} != {ITEM_DRAW_BYTES}")
+    return bytes(code)
 
 
 def build_guardian_data(room: dict) -> bytes:
@@ -437,13 +464,17 @@ def build_guardian_data(room: dict) -> bytes:
 
 def build_udg(room: dict) -> bytes:
     out = bytearray()
-    for i in range(7):
-        out.extend(room["tileudg"][i])
+    out.extend(room["tileudg"][6])   # item → chr 15
+    for i in range(6):
+        out.extend(room["tileudg"][i])  # tiles 0–5 → chr 16–21
     return bytes(out)
 
 
 def build_tile_colors(room: dict) -> bytes:
-    return bytes(room["tilecolors"])
+    colors = room["tilecolors"]
+    if len(colors) != TILE_COLOR_BYTES:
+        raise ValueError(f"tilecolors length {len(colors)} != {TILE_COLOR_BYTES}")
+    return bytes(colors)
 
 
 def build_tail(room: dict) -> bytes:
@@ -451,16 +482,17 @@ def build_tail(room: dict) -> bytes:
     meta = build_meta(room)
     colors = build_tile_colors(room)
     gdata = build_guardian_data(room)
-    tail[0:14] = meta
-    tail[14:21] = colors
-    tail[21:81] = gdata
+    tail[0:META_SIZE] = meta
+    off = META_SIZE
+    tail[off : off + TILE_COLOR_BYTES] = colors
+    off += TILE_COLOR_BYTES
+    tail[off : off + GUARDIAN_DATA_BYTES] = gdata
     return bytes(tail)
 
 
 def build_room_image(room: dict) -> bytes:
     """RAM image loaded at $1A78 (1416 bytes)."""
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap"))
-    stamp_item_tile(tiles, room)
     stamp_hud_title(tiles, room)
 
     sprites = room["guardiansprites"] or bytes(GUARDIAN_SPRITES_BYTES)

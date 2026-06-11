@@ -19,7 +19,7 @@ Human-editable room descriptions for the JSW VIC-20 port. Convert with [`tools/m
 | `4` | Ramp | Slope (see `@ramp`) |
 | `5` | Conveyor | Uses `@belt` speed |
 
-Author digits **0–6** in `@tilemap`; `mkroom` stores screen codes **15–21** (tile type + 15). UDG bitmaps for tile types 0–6 are in `@tileudg`.
+Author digits **0–5** in `@tilemap`; `mkroom` stores screen codes **16–21** (tile type + 16). Item pickup (screen chr **15**) is not in the tilemap — position comes from `@items` and is drawn at runtime. UDG bitmaps: index **6** = item (chr 15), indices **0–5** = tiles (chr 16–21) in `@tileudg`.
 
 ## Color digits
 
@@ -44,11 +44,13 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@playerbmp` | block | Optional 256-byte Willy sprite (defaults if omitted) |
 | `@colors` | block | 18 lines × 24 digits |
 | `@items` | list | Collectibles: `col row` pairs (screen cells) |
+| `@tilecolors` | list | Six VIC colours for tile types 0–5 |
+| `@itemcolor` | colour | Item pickup cell colour (baked into draw code; default YEL) |
 | `@guardians` | list | `hx hy hl hr hd hc ht` per line (decimal) |
-| `@tileudg` | block | Six lines: `N: bb bb bb bb bb bb bb bb` (hex bytes) |
+| `@tileudg` | block | Seven lines: `N: bb bb bb bb bb bb bb bb` (hex bytes; 0–5 tiles, 6 item) |
 | `@guardianbmp` | block | Optional; hex bytes, 128 per guardian in order |
 
-Lines starting with `#` are comments. Blank lines ignored.
+Lines starting with `#` or `;` are comments; `#` may also appear mid-line. Blank lines ignored.
 
 ## Binary layout (output of `mkroom.py`)
 
@@ -58,13 +60,15 @@ PRG loads at **`$1A78`** (1416 bytes):
 |--------|---------|------|---------|
 | 0 | `$1A78` | 256 | `@guardiansprites` |
 | 256 | `$1B78` | 256 | `player_bmp` |
-| 512 | `$1C78` | 56 | Tile UDG bytes (screen chr 15–21) |
+| 512 | `$1C78` | 56 | Tile UDG bytes (chr 15=item, chr 16–21=tiles 0–5) |
 | 568 | `$1CB0` | 336 | Runtime UDG pad (zeros) |
-| 904 | `$1E00` | 408 | 24×17 screen (row 16 = HUD + title) |
-| 1312 | `$1F98` | 14 | Meta (guardians, `$900F` border byte, spawn, belt, ramp+bounds, conn) |
-| 1326 | `$1FA6` | 7 | Tile colours |
-| 1333 | `$1FAD` | 60 | Guardian live data (SoA, 10×6 bytes) |
-| 1393 | `$1FE9` | 23 | Reserved |
+| 904 | `$1E00` | 408 | 24×17 screen (row 16 = HUD + title; item not baked in) |
+| 1312 | `$1F98` | 25 | Meta (14-byte header + 11-byte item draw code at `$1FA6`) |
+| 1337 | `$1FB1` | 6 | Tile colours (types 0–5 only) |
+| 1343 | `$1FB7` | 60 | Guardian live data (SoA, 10×6 bytes) |
+| 1403 | `$1FF3` | 13 | Reserved |
+
+Item draw code (11 bytes at meta+14): `lda #15` / `sta screen` / `lda #color` / `sta color_ram` / `rts`. `DrawItem` does `jsr $1FA6` when `items_left` > 0.
 
 Split outputs (optional): `ROOMnn.TIL`, `ROOMnn.COL`, `ROOMnn.MET`.
 

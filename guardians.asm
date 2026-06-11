@@ -70,6 +70,8 @@ EraseBlock
     rts
 
 EraseGuardians
+    lda meta_content_src + meta_off_guardians
+    beq erase_guardians_done
     lda #0
     sta guardian_index
 erase_guardian_loop
@@ -92,6 +94,7 @@ erase_guardian_loop
     lda guardian_index
     cmp meta_content_src + meta_off_guardians
     bne erase_guardian_loop
+erase_guardians_done
     rts
 
 GetGuardianSpriteAddr

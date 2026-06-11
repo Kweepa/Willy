@@ -1,8 +1,9 @@
 ;
 ; LoadRoom - KERNAL LOAD roomnn PRG to image_base ($1A78), then:
-;   paint color RAM from tile_color_src lookup (types 0-6)
-;   paint map_base ($9400): store tile type 0-6 (screen chr - TILE_CHR_BASE);
+;   paint color RAM from tile_color_src lookup (tile types 0-5)
+;   paint map_base ($9400): store tile type 0-5 (low nybble of screen chr 16-21);
 ;     map_base is VIC colour RAM — only low nybble valid; read with AND #$0f
+;   draw item chr 15 separately (DrawItem) — not in tilemap
 ;
 ; PRG image layout (1416 bytes at $1A78):
 ;   +$000 guardian sprites 256 @ $1A78
@@ -36,6 +37,7 @@ LoadRoom
     cli
     jsr ParseRoomMeta
     jsr PaintColors
+    jsr DrawItem
     ; jsr DrawHud
     jsr DrawPlayer
     rts
@@ -44,16 +46,14 @@ PaintColors
     ldy #0
 -
     lda screen_base,y
-    sec
-    sbc #TILE_CHR_BASE
     sta map_base,y
+    and #$0f
     tax
     lda tile_color_src,x
     sta color_base,y
     lda screen_base+$80,y
-    sec
-    sbc #TILE_CHR_BASE
     sta map_base+$80,y
+    and #$0f
     tax
     lda tile_color_src,x
     sta color_base+$80,y
@@ -68,9 +68,16 @@ PaintColors
     bne -
     rts
 
+DrawItem
+    lda items_left
+    beq draw_item_done
+    jsr item_draw
+draw_item_done
+    rts
+
 ;
 ; ParseRoomMeta - read room meta at meta_content_src ($1F98).
-; Layout: guardians, border, spawn x2, belt, ramp, ramp bounds x4, conn x4
+; Layout: guardians, border, spawn x2, belt, ramp, ramp bounds x4, conn x4, item draw code
 ParseRoomMeta
     lda meta_content_src + meta_off_border
     sta $900f
