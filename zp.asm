@@ -34,8 +34,8 @@ lastxmove       = $27
 was_on_ground   = $28
 inairtime       = $29
 men             = $2a
-menx            = $84          ; was $2b (TXTTAB) — unused, kept off BASIC ZP
-items_total     = $85          ; was $2d (VARTAB) — must not clobber KERNAL LOAD
+menx            = $84          ; was $2b (TXTTAB) - unused, kept off BASIC ZP
+items_total     = $85          ; was $2d (VARTAB) - must not clobber KERNAL LOAD
 stream_ptr      = $52
 stream_ptr_hi   = $53
 
@@ -69,7 +69,6 @@ align_tmp       = $58
 entry_px        = $59
 entry_py        = $5a
 map             = $5b
-conn_ptr        = $5c          ; -> conn bytes in loaded room meta at $1C3A+
 use_room_spawn  = $5f          ; 1 = ParseRoomMeta sets px/py from @spawn
 initial_room_load = $86        ; 1 = first DrawMap after ResetGame (use @spawn)
 spawn_px        = $87          ; respawn position (game start or last room entry)
@@ -82,14 +81,10 @@ ramp_tmp3       = $57
 
 ts              = $50
 
-num_guardians   = $60
 guardian_index  = $61
-guardian_data   = $62
 item_count      = $94
 
 items_buf       = $d6
-
-belt_spd        = $9c
 
 left_right_ctr  = $9d
 up_down_ctr     = $9f
@@ -111,5 +106,3 @@ stringrow		= $f0
 
 vguard_frame    = $f7
 hguard_frame	= $f8
-
-ramp_type       = $fd

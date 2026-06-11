@@ -1,21 +1,30 @@
 ; unexpanded JSW layout
 
-image_base = $1c00
-meta_slot_off = $3b0             ; $1FB0 — above HUD row 17 (mkroom META_OFF 944)
-meta_slot_src = image_base + meta_slot_off
+image_base = $1b00
+guardian_sprites_base = $1b00    ; 256 bytes: up to 8 guardian frames x 32 bytes
+guardian_data_base = $1c6e       ; 6 x 8-byte live guardian records (in room padding)
+meta_slot_src = $1fb0
 meta_content_src = meta_slot_src + 2
-meta_base = $1fb0                ; copy destination for fast-loader path
-tile_color_off = image_base + $68 ; $1C68 (mkroom TILE_COLOR_OFF 88)
+; Meta payload layout at meta_content_src (see build_meta in mkroom.py)
+meta_off_guardians = 0
+meta_off_border = 1
+meta_off_spawn_px = 2
+meta_off_spawn_py = 3
+meta_off_belt = 4
+meta_off_ramp = 5
+meta_off_conn = 6
+meta_off_item_count = 10
+meta_off_items = 11
+tile_color_off = $1c68
 tile_color_src = tile_color_off
 screen_base = $1e00
 map_base = $9400
 color_base = $9600
-room_image_size = $3e0           ; 992 bytes
-meta_slot_size = $30             ; 48 bytes: u16 len + meta + pad (mkroom META_SLOT_BYTES)
+room_image_size = $4e0           ; 1248 bytes
+meta_slot_size = $30             ; 48 bytes: u16 len + meta + pad
 tile_color_bytes = 6
-
-hguard_bmp = $1900
-vguard_bmp = $1980
+guardian_record_bytes = 8
+max_guardians = 6
 
 basic_start = $1000
 
@@ -32,20 +41,4 @@ basic_end
 
 cold_start
 warm_start
-
-    sei
-
-    lda #$7f
-    sta $911d
-    sta $911e
-
-    cld
-    ldx #$ff
-    txs
-
-    jsr $fdf9                   ; RAMTAS — RAM test / BASIC pointers
-    jsr $e518                   ; BASIC init (screen defaults)
-
-	jsr InitScreen24            ; 24-col before game/title
-
-    cli
+    jsr WarmStart

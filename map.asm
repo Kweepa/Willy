@@ -27,8 +27,6 @@ ResetMap
 	rts
 
 DrawMap
-	jsr InitMusic
-	jsr InitScreen24
 	lda #8
 	sta $900f
 	ldx #20
@@ -36,7 +34,6 @@ DrawMap
     jsr WaitForRaster
     dex
     bne -
-    jsr InitScreen24
     jsr ClearScreen
     lda #0
     sta dead
@@ -55,7 +52,7 @@ DrawMap
     rts
 drawmap_first_room
     lda #1
-    sta use_room_spawn          ; new game — @spawn from room meta
+    sta use_room_spawn          ; new game - @spawn from room meta
     jsr LoadRoom
     jsr SaveSpawn
     lda #0
@@ -71,7 +68,7 @@ AnimateBelts
     ; or less if we can combine several functions
     lda left_right_ctr
     bne no_belt_animate
-    lda belt_spd
+    lda meta_content_src + meta_off_belt
     bpl belt_animate_right
     lda udg_base + TILE_CONVEYOR*8
     asl
@@ -175,7 +172,7 @@ exit_pickup
     rts
 
 GetConnByte
-    lda (conn_ptr),y
+    lda meta_content_src + meta_off_conn,y
     rts
 
 ; row: coord(0=px,1=py), cmp(0=le,1=ge), limit+1 for le / limit for ge, conn, entry_px, entry_py
@@ -236,7 +233,7 @@ do_room_change
     sta py
 +
     lda #0
-    sta use_room_spawn          ; edge transition — px/py already set, not @spawn
+    sta use_room_spawn          ; edge transition - px/py already set, not @spawn
     jsr LoadRoom
     jsr SaveSpawn
     lda #51

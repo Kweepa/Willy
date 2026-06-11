@@ -1,6 +1,4 @@
 start_game
-	jsr InitMusic
-    jsr TitleScreen
 	jsr ResetGame
 
 start_map
@@ -16,13 +14,10 @@ main_loop
     jsr TryPickupItem
     jsr CheckRoomEdge
     jsr AnimateBelts
-	jsr PlayInGameMusic
-    jsr DisplayStatusLine
     jsr WaitForRasterLineLessThan
     jsr WaitForRasterLine
     lda dead
     beq +
-	jsr InitMusic
 	jsr DeathFlash
     dec men
     beq ++
@@ -31,5 +26,4 @@ main_loop
     jmp main_loop
 
 ++
-	jsr BootSquash
 	jmp start_game

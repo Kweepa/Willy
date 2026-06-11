@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build jsw.d64 from jsw.prg and ROOMnn binaries."""
+"""Build jsw.d64 from jsw.prg and Rx room binaries."""
 
 import argparse
 import os
@@ -39,12 +39,8 @@ def find_c1541(explicit: Optional[Path] = None) -> Optional[Path]:
 
 
 def collect_room_files(room_dir: Path) -> List[Path]:
-    """Return ROOMnn PRG blobs (one file per room)."""
-    return sorted(
-        r
-        for r in room_dir.glob("ROOM*")
-        if len(r.name) == 6 and r.name[4:6].isdigit()
-    )
+    """Return Rx PRG blobs (2-char names: R + one suffix char)."""
+    return sorted(r for r in room_dir.glob("R*") if len(r.name) == 2 and r.name[0] == "R")
 
 
 def build_with_c1541(c1541: Path, d64: Path, prg: Optional[Path], rooms: List[Path]) -> None:
@@ -148,7 +144,7 @@ def main():
     ap = argparse.ArgumentParser(description="Build jsw.d64 from PRG and room binaries")
     ap.add_argument("--out", default="jsw.d64")
     ap.add_argument("--prg", default="jsw.prg")
-    ap.add_argument("--rooms", default="rooms/out", help="directory with ROOMnn files")
+    ap.add_argument("--rooms", default="rooms/out", help="directory with Rx room files")
     ap.add_argument(
         "--c1541",
         type=Path,
@@ -160,7 +156,7 @@ def main():
     room_dir = Path(args.rooms)
     rooms = collect_room_files(room_dir)
     if not rooms:
-        print("No ROOMnn PRG files found; run mkroom.py first", file=sys.stderr)
+        print("No Rx PRG files found; run mkroom.py first", file=sys.stderr)
         sys.exit(1)
 
     d64 = Path(args.out)

@@ -20,31 +20,6 @@ WaitForRaster
 	jsr WaitForRasterLineLessThan
 	jmp WaitForRasterLine
 
-; 24×18 screen at $1E00, color RAM at $9600, tile UDGs at $1C00.
-; KERNAL LOAD resets $9002/$9005 to 22-col / ROM charset — call after every LOAD.
-;
-; Target registers (pause in monitor after InitScreen24):
-;   $9000 = $02   horizontal position
-;   $9001 = $2C   vertical position
-;   $9002 = $98   24 columns + bit7 (screen at $1E00, color at $9600)
-;   $9003 = $24   18 rows (doubled count in bits 1-6)
-;   $9005 = $FF   screen block $1C00+$200, charset block $1C00
-;   $0288 = $1E   KERNAL screen page for $1E00
-InitScreen24
-    lda #$0a
-    sta $9000                   ; horizontal centre
-    lda #$98
-    sta $9002                   ; 24 cols + half-page offset
-    lda #$24
-    sta $9003                   ; 18 rows
-    lda #$22
-    sta $9001                   ; vertical centre (moved up 10 units/20 scanlines)
-    lda #$ff
-    sta $9005                   ; screen $1E00, chars $1C00
-    lda #$1e
-    sta $0288                   ; KERNAL screen page (not VIC)
-    rts
-
 ClearScreen
     ldx #0
 -
@@ -104,7 +79,7 @@ ConvertXYToScreenAddr
     bcc +
     inc scr_ptr + 1
 +
-    ; screen/map/color bases differ by $xx00 only — low byte unchanged
+    ; screen/map/color bases differ by $xx00 only - low byte unchanged
     lda scr_ptr
     sta map_ptr
     sta col_ptr
@@ -138,9 +113,6 @@ UpdateMoveCounters
 	bne +
 	inc game_time_hi
 +
-    rts
-
-DisplayStatusLine
     rts
 
 AddExtraMan

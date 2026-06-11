@@ -11,15 +11,19 @@ TILE_BYTES = WIDTH * HEIGHT
 UDG_BYTES = 56
 META_SLOT_BYTES = 48
 TILE_COLOR_BYTES = 6
-UDG_OFF = 0
-META_RESERVE_BYTES = 48       # pad $1C38-$1C67 (keeps tile_colors at $1C68)
-TILE_COLOR_OFF = 104          # $1C68 (UDG 56 + reserved 48)
+GUARDIAN_SPRITES_BYTES = 256
+GUARDIAN_DATA_BYTES = 48          # 6 guardians × 8 bytes
+MAX_GUARDIANS = 6
+META_RESERVE_BYTES = 48           # pad $1C38-$1C67 (keeps tile_colors at $1C68)
+TILE_COLOR_OFF = 256 + UDG_BYTES + META_RESERVE_BYTES   # 360 → $1C68
+GUARDIAN_DATA_OFF = TILE_COLOR_OFF + TILE_COLOR_BYTES   # 366 → $1C6E
 PADDING_BYTES = 402
-TILE_OFF = 512                # $1E00 screen / tilemap
-META_GAP_BYTES = 24           # pad $1F98-$1FAF (HUD row 17), meta above UI
-META_OFF = 920 + META_GAP_BYTES  # $1FB0, after tiles + name + UI row
-IMAGE_LOAD = 0x1C00
-ROOM_IMAGE_SIZE = META_OFF + META_SLOT_BYTES  # 992 bytes
+PADDING_REST = PADDING_BYTES - GUARDIAN_DATA_BYTES
+TILE_OFF = 768                    # $1E00 screen / tilemap
+META_GAP_BYTES = 24
+META_OFF = 1200                   # $1FB0
+IMAGE_LOAD = 0x1B00
+ROOM_IMAGE_SIZE = META_OFF + META_SLOT_BYTES  # 1248 bytes
 DEFAULT_TILE_COLORS = [0, 1, 3, 2, 5, 4]
 DEFAULT_ITEM_UDG = bytes([48, 72, 136, 144, 104, 4, 10, 4])
 
@@ -33,6 +37,23 @@ VIC_COLOR = {
     "BLU": 6,
     "YEL": 7,
 }
+
+GUARDIAN_DSL_H = re.compile(
+    r"y\s*=\s*(\d+)\s+"
+    r"x\s*=\s*(\d+)\((\d+)\.\.(\d+)\)\s+"
+    r"v\s*=\s*([+-]?\d+)\s+"
+    r"f\s*=\s*(\d+)\.\.(\d+)\s+"
+    r"(\w+)",
+    re.I,
+)
+GUARDIAN_DSL_V = re.compile(
+    r"x\s*=\s*(\d+)\s+"
+    r"y\s*=\s*(\d+)\((\d+)\.\.(\d+)\)\s+"
+    r"v\s*=\s*([+-]?\d+)\s+"
+    r"f\s*=\s*(\d+)\.\.(\d+)\s+"
+    r"(\w+)",
+    re.I,
+)
 
 
 def parse_byte(s: str) -> int:
@@ -68,6 +89,48 @@ def parse_byte_list(text: str) -> list[int]:
     return [parse_byte(part) for part in text.split(",") if part.strip()]
 
 
+def parse_velocity(text: str) -> int:
+    v = int(text.strip())
+    return v & 0xFF
+
+
+def parse_guardian_line(line: str) -> list[int]:
+    """Parse guardian DSL line into 8-byte record (cur_frame = frame_min)."""
+    line = line.split(";", 1)[0].strip()
+    m = GUARDIAN_DSL_H.match(line)
+    if m:
+        hy, x_tile, xmin, xmax, vel, fmin, fmax, colour = m.groups()
+        gx = int(x_tile) * 4
+        gmin = int(xmin) * 4
+        gmax = int(xmax) * 4
+        gy = int(hy)
+    else:
+        m = GUARDIAN_DSL_V.match(line)
+        if not m:
+            raise ValueError(f"bad @guardians line: {line!r}")
+        x_tile, gy, ymin, ymax, vel, fmin, fmax, colour = m.groups()
+        gx = int(x_tile) * 4
+        gy = int(gy)
+        gmin = int(ymin)
+        gmax = int(ymax)
+
+    fmin_i = int(fmin)
+    fmax_i = int(fmax)
+    if not 0 <= fmin_i <= 7 or not 0 <= fmax_i <= 7 or fmin_i > fmax_i:
+        raise ValueError(f"frame range out of range 0-7: {fmin}..{fmax}")
+
+    return [
+        gx & 0xFF,
+        gy & 0xFF,
+        gmin & 0xFF,
+        gmax & 0xFF,
+        parse_velocity(vel),
+        ((fmin_i & 0x0F) << 4) | (fmax_i & 0x0F),
+        parse_vic_color(colour),
+        fmin_i,
+    ]
+
+
 def parse_room(text: str) -> dict:
     lines = text.splitlines()
     room = {
@@ -78,14 +141,12 @@ def parse_room(text: str) -> dict:
         "border": 0,
         "belt": 0,
         "ramp": 0,
-        "hguard": 0,
-        "vguard": 0,
         "tilemap": [],
         "tilecolors": list(DEFAULT_TILE_COLORS),
         "items": [],
         "guardians": [],
         "tileudg": [bytes(8) for _ in range(6)] + [DEFAULT_ITEM_UDG],
-        "guardianbmp": b"",
+        "guardiansprites": b"",
     }
     block = None
     block_lines = []
@@ -112,11 +173,15 @@ def parse_room(text: str) -> dict:
                     if invert:
                         bs = [b ^ 0xFF for b in bs]
                     room["tileudg"][idx] = bytes(bs)
-        elif block == "guardianbmp":
+        elif block == "guardiansprites":
             bs = []
             for line in block_lines:
+                if line.strip().startswith(";"):
+                    continue
                 bs.extend(parse_byte_list(line))
-            room["guardianbmp"] = bytes(bs)
+            room["guardiansprites"] = bytes(bs[:GUARDIAN_SPRITES_BYTES]).ljust(
+                GUARDIAN_SPRITES_BYTES, b"\x00"
+            )
         block = None
         block_lines.clear()
 
@@ -128,7 +193,7 @@ def parse_room(text: str) -> dict:
             flush_block()
             parts = line.split()
             tag = parts[0][1:].lower()
-            if tag in ("tilemap", "tileudg", "guardianbmp", "guardians", "items"):
+            if tag in ("tilemap", "tileudg", "guardiansprites", "guardians", "items"):
                 block = tag
                 continue
             if tag == "room":
@@ -145,10 +210,6 @@ def parse_room(text: str) -> dict:
                 room["belt"] = int(parts[1])
             elif tag == "ramp":
                 room["ramp"] = int(parts[1])
-            elif tag == "hguard":
-                room["hguard"] = int(parts[1])
-            elif tag == "vguard":
-                room["vguard"] = int(parts[1])
             elif tag == "tilecolors":
                 if len(parts[1:]) != 6:
                     raise ValueError("@tilecolors needs 6 values (tile types 0-5)")
@@ -156,12 +217,12 @@ def parse_room(text: str) -> dict:
             continue
         if block == "guardians":
             if line:
-                room["guardians"].append([int(x) for x in line.split()])
+                room["guardians"].append(parse_guardian_line(line))
         elif block == "items":
             cols = [int(x) for x in line.split()]
             for i in range(0, len(cols) - 1, 2):
                 room["items"].append((cols[i], cols[i + 1]))
-        elif block in ("tilemap", "tileudg", "guardianbmp"):
+        elif block in ("tilemap", "tileudg", "guardiansprites"):
             block_lines.append(line)
     flush_block()
     return room
@@ -188,28 +249,32 @@ def belt_byte(speed: int) -> int:
 
 
 def build_meta(room: dict) -> bytes:
-    meta = bytearray()
     g = room["guardians"]
+    if len(g) > MAX_GUARDIANS:
+        raise ValueError(f"too many guardians ({len(g)}, max {MAX_GUARDIANS})")
+    meta = bytearray()
     meta.append(len(g))
-    for rec in g:
-        if len(rec) != 7:
-            raise ValueError("guardian record needs 7 fields")
-        meta.extend(rec)
     meta.append(room["border"] & 0xFF)
     meta.append(room["spawn"][0] & 0xFF)
     meta.append(room["spawn"][1] & 0xFF)
     meta.append(belt_byte(room["belt"]))
     meta.append(room["ramp"] & 0xFF)
-    meta.append(room["hguard"] & 0xFF)
-    meta.append(room["vguard"] & 0xFF)
     meta.extend(room["conn"])
     meta.append(len(room["items"]))
     for col, row in room["items"]:
         meta.append(col & 0xFF)
         meta.append(row & 0xFF)
-    if room["guardianbmp"]:
-        meta.extend(room["guardianbmp"])
     return bytes(meta)
+
+
+def build_guardian_data(room: dict) -> bytes:
+    out = bytearray(GUARDIAN_DATA_BYTES)
+    for i, rec in enumerate(room["guardians"]):
+        if len(rec) != 8:
+            raise ValueError("guardian record needs 8 fields")
+        off = i * 8
+        out[off : off + 8] = bytes(rec)
+    return bytes(out)
 
 
 def build_udg(room: dict) -> bytes:
@@ -232,13 +297,12 @@ def ascii_to_rom_screen(ch: str) -> int:
 
 
 def build_room_image(room: dict) -> bytes:
-    """RAM image loaded at $1C00 (992 bytes).
+    """RAM image loaded at $1B00 (1248 bytes).
 
-    $1C00 UDG (56) | $1C38 reserved (48) | $1C68 tile_colors (6) | pad (402)
-    $1E00 tiles (384) | $1F80 room_name (24) | $1F98 UI pad (24) | $1FB0 meta (48)
+    $1B00 sprites (256) | $1C00 UDG (56) | reserved (48) | $1C68 colors (6)
+    $1C6E guardian data (48) | pad (354) | $1E00 tiles (384+24) | meta ($1FB0)
     """
     tiles = grid_bytes(room["tilemap"], "tilemap")
-    # Append room name (24 bytes) mapped to ROM characters
     padded_title = room["title"].upper().center(24)
     title_bytes = bytes(ascii_to_rom_screen(c) for c in padded_title)
     tiles += title_bytes
@@ -248,12 +312,26 @@ def build_room_image(room: dict) -> bytes:
         raise ValueError(f"meta too large ({len(meta)} bytes, max {META_SLOT_BYTES - 2})")
     meta_slot = struct.pack("<H", len(meta)) + meta
     meta_slot = meta_slot.ljust(META_SLOT_BYTES, b"\x00")
+
+    sprites = room["guardiansprites"] or bytes(GUARDIAN_SPRITES_BYTES)
     udg = build_udg(room)
     tile_colors = build_tile_colors(room)
-    padding = b"\x00" * PADDING_BYTES
+    guardian_data = build_guardian_data(room)
+    padding_rest = b"\x00" * PADDING_REST
     reserved = b"\x00" * META_RESERVE_BYTES
     meta_gap = b"\x00" * META_GAP_BYTES
-    blob = udg + reserved + tile_colors + padding + tiles + meta_gap + meta_slot
+
+    blob = (
+        sprites
+        + udg
+        + reserved
+        + tile_colors
+        + guardian_data
+        + padding_rest
+        + tiles
+        + meta_gap
+        + meta_slot
+    )
     if len(blob) != ROOM_IMAGE_SIZE:
         raise ValueError(f"room image size {len(blob)} != {ROOM_IMAGE_SIZE}")
     return blob
@@ -276,7 +354,7 @@ def convert_file(src: Path, outstem: Path) -> None:
 def main():
     ap = argparse.ArgumentParser(description="Convert JSW .room files to PRG binaries")
     ap.add_argument("input", nargs="?", help=".room file or directory with --all")
-    ap.add_argument("output", nargs="?", help="output file stem e.g. rooms/out/ROOM01")
+    ap.add_argument("output", nargs="?", help="output file stem e.g. rooms/out/R1")
     ap.add_argument("--all", action="store_true", help="convert all *.room in input dir")
     args = ap.parse_args()
     if args.all:
@@ -284,7 +362,7 @@ def main():
         outdir = Path(args.output or "rooms/out")
         for src in sorted(indir.glob("*.room")):
             n = parse_room(src.read_text(encoding="utf-8"))["id"]
-            convert_file(src, outdir / f"ROOM{n:02d}")
+            convert_file(src, outdir / f"R{n}")
         return
     if not args.input or not args.output:
         ap.error("need input and output, or --all")

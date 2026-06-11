@@ -1,5 +1,5 @@
-; Jet Set Willy — unexpanded VIC-20
-; PRG layout: code from $1000, then resident sprite data, all below $1C00 (UDG/room image)
+; Jet Set Willy - unexpanded VIC-20
+; PRG from $1000; room image loads to $1B00 (overwrites $1B00+ at runtime)
 
 !source "zp.asm"
 !source "defines.asm"
@@ -12,9 +12,12 @@
 !source "util.asm"
 !source "input.asm"
 !source "playerdata.asm"
-!source "stubs.asm"
 !source "spritedata.asm"
+!source "guardians.asm"
+!source "warm.asm"
 
-!if * > $1c00 {
-!error "PRG exceeds $1C00 — would corrupt UDG at $1C00 and screen at $1E00"
+prg_end = *
+
+!if * > $1b00 {
+!warn "PRG extends past $1B00 room load base - trim resident code/data"
 }

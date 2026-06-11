@@ -23,14 +23,14 @@ try_touch_below
     lda #0
     rts
 do_belt
-    lda belt_spd
+    lda meta_content_src + meta_off_belt
     beq do_belt_zero
 
     lda belt_active
     bne do_belt_conveyor
 
     ; Check opposite key based on belt_spd
-    lda belt_spd
+    lda meta_content_src + meta_off_belt
     bpl check_left_pressed
 
     ; belt_spd is negative (pushes left), so check if RIGHT is pressed
@@ -57,7 +57,7 @@ do_belt_release
     sta belt_active
 
 do_belt_conveyor
-    lda belt_spd
+    lda meta_content_src + meta_off_belt
     sta xadd
     sta lastxmove
     jmp do_block_below
@@ -79,7 +79,7 @@ try_ramp
     bne +
     jmp try_ramp_done
 +
-    lda ramp_type
+    lda meta_content_src + meta_off_ramp
     bne +
     jmp try_ramp_done
 +
@@ -224,7 +224,7 @@ found_ramp
     sta ramp_tmp2
     
     ; Calculate y_surface based on ramp_type
-    lda ramp_type
+    lda meta_content_src + meta_off_ramp
     cmp #RAMP_UP_RIGHT
     bne +
     
@@ -744,8 +744,8 @@ try_killed
 	bcs kill_player
 	rts
 kill_player
-    ; lda #1      ; Stubbed out hazard/guardian death collision
-    ; sta dead
+    lda #1
+    sta dead
 dont_kill_player
     rts
 

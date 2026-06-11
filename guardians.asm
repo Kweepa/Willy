@@ -1,136 +1,70 @@
-CopyDownGuardianBmp
-	; guardian bitmap loaded into hguard_bmp by LoadRoom
-	lda #<hguard_bmp
-	sta arr
-	lda #>hguard_bmp
-	sta arr+1
-
-	; copy down guardian bmp
-	; 0 1 2 3 ..... 32 33 34 35 ...
-	; 0 16 1 17 .... 32 48 33 49 ...
-	
-	ldy #127
-	sty tmp
--	ldy tmp
-	lda (arr),y
-	pha
-	tya
-	and #$1f
-	lsr
-	bcc +
-	ora #$10
-+	sta ts
-	tya
-	and #$60
-	ora ts
-	tay
-	pla
-	sta (arr2),y
-	dec tmp
-	bpl -
-	rts
-
-CopyDownHorizontalGuardianBmp
-	lda #<hguard_bmp
-	sta arr2
-	lda #>hguard_bmp
-	sta arr2+1
-	lda hguardian_index
-	jmp CopyDownGuardianBmp
-
-CopyDownVerticalGuardianBmp
-	lda #<vguard_bmp
-	sta arr2
-	lda #>vguard_bmp
-	sta arr2+1
-	lda vguardian_index
-	jmp CopyDownGuardianBmp
-
-CopyAndFlipGuardian
-	jsr CopyDownHorizontalGuardianBmp
-
-	; flip sprites
-	; 8x8 sprite arrangement before -> after
-	; ACXXXXXX -> XXXXXXCA
-	; BDXXXXXX -> XXXXXXDB (with bits reversed)
-	; map left to right: keep bits 0-2 the same (within char block)
-	; then %0000000<->%1110000, %0001000<->%1111000, %0010000<->%1100000, %0011000<->%1101000
-	; i.e. bit 3 is the same
-	; bits 4-6 are 7-x
-	; bit 7 changes from 0-1
-
-flippedbyte = ts
-	ldx #127
---
-	; calc destination byte
-
-	; load the source and flip it
-	lda hguard_bmp,x
-	ldy #8
--	ror
-	rol flippedbyte
-	dey
-	bne -
-	txa
-	eor #$f0 ; set bit 7, flip bits 4,5,6
-	tay
-	lda flippedbyte
-	sta hguard_bmp,y
-	dex
-	bpl --
-	rts
-
-MulGuardianIndexBy7
+MulGuardianIndexBy8
     lda guardian_index
     asl
-	asl
-	asl
-    sec
-    sbc guardian_index
-	clc
-    adc #6
-	rts
+    asl
+    asl
+    rts
 
 CopyDownGuardianData
-	jsr MulGuardianIndexBy7
+    jsr MulGuardianIndexBy8
     tay
-    ldx #6
--
-    lda guardian_data,y
-    sta hx,x
-    dey
-    dex
-    bpl -
+    lda guardian_data_base,y
+    sta hx
+    lda guardian_data_base+1,y
+    sta hy
+    lda guardian_data_base+2,y
+    sta hl
+    lda guardian_data_base+3,y
+    sta hr
+    lda guardian_data_base+4,y
+    sta hd
+    lda guardian_data_base+5,y
+    sta ht
+    lda guardian_data_base+6,y
+    sta hc
+    lda guardian_data_base+7,y
+    sta hguard_frame
     rts
 
 CopyUpGuardianData
-	jsr MulGuardianIndexBy7
+    jsr MulGuardianIndexBy8
     tay
-    ldx #6
--
-    lda hx,x
-    sta guardian_data,y
-    dey
-    dex
-    bpl -
+    lda hx
+    sta guardian_data_base,y
+    lda hy
+    sta guardian_data_base+1,y
+    lda hl
+    sta guardian_data_base+2,y
+    lda hr
+    sta guardian_data_base+3,y
+    lda hd
+    sta guardian_data_base+4,y
+    lda ht
+    sta guardian_data_base+5,y
+    lda hc
+    sta guardian_data_base+6,y
+    lda hguard_frame
+    sta guardian_data_base+7,y
+    rts
+
+IsVerticalGuardian
+    lda ht
+    and #$f0
+    cmp #$40
     rts
 
 EraseBlock
-	ldy erase_scr_off,x
-	lda #0
-	sta (scr_ptr),y
-	lda #1
-	sta (col_ptr),y
-	dex
-	bpl EraseBlock
-	rts
+    ldy guardian_erase_off,x
+    lda #0
+    sta (scr_ptr),y
+    lda #1
+    sta (col_ptr),y
+    dex
+    bpl EraseBlock
+    rts
 
-erase_scr_off
-	!byte 24,25,48,49,72,73
-
-Erase2x2
-	ldx #3
-	jmp EraseBlock
+guardian_erase_off
+    !byte 24,25,48,49,72,73
 
 EraseGuardians
     lda #0
@@ -140,74 +74,97 @@ erase_guardian_loop
     ldx hx
     ldy hy
     jsr ConvertXYToScreenAddr
-	ldx #3
-	lda ht
-	and #16 ; horizontal?
-	beq +
-	lda hy	; vertical & y&7 == 0?
-	and #7
-	beq +
-	inx
-	inx
+    ldx #3
+    jsr IsVerticalGuardian
+    bcc +
+    lda hy
+    and #7
+    beq +
+    inx
+    inx
 +
-	jsr EraseBlock
+    jsr EraseBlock
 
     inc guardian_index
     lda guardian_index
-    cmp num_guardians
+    cmp meta_content_src + meta_off_guardians
     bne erase_guardian_loop
     rts
 
-GetHorizontalGuardianBmpAddr
-    lda hx
-    and #$03
-FinishHorizontalGuardianBmpAddr
+; A = frame index 0-7 -> arr = guardian_sprites_base + frame*32
+GetGuardianSpriteAddr
+    sta tmp
+    lda tmp
     asl
     asl
     asl
     asl
     asl
     clc
-    adc #<hguard_bmp
+    adc #<guardian_sprites_base
     sta arr
-    lda #>hguard_bmp
+    lda #>guardian_sprites_base
     adc #0
     sta arr+1
     rts
 
-AddBidirectionalGuardianBmpAddr
-	clc
+GetHorizontalGuardianFrame
+    lda hx
+    and #$03
+    sta tmp
+    lda ht
+    and #$f0
+    lsr
+    lsr
+    lsr
+    lsr
+    sta tmp_xadd
+    lda ht
+    and #$0f
+    sec
+    sbc tmp_xadd
+    cmp #4
+    bcs bidirectional_frames
+    lda tmp
+    clc
+    adc tmp_xadd
+    jmp GetGuardianSpriteAddr
+
+bidirectional_frames
     lda hd
-    and #$80
-    adc arr
-    sta arr
-	lda arr+1
-	adc #0
-	sta arr+1
-	rts
+    bmi leftward_frames
+    lda tmp
+    clc
+    adc #4
+    jmp GetGuardianSpriteAddr
+
+leftward_frames
+    lda tmp
+    clc
+    adc tmp_xadd
+    jmp GetGuardianSpriteAddr
 
 GetVerticalGuardianBmpAddr
-    lda vguard_frame
-	clc
-	adc guardian_index
-    and #$03
-SkylabVerticalGuardianBmpAddrInterrupt
-    asl
-    asl
-    asl
-    asl
-    asl
-FinishVerticalGuardianBmpAddr
-    clc
-    adc #<vguard_bmp
-    sta arr
-    lda #>vguard_bmp
-    adc #0
-    sta arr+1
+    lda hguard_frame
+    jmp GetGuardianSpriteAddr
+
+AdvanceVerticalFrame
+    inc hguard_frame
+    lda ht
+    and #$0f
+    cmp hguard_frame
+    bcs +
+    lda ht
+    and #$f0
+    lsr
+    lsr
+    lsr
+    lsr
+    sta hguard_frame
++
     rts
 
 MoveHorizontalGuardian
-    ; update x
     lda hx
     clc
     adc hd
@@ -217,22 +174,21 @@ MoveHorizontalGuardian
     lda hx
     cmp hr
     bne +++
-	beq ++
+    beq ++
 +
     lda hx
     cmp hl
     bne +++
 ++
-	lda hd
-	eor #$ff
-	clc
-	adc #1
+    lda hd
+    eor #$ff
+    clc
+    adc #1
     sta hd
 +++
-	rts
+    rts
 
 MoveVerticalGuardian
-    ; update y
     lda hy
     clc
     adc hd
@@ -242,75 +198,73 @@ MoveVerticalGuardian
     lda hy
     cmp hr
     bne +++
-	beq ++
+    beq ++
 +
     lda hy
     cmp hl
     bne +++
 ++
-	lda hd
-	eor #$ff
-	clc
-	adc #1
+    lda hd
+    eor #$ff
+    clc
+    adc #1
     sta hd
 +++
-	rts
+    rts
 
 draw_guardian_offsets
-	!byte 24,25,48,49,72,73
+    !byte 24,25,48,49,72,73
 draw_vguard_chrs
-	!byte 0,3,1,4,2,5
+    !byte 0,3,1,4,2,5
 draw_hguard_chrs
-	!byte 0,2,1,3
+    !byte 0,2,1,3
 
 DrawHorizontalGuardian
-	inc hguard_count
-    ; plaster to screen
+    inc hguard_count
     ldx hx
     ldy hy
     jsr ConvertXYToScreenAddr
 
-	ldx #3
+    ldx #3
 -
-	ldy draw_guardian_offsets,x
-	lda hc
-	sta (col_ptr),y
-	lda draw_hguard_chrs,x
-	clc
-	adc guard_udg_index
-	sta (scr_ptr),y
-	dex
-	bpl -
-	rts
+    ldy draw_guardian_offsets,x
+    lda hc
+    sta (col_ptr),y
+    lda draw_hguard_chrs,x
+    clc
+    adc guard_udg_index
+    sta (scr_ptr),y
+    dex
+    bpl -
+    rts
 
 DrawVerticalGuardian
-	inc vguard_count
-    ; plaster to screen
+    inc vguard_count
     ldx hx
     ldy hy
     jsr ConvertXYToScreenAddr
 
-	ldx #3
-	lda hy
-	and #7
-	beq +
-	inx
-	inx
+    ldx #3
+    lda hy
+    and #7
+    beq +
+    inx
+    inx
 +
 -
-	ldy draw_guardian_offsets,x
-	lda hc
-	sta (col_ptr),y
-	lda draw_vguard_chrs,x
-	clc
-	adc guard_udg_index
-	sta (scr_ptr),y
-	dex
-	bpl -
-	rts
+    ldy draw_guardian_offsets,x
+    lda hc
+    sta (col_ptr),y
+    lda draw_vguard_chrs,x
+    clc
+    adc guard_udg_index
+    sta (scr_ptr),y
+    dex
+    bpl -
+    rts
 
 CalcGuardianUDGIndex
-    lda guardian_index           ; x6
+    lda guardian_index
     asl
     clc
     adc guardian_index
@@ -318,158 +272,150 @@ CalcGuardianUDGIndex
     sta guard_udg_off
     clc
     adc #GUARDIAN_CHR
-	sta guard_udg_index
-
-	rts
+    sta guard_udg_index
+    rts
 
 CalcGuardianUDGAddr
-	; arr2 ends up with the udg address
-
-	lda guard_udg_off
+    lda guard_udg_off
     asl
     asl
-    asl                 ; x8
+    asl
+    clc
     adc #<guardian_udgs
     sta arr2
     lda #>guardian_udgs
     adc #0
     sta arr2+1
-	rts
+    rts
 
 CopyHorizontalGuardianFrame
     ldy #31
--   lda (arr),y
+-
+    lda (arr),y
     sta (arr2),y
     dey
     bpl -
-	rts
+    rts
 
 CopyVerticalGuardianFrame
-	lda arr2
-	clc
-	adc #24
-	sta arr3
-	lda arr2+1
-	adc #0
-	sta arr3+1
-	lda arr
-	sta mod_src_col1+1
-	clc
-	adc #16
-	sta mod_src_col2+1
-	lda arr+1
-	sta mod_src_col1+2
-	sta mod_src_col2+2
+    lda arr2
+    clc
+    adc #24
+    sta arr3
+    lda arr2+1
+    adc #0
+    sta arr3+1
+    lda arr
+    sta mod_src_col1+1
+    clc
+    adc #16
+    sta mod_src_col2+1
+    lda arr+1
+    sta mod_src_col1+2
+    sta mod_src_col2+2
 
-	; clear the top section
-	ldy #0
+    ldy #0
 
-	lda hy
-	and #7
-	beq +
-	tax
+    lda hy
+    and #7
+    beq +
+    tax
 
-	lda #0
+    lda #0
 -
-	sta (arr2),y
-	sta (arr3),y
-	iny
-	dex
-	bne -
+    sta (arr2),y
+    sta (arr3),y
+    iny
+    dex
+    bne -
 +
-	; copy the center section
-	ldx #16
+    ldx #16
 -
 mod_src_col1
-	lda vguard_bmp
-	inc mod_src_col1+1
-	sta (arr2),y
+    lda guardian_sprites_base
+    inc mod_src_col1+1
+    sta (arr2),y
 mod_src_col2
-	lda vguard_bmp
-	inc mod_src_col2+1
-	sta (arr3),y
-	iny
-	dex
-	bne -
+    lda guardian_sprites_base
+    inc mod_src_col2+1
+    sta (arr3),y
+    iny
+    dex
+    bne -
 
-	; clear the bottom section
-	lda hy
-	and #7
-	eor #7
-	tax
+    lda hy
+    and #7
+    eor #7
+    tax
 
-	lda #0
+    lda #0
 -
-	sta (arr2),y
-	sta (arr3),y
-	iny
-	dex
-	bpl -
+    sta (arr2),y
+    sta (arr3),y
+    iny
+    dex
+    bpl -
 
-	rts
+    rts
 
 MoveGuardians
-    lda num_guardians
+    lda meta_content_src + meta_off_guardians
     beq move_guardians_done
     lda #0
     sta guardian_index
-	sta hguard_count
-	sta vguard_count
+    sta hguard_count
+    sta vguard_count
 -
-	jsr CalcGuardianUDGIndex
+    jsr CalcGuardianUDGIndex
     jsr CopyDownGuardianData
-	lda ht
-	beq MoveBidirectionalHorizontalGuardian
-	cmp #GUARDIAN_VERTICAL
-	beq MoveNormalVerticalGuardian
-	jmp EndGuardianLoop
+    jsr IsVerticalGuardian
+    bcs MoveNormalVerticalGuardian
+    jmp MoveBidirectionalHorizontalGuardian
 
 MoveBidirectionalHorizontalGuardian
-	jsr ShouldMoveHorizontalGuardianThisFrame
-	bne EndMoveHorizontalGuardian
-	jsr MoveHorizontalGuardian
-    jsr GetHorizontalGuardianBmpAddr
-	jsr AddBidirectionalGuardianBmpAddr
-ContinueMoveHorizontalGuardian
-	jsr CalcGuardianUDGAddr
+    jsr ShouldMoveHorizontalGuardianThisFrame
+    bne EndMoveHorizontalGuardian
+    jsr MoveHorizontalGuardian
+    jsr GetHorizontalGuardianFrame
+    jsr CalcGuardianUDGAddr
     jsr CopyHorizontalGuardianFrame
 EndMoveHorizontalGuardian
-	jsr DrawHorizontalGuardian
-	jmp EndGuardianLoop
+    jsr DrawHorizontalGuardian
+    jmp EndGuardianLoop
 
 MoveNormalVerticalGuardian
-	jsr ShouldMoveVerticalGuardianThisFrame
-	bne +
-	jsr MoveVerticalGuardian
-	jsr GetVerticalGuardianBmpAddr
-	jsr CalcGuardianUDGAddr
-	jsr CopyVerticalGuardianFrame
+    jsr ShouldMoveVerticalGuardianThisFrame
+    bne +
+    jsr MoveVerticalGuardian
+    jsr AdvanceVerticalFrame
+    jsr GetVerticalGuardianBmpAddr
+    jsr CalcGuardianUDGAddr
+    jsr CopyVerticalGuardianFrame
 +
-	jsr DrawVerticalGuardian
-	jmp EndGuardianLoop
+    jsr DrawVerticalGuardian
+    jmp EndGuardianLoop
 
 EndGuardianLoop
     jsr CopyUpGuardianData
     inc guardian_index
     lda guardian_index
-    cmp num_guardians
+    cmp meta_content_src + meta_off_guardians
     bne -
 move_guardians_done
     rts
 
 ShouldMoveHorizontalGuardianThisFrame
-	lda hguard_count
-	and #3
-	cmp left_right_ctr
-	rts
+    lda hguard_count
+    and #3
+    cmp left_right_ctr
+    rts
 
 ShouldMoveVerticalGuardianThisFrame
-	; bne + after this function to not move
-	lda vguard_count
-	cmp up_down_ctr
-	beq +
-	sec
-	sbc #3
-	cmp up_down_ctr
+    lda vguard_count
+    cmp up_down_ctr
+    beq +
+    sec
+    sbc #3
+    cmp up_down_ctr
 +
-	rts
+    rts
