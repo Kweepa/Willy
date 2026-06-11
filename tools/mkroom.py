@@ -10,22 +10,25 @@ WIDTH, HEIGHT = 24, 16
 TILE_BYTES = WIDTH * HEIGHT
 UDG_BYTES = 56
 META_SLOT_BYTES = 48
-TILE_COLOR_BYTES = 6
+TILE_COLOR_BYTES = 7
 GUARDIAN_SPRITES_BYTES = 256
 GUARDIAN_DATA_BYTES = 48          # 6 guardians × 8 bytes
 MAX_GUARDIANS = 6
 META_RESERVE_BYTES = 48           # pad $1C38-$1C67 (keeps tile_colors at $1C68)
 TILE_COLOR_OFF = 256 + UDG_BYTES + META_RESERVE_BYTES   # 360 → $1C68
-GUARDIAN_DATA_OFF = TILE_COLOR_OFF + TILE_COLOR_BYTES   # 366 → $1C6E
+GUARDIAN_DATA_OFF = TILE_COLOR_OFF + TILE_COLOR_BYTES   # 367 → $1C6F
 PADDING_BYTES = 402
-PADDING_REST = PADDING_BYTES - GUARDIAN_DATA_BYTES
+PADDING_REST = PADDING_BYTES - GUARDIAN_DATA_BYTES - 1  # 353 (room image stays 1248 B)
 TILE_OFF = 768                    # $1E00 screen / tilemap
 META_GAP_BYTES = 24
 META_OFF = 1200                   # $1FB0
 IMAGE_LOAD = 0x1B00
+SCREEN_BASE = 0x1E00
+MAX_ITEMS = 1
 ROOM_IMAGE_SIZE = META_OFF + META_SLOT_BYTES  # 1248 bytes
-DEFAULT_TILE_COLORS = [0, 1, 3, 2, 5, 4]
+DEFAULT_TILE_COLORS = [0, 1, 3, 2, 5, 4, 7]
 DEFAULT_ITEM_UDG = bytes([48, 72, 136, 144, 104, 4, 10, 4])
+ITEM_CHR = 6
 
 VIC_COLOR = {
     "BLK": 0,
@@ -211,9 +214,9 @@ def parse_room(text: str) -> dict:
             elif tag == "ramp":
                 room["ramp"] = int(parts[1])
             elif tag == "tilecolors":
-                if len(parts[1:]) != 6:
-                    raise ValueError("@tilecolors needs 6 values (tile types 0-5)")
-                room["tilecolors"] = [parse_vic_color(x) for x in parts[1:7]]
+                if len(parts[1:]) != 7:
+                    raise ValueError("@tilecolors needs 7 values (tile types 0-6)")
+                room["tilecolors"] = [parse_vic_color(x) for x in parts[1:8]]
             continue
         if block == "guardians":
             if line:
@@ -222,9 +225,13 @@ def parse_room(text: str) -> dict:
             cols = [int(x) for x in line.split()]
             for i in range(0, len(cols) - 1, 2):
                 room["items"].append((cols[i], cols[i + 1]))
+            if len(room["items"]) > MAX_ITEMS:
+                raise ValueError(f"too many items ({len(room['items'])}, max {MAX_ITEMS})")
         elif block in ("tilemap", "tileudg", "guardiansprites"):
             block_lines.append(line)
     flush_block()
+    if len(room["items"]) != MAX_ITEMS:
+        raise ValueError(f"room must have exactly {MAX_ITEMS} item (col row pair in @items)")
     return room
 
 
@@ -238,10 +245,18 @@ def grid_bytes(rows: list, name: str) -> bytes:
             raise ValueError(f"{name} row {r}: expected {WIDTH} cols, got {len(row)} ({row!r})")
         for ch in row:
             v = int(ch)
-            if v > 5:
-                raise ValueError(f"tile out of range 0-5: {v}")
+            if v > ITEM_CHR:
+                raise ValueError(f"tile out of range 0-{ITEM_CHR}: {v}")
             out.append(v)
     return bytes(out)
+
+
+def stamp_item_tile(tiles: bytearray, room: dict) -> None:
+    col, row = room["items"][0]
+    if not 0 <= col < WIDTH or not 0 <= row < HEIGHT:
+        raise ValueError(f"item cell out of range: col={col} row={row}")
+    idx = row * WIDTH + col
+    tiles[idx] = ITEM_CHR
 
 
 def belt_byte(speed: int) -> int:
@@ -260,10 +275,6 @@ def build_meta(room: dict) -> bytes:
     meta.append(belt_byte(room["belt"]))
     meta.append(room["ramp"] & 0xFF)
     meta.extend(room["conn"])
-    meta.append(len(room["items"]))
-    for col, row in room["items"]:
-        meta.append(col & 0xFF)
-        meta.append(row & 0xFF)
     return bytes(meta)
 
 
@@ -299,10 +310,11 @@ def ascii_to_rom_screen(ch: str) -> int:
 def build_room_image(room: dict) -> bytes:
     """RAM image loaded at $1B00 (1248 bytes).
 
-    $1B00 sprites (256) | $1C00 UDG (56) | reserved (48) | $1C68 colors (6)
-    $1C6E guardian data (48) | pad (354) | $1E00 tiles (384+24) | meta ($1FB0)
+    $1B00 sprites (256) | $1C00 UDG (56) | reserved (48) | $1C68 colors (7)
+    $1C6F guardian data (48) | pad (353) | $1E00 tiles (384+24) | meta ($1FB0)
     """
-    tiles = grid_bytes(room["tilemap"], "tilemap")
+    tiles = bytearray(grid_bytes(room["tilemap"], "tilemap"))
+    stamp_item_tile(tiles, room)
     padded_title = room["title"].upper().center(24)
     title_bytes = bytes(ascii_to_rom_screen(c) for c in padded_title)
     tiles += title_bytes

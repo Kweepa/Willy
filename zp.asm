@@ -35,7 +35,6 @@ was_on_ground   = $28
 inairtime       = $29
 men             = $2a
 menx            = $84          ; was $2b (TXTTAB) - unused, kept off BASIC ZP
-items_total     = $85          ; was $2d (VARTAB) - must not clobber KERNAL LOAD
 stream_ptr      = $52
 stream_ptr_hi   = $53
 
@@ -82,9 +81,6 @@ ramp_tmp3       = $57
 ts              = $50
 
 guardian_index  = $61
-item_count      = $94
-
-items_buf       = $d6
 
 left_right_ctr  = $9d
 up_down_ctr     = $9f

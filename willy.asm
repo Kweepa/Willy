@@ -736,13 +736,35 @@ coll_check
     rts
 
 try_killed
-	cmp #TILE_HAZARD
-	beq kill_player
-	cmp #TILE_SOLID
-	beq dont_kill_player
-	cmp #GUARDIAN_CHR
-	bcs kill_player
-	rts
+    cmp #ITEM_CHR
+    bne +
+    jsr PickupItemAtOverlap
+    jmp dont_kill_player
++
+    cmp #TILE_HAZARD
+    beq kill_player
+    cmp #TILE_SOLID
+    beq dont_kill_player
+    cmp #GUARDIAN_CHR
+    bcs kill_player
+    rts
+
+PickupItemAtOverlap
+    lda items_left
+    beq pickup_done
+    lda draw_player_offsets,y
+    tay
+    lda #TILE_EMPTY
+    sta (scr_ptr),y
+    sta (map_ptr),y
+    lda #BLACK
+    sta (col_ptr),y
+    lda #180
+    sta $900c
+    dec items_left
+pickup_done
+    rts
+
 kill_player
     lda #1
     sta dead
