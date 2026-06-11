@@ -4,7 +4,7 @@
 ;
 ; Target registers (pause in monitor after WarmStart):
 ;   $9000 = $0A   horizontal centre
-;   $9001 = $22   vertical centre
+;   $9001 = $32   vertical centre (+16 from $22 — 4 tile rows down)
 ;   $9002 = $98   24 columns + bit7 (screen at $1E00, color at $9600)
 ;   $9003 = $22   17 rows (doubled count in bits 1-6)
 ;   $9004 = $00   default (light pen Y)
@@ -33,4 +33,4 @@ WarmStart
     jmp start_game
 
 init24_val
-    !byte $0a, $22, $98, $22, $00, $ff
+    !byte $0a, $32, $98, $22, $00, $ff

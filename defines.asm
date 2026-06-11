@@ -23,8 +23,10 @@ udg_base = $1c00
 guardian_udgs = udg_base + GUARDIAN_CHR*8
 player_udg = udg_base + PLAY_CHR*8
 
-RASTERLINE_PAL      = $66
-RASTERLINE_NTSC     = $54
+; Screen shifted down 4 tile rows ($9001); sync below playfield by same amount
+SCREEN_DOWN_RASTER  = 16
+RASTERLINE_PAL      = $66 + SCREEN_DOWN_RASTER
+RASTERLINE_NTSC     = $54 + SCREEN_DOWN_RASTER
 
 GUARDIAN_HORIZONTAL = 0
 GUARDIAN_VERTICAL = 1
