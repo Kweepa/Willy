@@ -33,8 +33,6 @@ CopyDownGuardianData
     sta hc
     lda guardian_g_fmin,x
     sta ht
-    lda guardian_g_frame,x
-    sta hguard_frame
     rts
 
 CopyUpGuardianData
@@ -49,8 +47,6 @@ CopyUpGuardianData
     sta guardian_g_max,x
     lda hd
     sta guardian_g_vel,x
-    lda hguard_frame
-    sta guardian_g_frame,x
     rts
 
 IsVerticalGuardian
@@ -145,19 +141,12 @@ leftward_frames
     jmp GetGuardianSpriteAddr
 
 GetVerticalGuardianBmpAddr
-    lda hguard_frame
-    jmp GetGuardianSpriteAddr
-
-AdvanceVerticalFrame
-    inc hguard_frame
     ldx guardian_index
     lda hguard_frame
-    cmp guardian_g_fmax,x
-    bcc +
-    lda guardian_g_fmin,x
-    sta hguard_frame
-+
-    rts
+    and guardian_g_fmax,x
+    clc
+    adc guardian_g_fmin,x
+    jmp GetGuardianSpriteAddr
 
 MoveGuardian
     ldx guardian_index
@@ -357,13 +346,12 @@ draw_h_guardian
 
 MoveNormalVerticalGuardian
     jsr ShouldMoveVerticalGuardianThisFrame
-    bne draw_v_guardian
+    bne +
     jsr MoveGuardian
-    jsr AdvanceVerticalFrame
++
     jsr GetVerticalGuardianBmpAddr
     jsr CalcGuardianUDGAddr
     jsr CopyVerticalGuardianFrame
-draw_v_guardian
     jsr DrawVerticalGuardian
     jmp EndGuardianLoop
 

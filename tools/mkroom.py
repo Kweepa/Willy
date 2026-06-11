@@ -16,16 +16,17 @@ OP_STA_ABS = 0x8D
 OP_RTS = 0x60
 GUARDIAN_SPRITES_BYTES = 256
 PLAYER_BMP_BYTES = 256
-GUARDIAN_DATA_BYTES = 60          # SoA: 10 fields x 6 guardians
+GUARDIAN_DATA_BYTES = 54          # SoA: 9 fields x 6 guardians
 MAX_GUARDIANS = 6
 RUNTIME_UDG_PAD = 336             # $1CB0-$1DFF
 TAIL_BYTES = 104
 META_SIZE = 14 + ITEM_DRAW_BYTES
-IMAGE_LOAD = 0x1A78
+IMAGE_LOAD = 0x1A60
 SCREEN_BASE = 0x1E00
 COLOR_BASE = 0x9600
 MAX_ITEMS = 1
-ROOM_IMAGE_SIZE = 0x588           # 1416 bytes ($1A78-$1FFF)
+IMAGE_TILE_GAP = 24               # pad after player_bmp; tile UDG+ stay at $1C78+
+ROOM_IMAGE_SIZE = 0x5A0           # 1440 bytes ($1A60-$1FFF)
 TILE_CHR_BASE = 16
 TILE_CONVEYOR = 5
 ITEM_CHR = 15
@@ -103,8 +104,7 @@ G_OFF_VEL = 24
 G_OFF_FMIN = 30
 G_OFF_FMAX = 36
 G_OFF_COLOR = 42
-G_OFF_FRAME = 48
-G_OFF_AXIS = 54
+G_OFF_AXIS = 48
 
 
 def parse_byte(s: str) -> int:
@@ -171,6 +171,16 @@ def parse_guardian_line(line: str) -> dict:
     if not 0 <= fmin_i <= 7 or not 0 <= fmax_i <= 7 or fmin_i > fmax_i:
         raise ValueError(f"frame range out of range 0-7: {fmin}..{fmax}")
 
+    if axis == 1:
+        frame_count = fmax_i - fmin_i + 1
+        if frame_count not in (1, 2, 4):
+            raise ValueError(
+                f"vertical guardian frame count must be 1, 2, or 4: {fmin}..{fmax}"
+            )
+        fmax_store = frame_count - 1  # mask: 0, 1, or 3
+    else:
+        fmax_store = fmax_i
+
     return {
         "x": gx & 0xFF,
         "y": gy & 0xFF,
@@ -178,9 +188,8 @@ def parse_guardian_line(line: str) -> dict:
         "max": gmax & 0xFF,
         "vel": parse_velocity(vel),
         "fmin": fmin_i,
-        "fmax": fmax_i,
+        "fmax": fmax_store,
         "color": parse_vic_color(colour),
-        "frame": fmin_i,
         "axis": axis,
     }
 
@@ -457,7 +466,6 @@ def build_guardian_data(room: dict) -> bytes:
         out[G_OFF_FMIN + i] = g["fmin"]
         out[G_OFF_FMAX + i] = g["fmax"]
         out[G_OFF_COLOR + i] = g["color"]
-        out[G_OFF_FRAME + i] = g["frame"]
         out[G_OFF_AXIS + i] = g["axis"]
     return bytes(out)
 
@@ -508,7 +516,7 @@ def build_tail(room: dict) -> bytes:
 
 
 def build_room_image(room: dict) -> bytes:
-    """RAM image loaded at $1A78 (1416 bytes)."""
+    """RAM image loaded at $1A60 (1440 bytes)."""
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap"))
     stamp_hud_title(tiles, room)
 
@@ -521,6 +529,7 @@ def build_room_image(room: dict) -> bytes:
     blob = (
         sprites
         + player
+        + bytes(IMAGE_TILE_GAP)
         + udg
         + bytes(RUNTIME_UDG_PAD)
         + tiles
