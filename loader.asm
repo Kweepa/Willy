@@ -25,8 +25,8 @@ LoadRoom
     ora #'0'
     sta room_name+1
     sei
-    jsr $ff86                   ; CLALL - close all open files
-    jsr $ffcc                   ; CLRCHN - clear IEC channel
+    ; jsr $ff86                   ; CLALL - close all open files
+    ; jsr $ffcc                   ; CLRCHN - clear IEC channel
     lda #2                      ; SETNAM: "RX" length
     ldx #<room_name
     ldy #>room_name
