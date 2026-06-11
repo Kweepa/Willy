@@ -257,6 +257,7 @@ CopyVerticalGuardianFrame
     sta mod_src_col2+1
     lda arr+1
     sta mod_src_col1+2
+    adc #0
     sta mod_src_col2+2
 
     ldy #0
@@ -279,10 +280,16 @@ CopyVerticalGuardianFrame
 mod_src_col1
     lda guardian_sprites_base
     inc mod_src_col1+1
+    bne +
+    inc mod_src_col1+2
++
     sta (arr2),y
 mod_src_col2
     lda guardian_sprites_base
     inc mod_src_col2+1
+    bne +
+    inc mod_src_col2+2
++
     sta (arr3),y
     iny
     dex

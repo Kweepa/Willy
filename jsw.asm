@@ -1,5 +1,5 @@
 ; Jet Set Willy - unexpanded VIC-20
-; PRG from $1000; room image loads to $1A60 (overwrites $1A60+ at runtime)
+; PRG from $1000; room image loads to $1A78 (overwrites $1A78+ at runtime)
 
 !source "zp.asm"
 !source "defines.asm"

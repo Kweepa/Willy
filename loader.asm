@@ -1,14 +1,13 @@
 ;
-; LoadRoom - KERNAL LOAD roomnn PRG to image_base ($1A60), then:
+; LoadRoom - KERNAL LOAD roomnn PRG to image_base ($1A78), then:
 ;   paint color RAM from tile_color_src lookup (tile types 0-5)
 ;   paint map_base ($9400): store tile type 0-5 (low nybble of screen chr 16-21);
 ;     map_base is VIC colour RAM — only low nybble valid; read with AND #$0f
 ;   draw item chr 15 separately (DrawItem) — not in tilemap
 ;
-; PRG image layout (1440 bytes at $1A60):
-;   +$000 guardian sprites 256 @ $1A60
-;   +$100 player_bmp 256 @ $1B60
-;   +$200 pad 24 @ $1C60 (tile UDG+ remain at $1C78+)
+; PRG image layout (1416 bytes at $1A78):
+;   +$000 guardian sprites 256 @ $1A78
+;   +$100 player_bmp 256 @ $1B78
 ;   +$200 tile UDG 56 @ $1C78 (chr 15-21)
 ;   +$238 runtime pad 336 ($1CB0-$1DFF)
 ;   +$388 screen 408 @ $1E00 (24x17)

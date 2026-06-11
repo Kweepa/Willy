@@ -55,20 +55,19 @@ Lines starting with `#` or `;` are comments; `#` may also appear mid-line. Blank
 
 ## Binary layout (output of `mkroom.py`)
 
-PRG loads at **`$1A60`** (1440 bytes):
+PRG loads at **`$1A78`** (1416 bytes):
 
 | Offset | Address | Size | Content |
 |--------|---------|------|---------|
-| 0 | `$1A60` | 256 | Guardian sprites (32-byte aligned; column-major from `@guardiansprites`) |
-| 256 | `$1B60` | 256 | `player_bmp` |
-| 512 | `$1C60` | 24 | Pad (keeps tile UDG+ at fixed addresses below) |
-| 536 | `$1C78` | 56 | Tile UDG bytes (chr 15=item, chr 16–21=tiles 0–5) |
-| 592 | `$1CB0` | 336 | Runtime UDG pad (zeros) |
-| 928 | `$1E00` | 408 | 24×17 screen (row 16 = HUD + title; item not baked in) |
-| 1336 | `$1F98` | 25 | Meta (14-byte header + 11-byte item draw code at `$1FA6`) |
-| 1361 | `$1FB1` | 6 | Tile colours (types 0–5 only) |
-| 1367 | `$1FB7` | 54 | Guardian live data (SoA, 9×6 bytes; no stored frame) |
-| 1421 | `$1FED` | 19 | Reserved |
+| 0 | `$1A78` | 256 | Guardian sprites (column-major from `@guardiansprites`) |
+| 256 | `$1B78` | 256 | `player_bmp` |
+| 512 | `$1C78` | 56 | Tile UDG bytes (chr 15=item, chr 16–21=tiles 0–5) |
+| 568 | `$1CB0` | 336 | Runtime UDG pad (zeros) |
+| 904 | `$1E00` | 408 | 24×17 screen (row 16 = HUD + title; item not baked in) |
+| 1312 | `$1F98` | 25 | Meta (14-byte header + 11-byte item draw code at `$1FA6`) |
+| 1337 | `$1FB1` | 6 | Tile colours (types 0–5 only) |
+| 1343 | `$1FB7` | 54 | Guardian live data (SoA, 9×6 bytes; no stored frame) |
+| 1397 | `$1FED` | 19 | Reserved |
 
 Item draw code (11 bytes at meta+14): `lda #15` / `sta screen` / `lda #color` / `sta color_ram` / `rts`. `DrawItem` does `jsr $1FA6` when `items_left` > 0.
 

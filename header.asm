@@ -1,8 +1,8 @@
 ; unexpanded JSW layout
 
-image_base = $1a60
-guardian_sprites_base = $1a60    ; 512-byte sprite block: 8 guardian + 8 player frames x 32 bytes
-player_bmp = $1b60               ; player frames at indices 8-15 (256 bytes into block)
+image_base = $1a78
+guardian_sprites_base = $1a78    ; 512-byte sprite block: 8 guardian + 8 player frames x 32 bytes
+player_bmp = $1b78               ; player frames at indices 8-15 (256 bytes into block)
 meta_content_src = $1f98
 ; Meta payload at meta_content_src (see build_meta in mkroom.py)
 meta_off_guardians = 0
@@ -54,7 +54,7 @@ hud_item_scr = screen_base + hud_row_off + 21
 hud_item_col = color_base + hud_row_off + 21
 map_base = $9400
 color_base = $9600
-room_image_size = $5a0           ; 1440 bytes ($1A60–$1FFF)
+room_image_size = $588           ; 1416 bytes ($1A78–$1FFF)
 tile_color_bytes = 6
 guardian_data_bytes = 54
 max_guardians = 6

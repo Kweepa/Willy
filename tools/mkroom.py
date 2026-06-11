@@ -21,12 +21,11 @@ MAX_GUARDIANS = 6
 RUNTIME_UDG_PAD = 336             # $1CB0-$1DFF
 TAIL_BYTES = 104
 META_SIZE = 14 + ITEM_DRAW_BYTES
-IMAGE_LOAD = 0x1A60
+IMAGE_LOAD = 0x1A78
 SCREEN_BASE = 0x1E00
 COLOR_BASE = 0x9600
 MAX_ITEMS = 1
-IMAGE_TILE_GAP = 24               # pad after player_bmp; tile UDG+ stay at $1C78+
-ROOM_IMAGE_SIZE = 0x5A0           # 1440 bytes ($1A60-$1FFF)
+ROOM_IMAGE_SIZE = 0x588           # 1416 bytes ($1A78-$1FFF)
 TILE_CHR_BASE = 16
 TILE_CONVEYOR = 5
 ITEM_CHR = 15
@@ -516,7 +515,7 @@ def build_tail(room: dict) -> bytes:
 
 
 def build_room_image(room: dict) -> bytes:
-    """RAM image loaded at $1A60 (1440 bytes)."""
+    """RAM image loaded at $1A78 (1416 bytes)."""
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap"))
     stamp_hud_title(tiles, room)
 
@@ -529,7 +528,6 @@ def build_room_image(room: dict) -> bytes:
     blob = (
         sprites
         + player
-        + bytes(IMAGE_TILE_GAP)
         + udg
         + bytes(RUNTIME_UDG_PAD)
         + tiles
