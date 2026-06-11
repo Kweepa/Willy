@@ -45,7 +45,7 @@
 19 13
 
 @guardians
-y=24 x=12(0..20) v=-1 f=0..3 GRN # horizontal, because y is constant (measured in pixels) and x (measured in tiles) has a range. v starts negative here
+y=24 x=12(0..19) v=-1 f=0..3 GRN # horizontal, because y is constant (measured in pixels) and x (measured in tiles) has a range. v starts negative here
 
 @tileudg
 0: 0, 0, 0, 0, 0, 0, 0, 0
