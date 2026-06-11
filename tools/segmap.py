@@ -25,7 +25,6 @@ MODULES = [
     ("willy", ["try_touch", "Collide", "DrawPlayer"]),
     ("util", ["ClearScreen", "UpdateMoveCounters"]),
     ("input", ["GetPlayerInput", "ScanKeyRow"]),
-    ("playerdata", ["InitPlayerUDGs"]),
     ("spritedata", ["player_bmp", "guardian_bmps"]),
     ("guardians", ["MulGuardianIndexBy8", "MoveGuardians", "EraseGuardians"]),
     ("warm boot", ["WarmStart", "init24_val"]),
@@ -80,7 +79,7 @@ print(f"Trim target: {guard_past} B of guardian code at $1B00+")
 print()
 
 for mod_start, mod_name, _ in bounds:
-    if mod_name in ("spritedata", "warm boot", "header/boot", "playerdata"):
+    if mod_name in ("spritedata", "warm boot", "header/boot"):
         continue
     mod_end = next(
         (bounds[i + 1][0] - 1 for i, (s, n, _) in enumerate(bounds) if n == mod_name and i + 1 < len(bounds)),

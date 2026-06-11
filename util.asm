@@ -20,21 +20,6 @@ WaitForRaster
 	jsr WaitForRasterLineLessThan
 	jmp WaitForRasterLine
 
-ClearScreen
-    ldx #0
--
-    lda #0
-    sta screen_base,x
-    sta screen_base + $100,x
-    sta map_base,x
-    sta map_base + $100,x
-    lda #1
-    sta color_base,x
-    sta color_base + $100,x
-    inx
-    bne -
-    rts
-
 ; Row-base screen addresses (column 0).
 ; Pixel py: index (py >> 2) & $FE from start (word 0 = one row above screen).
 ; Cell row: index row << 1 from x24rowtab+2 (row 0 = $1E00).
@@ -92,9 +77,6 @@ ConvertXYToScreenAddr
     sta col_ptr + 1
     rts
 
-PrintString
-    rts
-
 UpdateMoveCounters
     dec left_right_ctr
     bpl +
@@ -108,11 +90,6 @@ UpdateMoveCounters
 	sta up_down_ctr
 	inc vguard_frame
 +
-	inc frame_ctr
-	inc game_time
-	bne +
-	inc game_time_hi
-+
     rts
 
 AddExtraMan
@@ -120,10 +97,4 @@ AddExtraMan
 	rts
 
 EndGame
-	rts
-
-FinalBarrierUpperSettings
-	rts
-
-FinalBarrierLowerSettings
 	rts

@@ -58,8 +58,6 @@ guard_udg_index = $49
 hguard_count    = $4a
 vguard_count    = $4b
 
-game_time       = $4c
-game_time_hi    = $4d
 last_py         = $4e
 belt_active     = $4f
 tmp_xadd        = $30
@@ -87,18 +85,6 @@ up_down_ctr     = $9f
 
 player_overlap  = $a0
 player_touch    = $a6
-
-frame_ctr		= $e6
-
-stringwidth     = $e8
-stringindex     = $e9
-stringstart     = $ea
-stringxdiv		= $eb
-stringxmod		= $ec
-stringcur		= $ed
-stringleft		= $ee
-stringright		= $ef
-stringrow		= $f0
 
 vguard_frame    = $f7
 hguard_frame	= $f8

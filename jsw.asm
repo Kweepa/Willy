@@ -11,13 +11,15 @@
 !source "willy.asm"
 !source "util.asm"
 !source "input.asm"
-!source "playerdata.asm"
 !source "spritedata.asm"
 !source "guardians.asm"
-!source "warm.asm"
 
 prg_end = *
 
-!if * > $1b00 {
-!warn "PRG extends past $1B00 room load base - trim resident code/data"
+!source "warm.asm"
+
+prg_overlap = prg_end - $1b00
+
+!if prg_end > $1b00 {
+!warn "PRG extends ", prg_overlap, " bytes past $1B00 room load base - trim resident code/data"
 }

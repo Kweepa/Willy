@@ -22,7 +22,6 @@ RASTERLINE_NTSC     = $54
 udg_base = $1c00
 guardian_udgs = udg_base + GUARDIAN_CHR*8
 player_udg = udg_base + 58*8
-propfont_udg = udg_base + 68*8
 
 PLAY_CHR = 58
 HEAD_CHR = 64

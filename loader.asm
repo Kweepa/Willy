@@ -40,7 +40,7 @@ LoadRoom
     cli
     jsr ParseRoomMeta           ; border, spawn; belt/ramp/conn read in place
     jsr PaintColors             ; color RAM from tiles + screen -> map_base
-    jsr InitPlayerUDGs          ; player sprites into $1C00+$1D00 area
+    ; DrawPlayer copy_udg initialises player_udg at $1DD0 from screen tiles
     jsr DrawPlayer
     rts
 
@@ -128,7 +128,4 @@ ConvertCellToScreenAddr
 GetCollision
     lda (map_ptr),y
     and #$0f
-    rts
-
-DrawLives
     rts

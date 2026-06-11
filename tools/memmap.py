@@ -13,7 +13,6 @@ MODULES = [
     ("willy", ["Collide", "ErasePlayer", "DrawPlayer"]),
     ("util", ["ClearScreen", "UpdateMoveCounters"]),
     ("input", ["GetPlayerInput", "ScanKeyRow"]),
-    ("playerdata", ["InitPlayerUDGs"]),
     ("spritedata", ["player_bmp", "guardian_bmps"]),
     ("guardians", ["MulGuardianIndexBy8", "MoveGuardians", "EraseGuardians"]),
     ("warm boot", ["WarmStart", "init24_val"]),

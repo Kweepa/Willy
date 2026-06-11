@@ -4,8 +4,6 @@ ResetGame
     lda #3
     sta men
     lda #0
-    sta game_time
-    sta game_time_hi
     sta items_left
     lda #1
     sta initial_room_load       ; first room load uses @spawn from meta
@@ -34,7 +32,6 @@ DrawMap
     jsr WaitForRaster
     dex
     bne -
-    jsr ClearScreen
     lda #0
     sta dead
     lda #51
