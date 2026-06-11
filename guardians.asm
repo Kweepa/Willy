@@ -79,8 +79,8 @@ erase_guardian_loop
     ldx hx
     ldy hy
     jsr ConvertXYToScreenAddr
-    ldx #3
     jsr IsVerticalGuardian
+    ldx #3
     bcc +
     lda hy
     and #7
