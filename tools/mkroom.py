@@ -477,6 +477,23 @@ def build_tile_colors(room: dict) -> bytes:
     return bytes(colors)
 
 
+def deinterleave_guardian_frame(frame: bytes) -> bytes:
+    """Skool L,R pairs -> column-major 16+16 (matches CopyDownGuardianBmp)."""
+    out = bytearray(32)
+    for row in range(16):
+        out[row] = frame[row * 2]
+        out[row + 16] = frame[row * 2 + 1]
+    return bytes(out)
+
+
+def deinterleave_guardian_sprites(data: bytes) -> bytes:
+    data = data[:GUARDIAN_SPRITES_BYTES].ljust(GUARDIAN_SPRITES_BYTES, b"\x00")
+    return b"".join(
+        deinterleave_guardian_frame(data[i : i + 32])
+        for i in range(0, GUARDIAN_SPRITES_BYTES, 32)
+    )
+
+
 def build_tail(room: dict) -> bytes:
     tail = bytearray(TAIL_BYTES)
     meta = build_meta(room)
@@ -495,7 +512,8 @@ def build_room_image(room: dict) -> bytes:
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap"))
     stamp_hud_title(tiles, room)
 
-    sprites = room["guardiansprites"] or bytes(GUARDIAN_SPRITES_BYTES)
+    raw = room["guardiansprites"] or bytes(GUARDIAN_SPRITES_BYTES)
+    sprites = deinterleave_guardian_sprites(raw)
     player = room["playerbmp"] or DEFAULT_PLAYER_BMP
     udg = build_udg(room)
     tail = build_tail(room)

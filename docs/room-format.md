@@ -38,6 +38,7 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@border` | colour | Border colour (BLK WHT RED CYN PUR GRN BLU YEL). `mkroom` stores `border \| 8` in meta — full VIC `$900F` byte (white background + border). |
 | `@belt` | speed | Conveyor speed: `-1`, `0`, or `1` |
 | `@ramp` | type | `0`=none, `1`=up-right, `2`=up-left. Col/row bounds are derived at build time from tile `4` placement (one ramp per room). |
+| `@guardiansprites` | block | 256 bytes: 8 frames × 32 bytes. Author in Skool interleaved format (left, right byte pairs per scanline). `mkroom` converts to column-major (16-byte left column, 16-byte right column) in the PRG. |
 | `@hguard` | index | Horizontal guardian sprite index |
 | `@vguard` | index | Vertical guardian sprite index |
 | `@tilemap` | block | 17 lines × 24 digits |
@@ -58,7 +59,7 @@ PRG loads at **`$1A78`** (1416 bytes):
 
 | Offset | Address | Size | Content |
 |--------|---------|------|---------|
-| 0 | `$1A78` | 256 | `@guardiansprites` |
+| 0 | `$1A78` | 256 | Guardian sprites (column-major; de-interleaved from `@guardiansprites` at build time) |
 | 256 | `$1B78` | 256 | `player_bmp` |
 | 512 | `$1C78` | 56 | Tile UDG bytes (chr 15=item, chr 16–21=tiles 0–5) |
 | 568 | `$1CB0` | 336 | Runtime UDG pad (zeros) |
