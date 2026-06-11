@@ -632,10 +632,6 @@ DrawPlayer
 	bne -
 
     ; now or player bitmaps to player udg 3x2
-    lda py
-    and #$07
-    tax
-
     lda px
     and #$03
     sta tmp
@@ -657,6 +653,11 @@ DrawPlayer
     lda arr+1
     adc #0
     sta arr2+1
+
+    lda py
+    and #$07
+    tax
+
     ldy #0
 draw_center_loop
     lda (arr),y
