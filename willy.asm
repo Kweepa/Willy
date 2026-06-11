@@ -74,6 +74,7 @@ do_block_below
     lda #0
     rts
 
+; try_ramp - adjust py after horizontal step; no carry return (side effects only)
 try_ramp
     lda was_on_ground
     bne +
@@ -95,7 +96,6 @@ try_ramp
     lda #27
     sta inairtime
 try_ramp_done
-    clc
     rts
 
 try_ramp_fail
@@ -134,7 +134,6 @@ try_ramp_restore_ptr
     ldx px
     ldy py
     jsr ConvertXYToScreenAddr
-    clc
     rts
 
 snap_to_flat
@@ -147,16 +146,15 @@ snap_to_flat
     sta on_ground
     lda #27
     sta inairtime
-    clc
     rts
 
+; GetRampY - target py for Willy standing/landing on a ramp tile
+; Input:  px, py, was_on_ground, newy, last_py (ZP)
+;         meta_content_src + meta_off_ramp (room type: RAMP_UP_RIGHT / RAMP_UP_LEFT)
+; Output: carry set, A = target py — ramp found and landing valid
+;         carry clear — no ramp or landing rejected
+; Clobbers: A, X, Y, map_ptr, scr_ptr, col_ptr, ramp_tmp..ramp_tmp3
 GetRampY
-    ; Save X and Y
-    txa
-    pha
-    tya
-    pha
-
     ; Calculate mid_col = (px + 3) >> 2
     lda px
     clc
@@ -207,10 +205,6 @@ GetRampY
     beq found_ramp
     
 no_ramp
-    pla
-    tay
-    pla
-    tax
     clc
     rts
 
@@ -280,18 +274,10 @@ found_ramp
     bcs not_valid_landing
 
 valid_landing
-    ; Calculate py_target = y_ramp_abs - 16
     lda ramp_tmp2
     sec
-    sbc #16
-    sta ramp_tmp3      ; target py in ramp_tmp3
-    
-    pla
-    tay
-    pla
-    tax
-    lda ramp_tmp3      ; Return target py in Accumulator
-    sec            ; Carry set to indicate ramp found!
+    sbc #16                       ; target py
+    sec                           ; ramp found
     rts
 
 not_valid_landing
