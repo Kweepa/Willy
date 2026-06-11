@@ -292,6 +292,7 @@ CollideLeftRight
     lda xadd
     bpl collide_right
     lda px
+    cmp #EDGE_WEST_PX
     beq end_collide_left_right
     lda px
     and #$03
