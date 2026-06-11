@@ -38,7 +38,7 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@spawn` | px py | Willy start (quarter-char X, 2-pixel Y) |
 | `@border` | colour | Border/background (`$900f`): BLK WHT RED CYN PUR GRN BLU YEL |
 | `@belt` | speed | Conveyor speed: `-1`, `0`, or `1` |
-| `@ramp` | type | `0`=none, `1`=up-right, `2`=up-left |
+| `@ramp` | type | `0`=none, `1`=up-right, `2`=up-left. Col/row bounds are derived at build time from tile `4` placement (one ramp per room). |
 | `@hguard` | index | Horizontal guardian sprite index |
 | `@vguard` | index | Vertical guardian sprite index |
 | `@tilemap` | block | 18 lines × 24 digits |
@@ -61,8 +61,11 @@ Lines starting with `#` are comments. Blank lines ignored.
 | … | 1 | BG color |
 | … | 2 | Spawn px, py |
 | … | 1 | Belt speed (unsigned byte; use 255 for −1) |
-| … | 1 | Ramp type |
-| … | 2 | H-guardian index, V-guardian index |
+| … | 1 | Ramp type (`0` / `1` up-right / `2` up-left) |
+| … | 1 | Ramp col start (derived from tile `4` in `@tilemap`) |
+| … | 1 | Ramp col end |
+| … | 1 | Ramp row at col start |
+| … | 1 | Ramp row step (`0` horizontal, `1` diagonal down-right, `255` diagonal down-left) |
 | … | 4 | Conn N, E, S, W |
 | … | var | Title ASCIZ |
 | … | 1 | Item count |

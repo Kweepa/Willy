@@ -150,63 +150,62 @@ snap_to_flat
 
 ; GetRampY - target py for Willy standing/landing on a ramp tile
 ; Input:  px, py, was_on_ground, newy, last_py (ZP)
-;         meta_content_src + meta_off_ramp (room type: RAMP_UP_RIGHT / RAMP_UP_LEFT)
+;         meta_content_src ramp type + cached bounds (col start/end, row, row_step)
 ; Output: carry set, A = target py — ramp found and landing valid
 ;         carry clear — no ramp or landing rejected
-; Clobbers: A, X, Y, map_ptr, scr_ptr, col_ptr, ramp_tmp..ramp_tmp3
+; Clobbers: A, X, ramp_tmp..ramp_tmp2
 GetRampY
-    ; Calculate mid_col = (px + 3) >> 2
+    lda meta_content_src + meta_off_ramp
+    bne +
+    jmp get_ramp_fail
++
+
+    ; mid_col = (px + 3) >> 2
     lda px
     clc
     adc #3
     lsr
     lsr
     sta ramp_tmp
-    
-    ; Calculate feet_row = (py + 16) >> 3
-    lda py
-    clc
-    adc #16
-    lsr
-    lsr
-    lsr
+
+    lda ramp_tmp
+    cmp meta_content_src + meta_off_ramp_col_start
+    bcs +
+    jmp get_ramp_fail
++
+    sec
+    sbc meta_content_src + meta_off_ramp_col_end
+    bcc +
+    beq +
+    jmp get_ramp_fail
++
+
+    ; feet_row = row + (mid_col - col_start) * row_step
+    lda meta_content_src + meta_off_ramp_row
     sta ramp_tmp1
-    
-    ; 1. Check feet_row
-    ldx ramp_tmp
-    ldy ramp_tmp1
-    jsr ConvertCellToScreenAddr
-    ldy #0
-    jsr GetCollision
-    cmp #TILE_RAMP
+
+    lda ramp_tmp
+    sec
+    sbc meta_content_src + meta_off_ramp_col_start
     beq found_ramp
-    
-    ; 2. Check feet_row - 1 (penetration check)
-    ldy ramp_tmp1
-    dey
-    sty ramp_tmp1
-    ldx ramp_tmp
-    jsr ConvertCellToScreenAddr
-    ldy #0
-    jsr GetCollision
-    cmp #TILE_RAMP
+
+    ldx meta_content_src + meta_off_ramp_row_step
     beq found_ramp
-    
-    ; 3. Check feet_row + 1 (support-from-above check)
-    ldy ramp_tmp1
-    iny
-    iny              ; (since we did dey before, we do iny iny to get to feet_row + 1)
-    sty ramp_tmp1
-    ldx ramp_tmp
-    jsr ConvertCellToScreenAddr
-    ldy #0
-    jsr GetCollision
-    cmp #TILE_RAMP
-    beq found_ramp
-    
-no_ramp
+
+    cpx #$ff
+    bne ramp_step_pos
+
+    sta ramp_tmp2
+    lda ramp_tmp1
+    sec
+    sbc ramp_tmp2
+    sta ramp_tmp1
+    jmp found_ramp
+
+ramp_step_pos
     clc
-    rts
+    adc ramp_tmp1
+    sta ramp_tmp1
 
 found_ramp
     ; Let's calculate x_offset = ((px + 3) & 3) * 2
@@ -281,7 +280,11 @@ valid_landing
     rts
 
 not_valid_landing
-    jmp no_ramp
+    jmp get_ramp_fail
+
+get_ramp_fail
+    clc
+    rts
 
 CollideLeftRight
     lda left_right_ctr
@@ -433,11 +436,6 @@ collide_down
     sta py
     jmp check_jump
 +
-    ; Restore map_ptr/scr_ptr/col_ptr corrupted by GetRampY's cell checks
-    ldx px
-    ldy py
-    jsr ConvertXYToScreenAddr
-
     lda py
     and #$07
     beq look_below_2

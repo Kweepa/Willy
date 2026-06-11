@@ -263,6 +263,53 @@ def belt_byte(speed: int) -> int:
     return speed & 0xFF
 
 
+TILE_RAMP = 4
+
+
+def derive_ramp_bounds(tilemap: list, ramp_type: int) -> tuple[int, int, int, int]:
+    """Return (col_start, col_end, row_start, row_step) for room meta."""
+    cells: list[tuple[int, int]] = []
+    for row, line in enumerate(tilemap):
+        for col, ch in enumerate(line.strip()):
+            if int(ch) == TILE_RAMP:
+                cells.append((col, row))
+
+    if ramp_type == 0:
+        if cells:
+            raise ValueError(f"@ramp 0 but tilemap has {len(cells)} ramp tile(s)")
+        return (0, 0, 0, 0)
+
+    if not cells:
+        raise ValueError(f"@ramp {ramp_type} but no ramp tiles (4) in tilemap")
+
+    col_start = min(col for col, _ in cells)
+    col_end = max(col for col, _ in cells)
+
+    by_col: dict[int, list[int]] = {}
+    for col, row in cells:
+        by_col.setdefault(col, []).append(row)
+
+    for col in range(col_start, col_end + 1):
+        if col not in by_col or len(by_col[col]) != 1:
+            raise ValueError(f"ramp gap or multiple tiles in column {col}")
+
+    row_start = by_col[col_start][0]
+    if col_end == col_start:
+        row_step = 0
+    else:
+        row_step = by_col[col_start + 1][0] - row_start
+        if row_step not in (-1, 0, 1):
+            raise ValueError(f"invalid ramp row step {row_step}")
+        for col in range(col_start, col_end + 1):
+            expected = row_start + (col - col_start) * row_step
+            if by_col[col][0] != expected:
+                raise ValueError(
+                    f"ramp row mismatch at col {col}: expected {expected}, got {by_col[col][0]}"
+                )
+
+    return (col_start, col_end, row_start, row_step & 0xFF)
+
+
 def build_meta(room: dict) -> bytes:
     g = room["guardians"]
     if len(g) > MAX_GUARDIANS:
@@ -274,6 +321,13 @@ def build_meta(room: dict) -> bytes:
     meta.append(room["spawn"][1] & 0xFF)
     meta.append(belt_byte(room["belt"]))
     meta.append(room["ramp"] & 0xFF)
+    col_start, col_end, row_start, row_step = derive_ramp_bounds(
+        room["tilemap"], room["ramp"]
+    )
+    meta.append(col_start & 0xFF)
+    meta.append(col_end & 0xFF)
+    meta.append(row_start & 0xFF)
+    meta.append(row_step & 0xFF)
     meta.extend(room["conn"])
     return bytes(meta)
 

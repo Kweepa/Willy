@@ -72,7 +72,7 @@ PaintColors
 ;
 ; ParseRoomMeta - read room meta in place at meta_content_src ($1FB2).
 ; Item is tile chr 6 in room tilemap; items_left tracks collected state.
-; Layout: guardians, border, spawn x2, belt, ramp, conn x4
+; Layout: guardians, border, spawn x2, belt, ramp, ramp bounds x4, conn x4
 ParseRoomMeta
     lda meta_content_src + meta_off_border
     ora #8                      ; Ensure Normal Mode (bit 3 set to 1)
