@@ -4,8 +4,8 @@
 ; call with the row in .X
 ; and the column mask in .Y
 ; the row is 1,2,4,8... ^ FF
-; returns whether pressed in .A
 ; returns keys pressed in .X
+; Z set = no key in mask, Z clear = key pressed
 ;
 ; left to right is LSB-MSB
 ; fe -> 1,3,5,7,9,-,DEL,
@@ -29,11 +29,6 @@ ScanKeyRow
     eor #$ff    ; $ff is no keys pressed
     and ts
     tax
-    beq scan_key_row_skip
-    lda #$01    ; key pressed
-    rts
-scan_key_row_skip
-    lda #$00    ; no key pressed
     rts
 
 GetPlayerInput
@@ -47,7 +42,6 @@ GetPlayerInput
     ldx #$ef
     ldy #$02
     jsr ScanKeyRow
-    cmp #0
     beq player_input_skip
     lda #-1
     sta lastxmove
@@ -63,7 +57,6 @@ player_input_skip
     ldx #$f7
     ldy #$04
     jsr ScanKeyRow
-    cmp #0
     beq player_input_try_jump
     sta lastxmove
     clc
@@ -76,15 +69,12 @@ player_input_skip3
 player_input_try_jump
     lda on_ground
     beq player_input_done
-        ; jump (Space)
-    ldx #$ef
-    ldy #$01
-    jsr ScanKeyRow
-    sta jumpIsPressed
-player_input_done
-    rts
-
 GetJumpIsPressed
     ldx #$ef
     ldy #$01
-    jmp ScanKeyRow
+    jsr ScanKeyRow
+    beq player_input_done
+    lda #1
+    sta jumpIsPressed
+player_input_done
+    rts

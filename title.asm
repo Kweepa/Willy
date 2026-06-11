@@ -122,9 +122,12 @@ TitleScreen
     sta $9005
 
     jsr GetJumpIsPressed
-	beq +
-	lda #1
+    beq +
+    lda #1
+    bne ++
 +
+    lda #0
+++
 	; should be 0, 1, 0
 	ldx title_jump_progress
 	cmp title_jump_sequence,x
