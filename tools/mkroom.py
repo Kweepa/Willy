@@ -4,10 +4,13 @@
 import argparse
 import re
 import struct
+import sys
 from pathlib import Path
 
-WIDTH, HEIGHT = 24, 17
-TILE_BYTES = WIDTH * HEIGHT
+WIDTH = 24
+SCREEN_ROWS = 17              # gameplay 0-15 + HUD row 16
+TILEMAP_ROWS = 16             # @tilemap lines (gameplay only)
+TILE_BYTES = WIDTH * SCREEN_ROWS
 UDG_BYTES = 56
 TILE_COLOR_BYTES = 6
 ITEM_DRAW_BYTES = 11
@@ -144,8 +147,31 @@ def parse_velocity(text: str) -> int:
     return v & 0xFF
 
 
-def parse_guardian_line(line: str) -> dict:
+def fmt_loc(source: Path | str | None = None, line_no: int | None = None) -> str:
+    if not source:
+        return ""
+    loc = str(source)
+    if line_no is not None:
+        loc += f":{line_no}"
+    return loc + ": "
+
+
+def room_error(room: dict | None, msg: str) -> ValueError:
+    if room:
+        src = room.get("_source")
+        rid = room.get("id", "?")
+        if src:
+            return ValueError(f"{src} (room {rid}): {msg}")
+        if rid != "?":
+            return ValueError(f"room {rid}: {msg}")
+    return ValueError(msg)
+
+
+def parse_guardian_line(
+    line: str, *, source: Path | str | None = None, line_no: int | None = None
+) -> dict:
     """Parse guardian DSL line into SoA field dict."""
+    loc = fmt_loc(source, line_no)
     m = GUARDIAN_DSL_H.match(line)
     if m:
         hy, x_tile, xmin, xmax, vel, fmin, fmax, colour = m.groups()
@@ -157,7 +183,7 @@ def parse_guardian_line(line: str) -> dict:
     else:
         m = GUARDIAN_DSL_V.match(line)
         if not m:
-            raise ValueError(f"bad @guardians line: {line!r}")
+            raise ValueError(f"{loc}bad @guardians line: {line!r}")
         x_tile, gy, ymin, ymax, vel, fmin, fmax, colour = m.groups()
         gx = int(x_tile) * 4
         gy = int(gy)
@@ -168,13 +194,13 @@ def parse_guardian_line(line: str) -> dict:
     fmin_i = int(fmin)
     fmax_i = int(fmax)
     if not 0 <= fmin_i <= 7 or not 0 <= fmax_i <= 7 or fmin_i > fmax_i:
-        raise ValueError(f"frame range out of range 0-7: {fmin}..{fmax}")
+        raise ValueError(f"{loc}frame range out of range 0-7: {fmin}..{fmax}")
 
     if axis == 1:
         frame_count = fmax_i - fmin_i + 1
         if frame_count not in (1, 2, 4):
             raise ValueError(
-                f"vertical guardian frame count must be 1, 2, or 4: {fmin}..{fmax}"
+                f"{loc}vertical guardian frame count must be 1, 2, or 4: {fmin}..{fmax}"
             )
         fmax_store = frame_count - 1  # mask: 0, 1, or 3
     else:
@@ -193,8 +219,9 @@ def parse_guardian_line(line: str) -> dict:
     }
 
 
-def parse_room(text: str) -> dict:
+def parse_room(text: str, source: Path | str | None = None) -> dict:
     lines = text.splitlines()
+    loc = lambda line_no=None: fmt_loc(source, line_no)
     room = {
         "id": 0,
         "title": "",
@@ -258,7 +285,7 @@ def parse_room(text: str) -> dict:
         block = None
         block_lines.clear()
 
-    for raw in lines:
+    for line_no, raw in enumerate(lines, start=1):
         line = raw.split("#", 1)[0].strip()
         if not line or line.startswith(";"):
             continue
@@ -293,7 +320,7 @@ def parse_room(text: str) -> dict:
             elif tag == "tilecolors":
                 if len(parts[1:]) != TILE_COLOR_BYTES:
                     raise ValueError(
-                        f"@tilecolors needs {TILE_COLOR_BYTES} values (tile types 0-5)"
+                        f"{loc(line_no)}@tilecolors needs {TILE_COLOR_BYTES} values (tile types 0-5)"
                     )
                 room["tilecolors"] = [parse_vic_color(x) for x in parts[1:7]]
             elif tag == "itemcolor":
@@ -301,37 +328,47 @@ def parse_room(text: str) -> dict:
             continue
         if block == "guardians":
             if line:
-                room["guardians"].append(parse_guardian_line(line))
+                room["guardians"].append(
+                    parse_guardian_line(line, source=source, line_no=line_no)
+                )
         elif block == "items":
             cols = [int(x) for x in line.split()]
             for i in range(0, len(cols) - 1, 2):
                 room["items"].append((cols[i], cols[i + 1]))
             if len(room["items"]) > MAX_ITEMS:
-                raise ValueError(f"too many items ({len(room['items'])}, max {MAX_ITEMS})")
+                raise ValueError(
+                    f"{loc(line_no)}too many items ({len(room['items'])}, max {MAX_ITEMS})"
+                )
         elif block in ("tilemap", "tileudg", "guardiansprites", "playerbmp"):
             block_lines.append(line)
     flush_block()
     if len(room["items"]) != MAX_ITEMS:
-        raise ValueError(f"room must have exactly {MAX_ITEMS} item (col row pair in @items)")
+        raise ValueError(
+            f"{loc()}room {room['id']}: must have exactly {MAX_ITEMS} item (col row pair in @items)"
+        )
+    if source:
+        room["_source"] = str(source)
     return room
 
 
-def grid_bytes(rows: list, name: str) -> bytes:
-    if len(rows) != HEIGHT:
-        raise ValueError(f"{name}: expected {HEIGHT} rows, got {len(rows)}")
+def grid_bytes(rows: list, name: str, room: dict | None = None) -> bytes:
+    if len(rows) != TILEMAP_ROWS:
+        raise room_error(
+            room, f"{name}: expected {TILEMAP_ROWS} rows, got {len(rows)}"
+        )
     out = bytearray()
     for r, row in enumerate(rows):
         row = row.strip()
         if len(row) != WIDTH:
-            raise ValueError(f"{name} row {r}: expected {WIDTH} cols, got {len(row)} ({row!r})")
+            raise room_error(
+                room, f"{name} row {r}: expected {WIDTH} cols, got {len(row)} ({row!r})"
+            )
         for ch in row:
             v = int(ch)
             if v > TILE_CONVEYOR:
-                raise ValueError(f"tile out of range 0-{TILE_CONVEYOR}: {v}")
-            if r < HEIGHT - 1:
-                out.append(v + TILE_CHR_BASE)
-            else:
-                out.append(TILE_CHR_BASE)
+                raise room_error(room, f"tile out of range 0-{TILE_CONVEYOR}: {v}")
+            out.append(v + TILE_CHR_BASE)
+    out.extend([TILE_CHR_BASE] * WIDTH)  # HUD row 16 — title stamped later
     return bytes(out)
 
 
@@ -347,7 +384,7 @@ def ascii_to_rom_screen(ch: str) -> int:
 
 def stamp_hud_title(tiles: bytearray, room: dict) -> None:
     title = room["title"].upper().ljust(HUD_TITLE_COLS)[:HUD_TITLE_COLS]
-    base = (HEIGHT - 1) * WIDTH
+    base = (SCREEN_ROWS - 1) * WIDTH
     for i, ch in enumerate(title):
         tiles[base + i] = ascii_to_rom_screen(ch)
 
@@ -359,11 +396,13 @@ def belt_byte(speed: int) -> int:
 TILE_RAMP = 4
 
 
-def derive_ramp_bounds(tilemap: list, ramp_type: int) -> tuple[int, int, int, int]:
+def derive_ramp_bounds(
+    tilemap: list, ramp_type: int, room: dict | None = None
+) -> tuple[int, int, int, int]:
     """Return (col_start, col_end, row_start, row_step) for room meta."""
     cells: list[tuple[int, int]] = []
     for row, line in enumerate(tilemap):
-        if row >= HEIGHT - 1:
+        if row >= TILEMAP_ROWS:
             continue
         for col, ch in enumerate(line.strip()):
             if int(ch) == TILE_RAMP:
@@ -371,11 +410,13 @@ def derive_ramp_bounds(tilemap: list, ramp_type: int) -> tuple[int, int, int, in
 
     if ramp_type == 0:
         if cells:
-            raise ValueError(f"@ramp 0 but tilemap has {len(cells)} ramp tile(s)")
+            raise room_error(
+                room, f"@ramp 0 but tilemap has {len(cells)} ramp tile(s)"
+            )
         return (0, 0, 0, 0)
 
     if not cells:
-        raise ValueError(f"@ramp {ramp_type} but no ramp tiles (4) in tilemap")
+        raise room_error(room, f"@ramp {ramp_type} but no ramp tiles (4) in tilemap")
 
     col_start = min(col for col, _ in cells)
     col_end = max(col for col, _ in cells)
@@ -386,7 +427,7 @@ def derive_ramp_bounds(tilemap: list, ramp_type: int) -> tuple[int, int, int, in
 
     for col in range(col_start, col_end + 1):
         if col not in by_col or len(by_col[col]) != 1:
-            raise ValueError(f"ramp gap or multiple tiles in column {col}")
+            raise room_error(room, f"ramp gap or multiple tiles in column {col}")
 
     row_start = by_col[col_start][0]
     if col_end == col_start:
@@ -394,12 +435,13 @@ def derive_ramp_bounds(tilemap: list, ramp_type: int) -> tuple[int, int, int, in
     else:
         row_step = by_col[col_start + 1][0] - row_start
         if row_step not in (-1, 0, 1):
-            raise ValueError(f"invalid ramp row step {row_step}")
+            raise room_error(room, f"invalid ramp row step {row_step}")
         for col in range(col_start, col_end + 1):
             expected = row_start + (col - col_start) * row_step
             if by_col[col][0] != expected:
-                raise ValueError(
-                    f"ramp row mismatch at col {col}: expected {expected}, got {by_col[col][0]}"
+                raise room_error(
+                    room,
+                    f"ramp row mismatch at col {col}: expected {expected}, got {by_col[col][0]}",
                 )
 
     return (col_start, col_end, row_start, row_step & 0xFF)
@@ -408,7 +450,7 @@ def derive_ramp_bounds(tilemap: list, ramp_type: int) -> tuple[int, int, int, in
 def build_meta(room: dict) -> bytes:
     g = room["guardians"]
     if len(g) > MAX_GUARDIANS:
-        raise ValueError(f"too many guardians ({len(g)}, max {MAX_GUARDIANS})")
+        raise room_error(room, f"too many guardians ({len(g)}, max {MAX_GUARDIANS})")
     meta = bytearray()
     meta.append(len(g))
     meta.append(room["border"] | 8)   # full $900F: white bg (bit 3) + border 0-7
@@ -417,7 +459,7 @@ def build_meta(room: dict) -> bytes:
     meta.append(belt_byte(room["belt"]))
     meta.append(room["ramp"] & 0xFF)
     col_start, col_end, row_start, row_step = derive_ramp_bounds(
-        room["tilemap"], room["ramp"]
+        room["tilemap"], room["ramp"], room
     )
     meta.append(col_start & 0xFF)
     meta.append(col_end & 0xFF)
@@ -426,15 +468,15 @@ def build_meta(room: dict) -> bytes:
     meta.extend(room["conn"])
     meta.extend(build_item_draw(room))
     if len(meta) != META_SIZE:
-        raise ValueError(f"meta size {len(meta)} != {META_SIZE}")
+        raise room_error(room, f"meta size {len(meta)} != {META_SIZE}")
     return bytes(meta)
 
 
 def build_item_draw(room: dict) -> bytes:
     """11 bytes: lda #ITEM_CHR / sta screen / lda #color / sta color_ram / rts."""
     col, row = room["items"][0]
-    if not 0 <= col < WIDTH or not 0 <= row < HEIGHT - 1:
-        raise ValueError(f"item cell out of range: col={col} row={row}")
+    if not 0 <= col < WIDTH or not 0 <= row < TILEMAP_ROWS:
+        raise room_error(room, f"item cell out of range: col={col} row={row}")
     cell_off = row * WIDTH + col
     scr_addr = SCREEN_BASE + cell_off
     col_addr = COLOR_BASE + cell_off
@@ -450,7 +492,7 @@ def build_item_draw(room: dict) -> bytes:
     code.extend(struct.pack("<H", col_addr))
     code.append(OP_RTS)
     if len(code) != ITEM_DRAW_BYTES:
-        raise ValueError(f"item draw code size {len(code)} != {ITEM_DRAW_BYTES}")
+        raise room_error(room, f"item draw code size {len(code)} != {ITEM_DRAW_BYTES}")
     return bytes(code)
 
 
@@ -480,7 +522,9 @@ def build_udg(room: dict) -> bytes:
 def build_tile_colors(room: dict) -> bytes:
     colors = room["tilecolors"]
     if len(colors) != TILE_COLOR_BYTES:
-        raise ValueError(f"tilecolors length {len(colors)} != {TILE_COLOR_BYTES}")
+        raise room_error(
+            room, f"tilecolors length {len(colors)} != {TILE_COLOR_BYTES}"
+        )
     return bytes(colors)
 
 
@@ -516,7 +560,7 @@ def build_tail(room: dict) -> bytes:
 
 def build_room_image(room: dict) -> bytes:
     """RAM image loaded at $1A78 (1416 bytes)."""
-    tiles = bytearray(grid_bytes(room["tilemap"], "tilemap"))
+    tiles = bytearray(grid_bytes(room["tilemap"], "tilemap", room))
     stamp_hud_title(tiles, room)
 
     raw = room["guardiansprites"] or bytes(GUARDIAN_SPRITES_BYTES)
@@ -534,7 +578,7 @@ def build_room_image(room: dict) -> bytes:
         + tail
     )
     if len(blob) != ROOM_IMAGE_SIZE:
-        raise ValueError(f"room image size {len(blob)} != {ROOM_IMAGE_SIZE}")
+        raise room_error(room, f"room image size {len(blob)} != {ROOM_IMAGE_SIZE}")
     return blob
 
 
@@ -542,28 +586,35 @@ def build_room_prg(room: dict) -> bytes:
     return struct.pack("<H", IMAGE_LOAD) + build_room_image(room)
 
 
-def convert_file(src: Path, outstem: Path) -> None:
-    room = parse_room(src.read_text(encoding="utf-8"))
+def room_dos_name(room_id: int) -> str:
+    """KERNAL LOAD filename: r + chr($40 + room_id), e.g. room 33 -> ra."""
+    return "r" + chr(0x40 + room_id)
+
+
+def convert_file(src: Path, outstem: Path, room: dict | None = None) -> None:
+    if room is None:
+        room = parse_room(src.read_text(encoding="utf-8"), source=src)
     data = build_room_prg(room)
     outstem.parent.mkdir(parents=True, exist_ok=True)
     outstem.write_bytes(data)
     print(
-        f"{src.name} -> {outstem.name} ({len(data)} bytes PRG @ ${IMAGE_LOAD:04X}, room {room['id']})"
+        f"{src.name} -> {outstem.name} ({room_dos_name(room['id'])}, {len(data)} bytes PRG @ ${IMAGE_LOAD:04X}, room {room['id']})"
     )
 
 
 def main():
     ap = argparse.ArgumentParser(description="Convert JSW .room files to PRG binaries")
     ap.add_argument("input", nargs="?", help=".room file or directory with --all")
-    ap.add_argument("output", nargs="?", help="output file stem e.g. rooms/out/R1")
+    ap.add_argument("output", nargs="?", help="output file stem e.g. rooms/out/33")
     ap.add_argument("--all", action="store_true", help="convert all *.room in input dir")
     args = ap.parse_args()
     if args.all:
         indir = Path(args.input or "rooms")
         outdir = Path(args.output or "rooms/out")
         for src in sorted(indir.glob("*.room")):
-            n = parse_room(src.read_text(encoding="utf-8"))["id"]
-            convert_file(src, outdir / f"R{n}")
+            text = src.read_text(encoding="utf-8")
+            room = parse_room(text, source=src)
+            convert_file(src, outdir / str(room["id"]), room=room)
         return
     if not args.input or not args.output:
         ap.error("need input and output, or --all")
@@ -571,4 +622,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        sys.exit(1)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build jsw.d64 from jsw.prg and Rx room binaries."""
+"""Build jsw.d64 from jsw.prg and room PRG binaries."""
 
 import argparse
 import os
@@ -8,7 +8,7 @@ import struct
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 SECTOR_SIZE = 256
 TRACKS = 35
@@ -16,6 +16,11 @@ SECTORS_PER_TRACK = 21
 
 # VICE install (matches make.bat); override with --c1541 or VICE_BIN env
 DEFAULT_VICE_BIN = Path(r"c:\app\vice3.10\bin")
+
+
+def room_dos_name(room_id: int) -> str:
+    """KERNAL LOAD filename: r + chr($40 + room_id), e.g. room 33 -> ra."""
+    return "r" + chr(0x40 + room_id)
 
 
 def find_c1541(explicit: Optional[Path] = None) -> Optional[Path]:
@@ -38,20 +43,26 @@ def find_c1541(explicit: Optional[Path] = None) -> Optional[Path]:
     return Path(w) if w else None
 
 
-def collect_room_files(room_dir: Path) -> List[Path]:
-    """Return Rx PRG blobs (2-char names: R + one suffix char)."""
-    return sorted(r for r in room_dir.glob("R*") if len(r.name) == 2 and r.name[0] == "R")
+def collect_room_files(room_dir: Path) -> List[Tuple[int, Path]]:
+    """Return (room_id, path) for numeric staging files from mkroom.py --all."""
+    rooms: List[Tuple[int, Path]] = []
+    for p in room_dir.iterdir():
+        if p.is_file() and p.name.isdigit():
+            rooms.append((int(p.name), p))
+    return sorted(rooms)
 
 
-def build_with_c1541(c1541: Path, d64: Path, prg: Optional[Path], rooms: List[Path]) -> None:
+def build_with_c1541(
+    c1541: Path, d64: Path, prg: Optional[Path], rooms: List[Tuple[int, Path]]
+) -> None:
     if d64.exists():
         d64.unlink()
     # Image mode: format <name,id> d64 <path> (not -format name path alone)
     subprocess.check_call([str(c1541), "-format", "jsw,01", "d64", str(d64)])
     if prg and prg.exists():
         subprocess.check_call([str(c1541), str(d64), "-write", str(prg), "jsw"])
-    for room in rooms:
-        name = room.stem.lower()[:16]
+    for room_id, room in rooms:
+        name = room_dos_name(room_id)
         subprocess.check_call([str(c1541), str(d64), "-write", str(room), f"{name},p"])
     print(f"Wrote {d64} via {c1541} ({len(rooms)} room files)")
 
@@ -130,12 +141,12 @@ class MinimalD64:
         path.write_bytes(self.data)
 
 
-def build_pure_python(d64: Path, prg: Optional[Path], rooms: List[Path]) -> None:
+def build_pure_python(d64: Path, prg: Optional[Path], rooms: List[Tuple[int, Path]]) -> None:
     d = MinimalD64()
     if prg and prg.exists():
         d.add_file("jsw", prg.read_bytes(), file_type=0x82)
-    for room in rooms:
-        d.add_file(room.stem.lower(), room.read_bytes(), file_type=0x82)
+    for room_id, room in rooms:
+        d.add_file(room_dos_name(room_id), room.read_bytes(), file_type=0x82)
     d.save(d64)
     print(f"Wrote {d64} (pure Python, {len(rooms)} room files)")
 
@@ -144,7 +155,7 @@ def main():
     ap = argparse.ArgumentParser(description="Build jsw.d64 from PRG and room binaries")
     ap.add_argument("--out", default="jsw.d64")
     ap.add_argument("--prg", default="jsw.prg")
-    ap.add_argument("--rooms", default="rooms/out", help="directory with Rx room files")
+    ap.add_argument("--rooms", default="rooms/out", help="directory with numeric room PRG files")
     ap.add_argument(
         "--c1541",
         type=Path,
@@ -156,7 +167,7 @@ def main():
     room_dir = Path(args.rooms)
     rooms = collect_room_files(room_dir)
     if not rooms:
-        print("No Rx PRG files found; run mkroom.py first", file=sys.stderr)
+        print("No room PRG files found; run mkroom.py --all first", file=sys.stderr)
         sys.exit(1)
 
     d64 = Path(args.out)

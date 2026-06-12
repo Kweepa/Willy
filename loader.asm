@@ -1,5 +1,5 @@
 ;
-; LoadRoom - KERNAL LOAD roomnn PRG to image_base ($1A78), then:
+; LoadRoom - KERNAL LOAD r? PRG to image_base ($1A78), then:
 ;   paint color RAM from tile_color_src lookup (tile types 0-5)
 ;   paint map_base ($9400): store tile type 0-5 (low nybble of screen chr 16-21);
 ;     map_base is VIC colour RAM — only low nybble valid; read with AND #$0f
@@ -17,11 +17,16 @@
 room_lfn = 15
 
 room_name
-    !text "R0"
+    !text "R?"
 
 LoadRoom
     lda map
-    ora #'0'
+    clc
+    adc #$40
+    cmp #'a'
+    bcc +
+    and #$df
++
     sta room_name+1
     sei
     lda #2
