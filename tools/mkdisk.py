@@ -19,8 +19,8 @@ DEFAULT_VICE_BIN = Path(r"c:\app\vice3.10\bin")
 
 
 def room_dos_name(room_id: int) -> str:
-    """KERNAL LOAD filename: r + chr($40 + room_id), e.g. room 33 -> ra."""
-    return "r" + chr(0x40 + room_id)
+    """KERNAL LOAD filename: R + zero-padded decimal, e.g. room 33 -> r33."""
+    return f"r{room_id:02d}"
 
 
 def find_c1541(explicit: Optional[Path] = None) -> Optional[Path]:

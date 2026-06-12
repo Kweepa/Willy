@@ -1,5 +1,5 @@
 ;
-; LoadRoom - KERNAL LOAD r? PRG to image_base ($1A78), then:
+; LoadRoom - KERNAL LOAD R00 PRG to image_base ($1A78), then:
 ;   paint color RAM from tile_color_src lookup (tile types 0-5)
 ;   paint map_base ($9400): store tile type 0-5 (low nybble of screen chr 16-21);
 ;     map_base is VIC colour RAM — only low nybble valid; read with AND #$0f
@@ -17,29 +17,37 @@
 room_lfn = 15
 
 room_name
-    !text "R?"
+    !text "R00"
+
+FormatRoomName
+    lda map
+    ldy #'0'
+-
+    cmp #10
+    bcc +
+    sbc #10
+    iny
+    bne -
++
+    adc #'0'
+    sta room_name+2
+    sty room_name+1
+    rts
 
 LoadRoom
-    lda map
-    clc
-    adc #$40
-    cmp #'a'
-    bcc +
-    and #$df
-+
-    sta room_name+1
+    jsr FormatRoomName
     sei
-    lda #2
+    lda #3
     ldx #<room_name
     ldy #>room_name
-    jsr $ffbd
+    jsr $ffbd                    ; SETNAM — filename length in A, ptr in XY
     lda #room_lfn
-    ldx #8
-    ldy #1
-    jsr $ffba
-    lda #0
-    jsr $ffd5
-    sei                         ; KERNAL LOAD leaves IRQs enabled
+    ldx #8                       ; device 8 (disk)
+    ldy #1                       ; secondary address 1
+    jsr $ffba                    ; SETLFS — logical file number in A, device in X, SA in Y
+    lda #0                       ; LOAD to RAM (not VERIFY)
+    jsr $ffd5                    ; LOAD — uses SETNAM/SETLFS; loads file to RAM
+    sei                          ; KERNAL LOAD leaves IRQs enabled
     jsr ParseRoomMeta
     jsr PaintColors
     jsr DrawItem
