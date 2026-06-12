@@ -177,7 +177,7 @@ def parse_guardian_line(
         hy, x_tile, xmin, xmax, vel, fmin, fmax, colour = m.groups()
         gx = int(x_tile) * 4
         gmin = int(xmin) * 4
-        gmax = int(xmax) * 4
+        gmax = int(xmax) * 4 - 1
         gy = int(hy)
         axis = 0
     else:
