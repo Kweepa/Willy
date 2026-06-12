@@ -34,7 +34,7 @@ LoadRoom
     jsr $ffba
     lda #0
     jsr $ffd5
-    cli
+    sei                         ; KERNAL LOAD leaves IRQs enabled
     jsr ParseRoomMeta
     jsr PaintColors
     jsr DrawItem
