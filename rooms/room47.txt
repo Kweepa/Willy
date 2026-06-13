@@ -1,0 +1,38 @@
+@room 47
+@title [
+@conn 0 0 0 0
+@spawn 44 104
+@border BLK
+@belt 0
+
+@guardiansprites
+
+@tilemap
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+            +           
+
+@tilecolors WHT BLK BLK WHT BLK BLK
+@itemcolor BLK
+
+@tileudg
+0: 0,0,0,0,0,0,0,0
+1: 0,0,0,0,0,0,0,0
+2: 0,0,0,0,0,0,0,16
+3: 0,0,0,0,0,0,0,0 ; invert
+4: 0,0,0,0,0,0,0,0
+5: 0,0,0,0,0,0,0,0
+6: 0,0,0,0,0,0,0,0

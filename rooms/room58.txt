@@ -1,0 +1,38 @@
+@room 58
+@title The Beach
+@conn 58 51 0 59
+@spawn 44 104
+@border RED
+@belt -1
+
+@guardiansprites
+
+@tilemap
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                WWWWWWWW
+                WWWWWWWW
+WWWWWW          WWWWWWWW
+                WWWWWWWW
+                WWWWWWWW
+              + WWWWWWWW
+     /*FF*FF**FFWWWWWWWW
+<<<<<FFFFFFFFFFFWWWWWWWW
+
+@tilecolors WHT RED RED BLK YEL GRN
+@itemcolor CYN
+
+@tileudg
+0: 0,0,0,0,0,0,0,0
+1: 0,0,64,4,0,16,0,1
+2: 68,0,146,36,128,40,130,80
+3: 66,129,231,129,90,126,60,66
+4: 1,3,7,15,30,55,127,251
+5: 78,170,0,64,64,68,170,255
+6: 4,5,11,11,23,55,111,239

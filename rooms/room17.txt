@@ -1,0 +1,47 @@
+@room 17
+@title Up on the Battlements
+@conn 0 16 0 18
+@spawn 44 104
+@border BLU
+@belt -1
+
+@guardiansprites
+; entity 2: page 191 sprite 4 f=0..1
+2,4,5,14,10,132,21,196,23,68,43,228,47,224,18,68,8,130,7,44,21,80,42,164,85,68,170,132,69,0,29,192
+2,0,5,0,10,132,21,206,23,68,43,228,47,228,18,68,8,128,7,4,21,82,42,172,85,64,170,132,69,4,29,196
+
+@tilemap
+                        
+                        
+                        
+                        
+                       +
+                        
+                        
+                        
+                        
+WWWW WWW <<<<< WWW WWWWW
+WWWW WWW WWWWW WWW WWWWW
+WWWW WWW WWWWW WWW WWWWW
+WWWW WWW WWWWW WWW WWWWW
+WWWW WWW WWWWW WWW WWWWW
+WWWW WWW WWWWW WWW WWWWW
+WWWWWWWWWWWWWWWWWWWWWWWW
+
+@tilecolors WHT GRN YEL BLK GRN RED
+@itemcolor CYN
+
+@guardians
+x=4 y=64(40..104) v=1 f=0..1 GRN
+x=8 y=80(44..104) v=2 f=0..1 RED
+x=14 y=48(48..96) v=4 f=0..1 YEL
+x=18 y=32(32..96) v=6 f=0..1 CYN
+
+@tileudg
+0: 0,0,0,0,0,0,0,0
+1: 128,192,224,176,144,148,214,119
+2: 0,127,127,99,107,99,127,127
+3: 74,42,26,72,108,106,41,136
+4: 0,0,0,0,0,0,0,0
+5: 40,170,10,0,85,85,85,255 ; invert
+6: 24,36,24,44,94,94,231,102

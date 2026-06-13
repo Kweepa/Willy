@@ -1,0 +1,38 @@
+@room 10
+@title The Front Door
+@conn 0 9 5 11
+@spawn 44 104
+@border RED
+@belt 0
+
+@guardiansprites
+
+@tilemap
+                        
+                        
+                        
+                        
+           +            
+WWWWWWWWWWWW            
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+F                       
+WW\                     
+
+@tilecolors WHT WHT RED WHT WHT WHT
+@itemcolor CYN
+
+@tileudg
+0: 0,0,0,0,0,0,0,0
+1: 255,170,119,170,119,170,85,170 ; invert
+2: 32,16,14,193,48,9,198,32
+3: 0,0,0,0,0,0,0,0 ; invert
+4: 192,64,176,80,172,84,171,85
+5: 0,0,0,0,0,0,0,0 ; invert
+6: 12,28,28,30,27,63,120,255

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert .room text files to PRG room binaries for JSW VIC-20."""
+"""Convert roomNN.txt source files to PRG room binaries for JSW VIC-20."""
 
 import argparse
 import re
@@ -8,6 +8,13 @@ import sys
 from pathlib import Path
 
 WIDTH = 24
+
+
+def normalize_tilemap_row(row: str) -> str:
+    """Trim overlong rows; pad short rows with spaces to exactly WIDTH."""
+    return row[:WIDTH].ljust(WIDTH)
+
+
 SCREEN_ROWS = 17              # gameplay 0-15 + HUD row 16
 TILEMAP_ROWS = 16             # @tilemap lines (gameplay only)
 TILE_BYTES = WIDTH * SCREEN_ROWS
@@ -344,7 +351,7 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
     def flush_block():
         nonlocal block, block_lines
         if block == "tilemap":
-            room["tilemap"] = block_lines.copy()
+            room["tilemap"] = [normalize_tilemap_row(line) for line in block_lines]
         elif block == "tileudg":
             for line in block_lines:
                 m = re.match(r"(\d+)\s*:\s*(.+)", line.strip(), re.I)
@@ -453,10 +460,7 @@ def grid_bytes(rows: list, name: str, room: dict | None = None) -> bytes:
         )
     out = bytearray()
     for r, row in enumerate(rows):
-        if len(row) != WIDTH:
-            raise room_error(
-                room, f"{name} row {r}: expected {WIDTH} cols, got {len(row)} ({row!r})"
-            )
+        row = normalize_tilemap_row(row)
         for ch in row:
             v = parse_tile_char(ch, room)
             out.append(v + TILE_CHR_BASE)
@@ -798,15 +802,15 @@ def convert_file(src: Path, outstem: Path, room: dict | None = None) -> None:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Convert JSW .room files to PRG binaries")
-    ap.add_argument("input", nargs="?", help=".room file or directory with --all")
+    ap = argparse.ArgumentParser(description="Convert JSW roomNN.txt files to PRG binaries")
+    ap.add_argument("input", nargs="?", help="roomNN.txt file or directory with --all")
     ap.add_argument("output", nargs="?", help="output file stem e.g. rooms/out/33")
-    ap.add_argument("--all", action="store_true", help="convert all *.room in input dir")
+    ap.add_argument("--all", action="store_true", help="convert all room*.txt in input dir")
     args = ap.parse_args()
     if args.all:
         indir = Path(args.input or "rooms")
         outdir = Path(args.output or "rooms/out")
-        for src in sorted(indir.glob("*.room")):
+        for src in sorted(indir.glob("room*.txt")):
             text = src.read_text(encoding="utf-8")
             room = parse_room(text, source=src)
             convert_file(src, outdir / str(room["id"]), room=room)

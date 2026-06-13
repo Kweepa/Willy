@@ -1,4 +1,4 @@
-# Room source format (`.room`)
+# Room source format (`roomNN.txt`)
 
 Human-editable room descriptions for the JSW VIC-20 port. Convert with [`tools/mkroom.py`](../tools/mkroom.py); pack onto disk with [`tools/mkdisk.py`](../tools/mkdisk.py).
 
@@ -94,7 +94,7 @@ Runtime (`ParseRoomMeta`) loads this byte and writes it directly to `$900F` — 
 
 ## Example room 1 — copy from here
 
-Save as [`rooms/room01.room`](../rooms/room01.room).
+Save as [`rooms/room01.txt`](../rooms/room01.txt).
 
 ```
 # ROOM 1 — The Landing
@@ -150,7 +150,7 @@ W          FFFFF       W
 
 ## Example room 2 — copy from here
 
-Save as [`rooms/room02.room`](../rooms/room02.room).
+Save as [`rooms/room02.txt`](../rooms/room02.txt).
 
 ```
 # ROOM 2 — The Cellar
@@ -227,9 +227,9 @@ JSW keeps guardian SoA in the room tail at `guardian_data_base` ($1FB8+). Every 
 
 ```bash
 # One room → binary
-python tools/mkroom.py rooms/room01.room rooms/out/ROOM01
+python tools/mkroom.py rooms/room01.txt rooms/out/ROOM01
 
-# All rooms/*.room → rooms/out/
+# All rooms/room*.txt → rooms/out/
 python tools/mkroom.py --all rooms rooms/out
 
 # D64 (needs built jsw.prg optional)
@@ -238,7 +238,7 @@ python tools/mkdisk.py --out jsw.d64 --prg jsw.prg --rooms rooms/out
 
 On Windows with VICE installed at `c:\app\vice3.10\bin`, `mkdisk.py` uses that `c1541` automatically (same path as [`make.bat`](../make.bat)). Override with `--c1541` or `VICE_BIN` env. An `OPENCBM` warning on startup is normal when no real IEC drive is attached; image operations still work.
 
-Example sources: [`rooms/room01.room`](../rooms/room01.room), [`rooms/room02.room`](../rooms/room02.room).
+Example sources: [`rooms/room01.txt`](../rooms/room01.txt), [`rooms/room02.txt`](../rooms/room02.txt).
 
 Save the scripts below as [`tools/mkroom.py`](../tools/mkroom.py) and [`tools/mkdisk.py`](../tools/mkdisk.py).
 
@@ -250,7 +250,7 @@ Save the scripts below as [`tools/mkroom.py`](../tools/mkroom.py) and [`tools/mk
 
 ```python
 #!/usr/bin/env python3
-"""Convert .room text files to binary room blobs for JSW VIC-20."""
+"""Convert roomNN.txt source files to binary room blobs for JSW VIC-20."""
 
 import argparse
 import re
@@ -424,16 +424,16 @@ def convert_file(src: Path, outstem: Path, split: bool) -> None:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Convert JSW .room files to binary")
-    ap.add_argument("input", nargs="?", help=".room file or directory with --all")
+    ap = argparse.ArgumentParser(description="Convert JSW roomNN.txt files to binary")
+    ap.add_argument("input", nargs="?", help="roomNN.txt file or directory with --all")
     ap.add_argument("output", nargs="?", help="output file stem e.g. rooms/out/ROOM01")
-    ap.add_argument("--all", action="store_true", help="convert all rooms/*.room in input dir")
+    ap.add_argument("--all", action="store_true", help="convert all rooms/room*.txt in input dir")
     ap.add_argument("--split", action="store_true", help="also write .TIL .COL .MET")
     args = ap.parse_args()
     if args.all:
         indir = Path(args.input or "rooms")
         outdir = Path(args.output or "rooms/out")
-        for src in sorted(indir.glob("*.room")):
+        for src in sorted(indir.glob("room*.txt")):
             n = parse_room(src.read_text(encoding="utf-8"))["id"]
             convert_file(src, outdir / f"ROOM{n:02d}", args.split)
         return
