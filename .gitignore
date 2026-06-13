@@ -1,3 +1,6 @@
+# Reference port (not part of JSW build)
+Miner-main/
+
 # VIC-20 Assembler & Emulator Build Outputs
 *.prg
 *.lbl
