@@ -5,9 +5,8 @@ Miner-main/
 *.prg
 *.lbl
 *.d64
+!jsw.d64
 /rooms/out/
-/room01
-/room02
 AcmeLabelSorter.exe
 
 # Python caching
