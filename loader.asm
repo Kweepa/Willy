@@ -141,36 +141,6 @@ skip_room_spawn
     sta last_py
     rts
 
-SetupMapColFromScr
-    lda scr_ptr
-    sta map_ptr
-    sta col_ptr
-    lda scr_ptr + 1
-    clc
-    adc #>(map_base - screen_base)
-    sta map_ptr + 1
-    clc
-    adc #>(color_base - map_base)
-    sta col_ptr + 1
-    rts
-
-ConvertCellToScreenAddr
-    tya
-    asl
-    tay
-    lda x24rowtab + 2,y
-    sta scr_ptr
-    lda x24rowtab + 3,y
-    sta scr_ptr + 1
-    txa
-    clc
-    adc scr_ptr
-    sta scr_ptr
-    bcc +
-    inc scr_ptr + 1
-+
-    jmp SetupMapColFromScr
-
 GetCollision
     lda (map_ptr),y
     and #$0f

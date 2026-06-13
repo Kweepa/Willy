@@ -1,6 +1,5 @@
 try_touch
     jsr GetCollision
-    sta typ
     cmp #TILE_SOLID
     beq do_block
     lda #0
@@ -11,7 +10,6 @@ do_block
 
 try_touch_below
     jsr GetCollision
-    sta typ
     cmp #TILE_EMPTY
     beq ++
     cmp #TILE_ITEM
@@ -315,8 +313,6 @@ check_jump
     sta on_ground
     lda #27
     sta inairtime
-    lda #0
-    sta yadd
     lda jumpIsPressed
     beq collide_end
     lda #0
@@ -355,8 +351,6 @@ hit_below
     sta on_ground
     lda #27
     sta inairtime
-    lda #0
-    sta yadd
 
     lda newy
     and #$f8
@@ -600,17 +594,3 @@ kill_player
     sta dead
 dont_kill_player
     rts
-
-DeathFlash
-	lda #(RED + 8)
-	sta $900f
-	rts
-
-ColFlash
-	ldx #0
--
-	sta color_base,x
-	sta color_base+$76,x
-	inx
-	bne -
-	rts

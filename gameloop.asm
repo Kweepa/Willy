@@ -18,7 +18,8 @@ main_loop
     +BorderDebugColor 8
     lda dead
     beq +
-	jsr DeathFlash
+	lda #(RED + 8)
+	sta $900f
     dec men
     beq ++
     jmp start_map

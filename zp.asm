@@ -5,12 +5,10 @@ scr_ptr         = $05
 col_ptr         = $07
 num             = $09
 run             = $0a
-typ             = $0b
 col             = $0c
 mov             = $0d
 
 xadd            = $0e
-yadd            = $0f
 px              = $10
 py              = $11
 arr2            = $13
