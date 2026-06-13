@@ -19,6 +19,10 @@ OP_STA_ABS = 0x8D
 OP_RTS = 0x60
 GUARDIAN_SPRITES_BYTES = 256
 PLAYER_BMP_BYTES = 256
+NIGHTMARE_ROOM_ID = 29
+NIGHTMARE_PLAYER_BMP_PATH = (
+    Path(__file__).resolve().parent.parent / "nightmareroomwilly.txt"
+)
 GUARDIAN_DATA_BYTES = 54          # SoA: 9 fields x 6 guardians
 MAX_GUARDIANS = 6
 RUNTIME_UDG_PAD = 336             # $1CB0-$1DFF
@@ -633,6 +637,28 @@ def build_tail(room: dict) -> bytes:
     return bytes(tail)
 
 
+def load_nightmare_player_bmp() -> bytes:
+    """256-byte Willy sprite for the Nightmare Room (room 29)."""
+    if not NIGHTMARE_PLAYER_BMP_PATH.is_file():
+        raise ValueError(f"missing {NIGHTMARE_PLAYER_BMP_PATH}")
+    bs: list[int] = []
+    for line in NIGHTMARE_PLAYER_BMP_PATH.read_text(encoding="utf-8").splitlines():
+        if line.strip().startswith(";") or not line.strip():
+            continue
+        bs.extend(parse_byte_list(line))
+    if len(bs) != PLAYER_BMP_BYTES:
+        raise ValueError(
+            f"{NIGHTMARE_PLAYER_BMP_PATH}: expected {PLAYER_BMP_BYTES} bytes, got {len(bs)}"
+        )
+    return deinterleave_guardian_sprites(bytes(bs))
+
+
+def player_bmp_for_room(room: dict) -> bytes:
+    if room["id"] == NIGHTMARE_ROOM_ID:
+        return load_nightmare_player_bmp()
+    return room["playerbmp"] or DEFAULT_PLAYER_BMP
+
+
 def build_room_image(room: dict) -> bytes:
     """RAM image loaded at $1A78 (1416 bytes)."""
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap", room))
@@ -640,7 +666,7 @@ def build_room_image(room: dict) -> bytes:
 
     raw = room["guardiansprites"] or bytes(GUARDIAN_SPRITES_BYTES)
     sprites = deinterleave_guardian_sprites(raw)
-    player = room["playerbmp"] or DEFAULT_PLAYER_BMP
+    player = player_bmp_for_room(room)
     udg = build_udg(room)
     tail = build_tail(room)
 

@@ -42,7 +42,7 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@hguard` | index | Horizontal guardian sprite index |
 | `@vguard` | index | Vertical guardian sprite index |
 | `@tilemap` | block | 17 lines × 24 digits |
-| `@playerbmp` | block | Optional 256-byte Willy sprite (defaults if omitted) |
+| `@playerbmp` | block | Optional 256-byte Willy sprite (defaults if omitted). Room **29** (Nightmare Room) uses repo-root `nightmareroomwilly.txt` at cook time (Skool interleaved format, deinterleaved like `@guardiansprites`). |
 | `@colors` | block | 18 lines × 24 digits |
 | `@items` | list | Collectibles: `col row` pairs (screen cells) |
 | `@tilecolors` | list | Six VIC colours for tile types 0–5 |
