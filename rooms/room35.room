@@ -36,14 +36,14 @@
 222222222222224000000000
 222222222222222111111111
 
-@tilecolors WHT YEL PUR WHT WHT CYN
+@tilecolors WHT YEL PUR WHT YEL CYN
 @itemcolor YEL
 
 @items
 12 11
 
 @guardians
-x=10 y=88(88..88) v=0 f=0..3 WHT
+x=10 y=88(88..88) v=0 f=0..1 WHT
 
 @tileudg
 0: 0,0,0,0,0,0,0,0	# Background
