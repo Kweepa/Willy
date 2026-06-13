@@ -10,14 +10,12 @@ calculate_ramp_y
     sbc meta_ramp_rx1
     tay
     bpl +
-    jmp ramp_dbg_done ; outside ramp lower bound
+    rts
 +
-    ; check upper bound (rx1 <= px < rx2; rx2 baked as max px + 1)
-
     txa
     cmp meta_ramp_rx2
     bcc +
-    jmp ramp_dbg_done ; outside ramp upper bound
+    rts
 +
     ; ramp_y = ry + ((2 * dx EOR E) + A)  — E/A baked per ramp type
 
@@ -32,56 +30,6 @@ calculate_ramp_y
 
     lda #1
     sta is_in_ramp_bounds
-    jmp ramp_dbg_done
-
-ramp_dbg_done
-    lda was_on_ground
-    clc
-    adc #$b0
-    sta hud_dbg_scr+0
-    lda is_on_ramp
-    clc
-    adc #$b0
-    sta hud_dbg_scr+1
-    lda is_in_ramp_bounds
-    clc
-    adc #$b0
-    sta hud_dbg_scr+2
-    lda was_on_ground
-    bne falling_0
-    lda inairtime
-    cmp #27
-    bcc falling_0
-    lda #1
-    bne falling_store
-falling_0
-    lda #0
-falling_store
-    clc
-    adc #$b0
-    sta hud_dbg_scr+3
-    lda ramp_y
-    ldy #$b0
--
-    cmp #100
-    bcc +
-    sbc #100
-    iny
-    bne -
-+
-    sty hud_dbg_scr+5
-    ldy #$b0
--
-    cmp #10
-    bcc ++
-    sbc #10
-    iny
-    bne -
-++
-    sty hud_dbg_scr+6
-    clc
-    adc #$b0
-    sta hud_dbg_scr+7
     rts
 
 ; ===========================================================================
@@ -136,12 +84,12 @@ do_falling_ramp_check
     lda last_py
     cmp ramp_y
     bcc +
-    rts ; was not above the ramp surface last frame
+    rts
 +
     lda newy
     cmp ramp_y
     bcs +
-    rts ; has not reached the ramp surface yet
+    rts
 +
     lda ramp_y
     sta py

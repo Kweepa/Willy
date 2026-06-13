@@ -49,7 +49,6 @@ guardian_g_axis = guardian_data_base + g_off_axis
 screen_base = $1e00
 tile_bytes = 408                 ; 24 x 17
 hud_row_off = 384                ; row 16 * 24
-hud_dbg_scr = screen_base + hud_row_off + 15   ; ramp debug: 7 chars cols 15-21
 hud_men_scr = screen_base + hud_row_off + 18
 hud_men_col = color_base + hud_row_off + 18
 hud_item_scr = screen_base + hud_row_off + 21
