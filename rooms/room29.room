@@ -1,6 +1,6 @@
 @room 29
 @title Nightmare Room
-@conn 255 28 255 255
+@conn 255 28 255 30
 @spawn 44 16
 @border GRN
 @belt 0
