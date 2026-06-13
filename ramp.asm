@@ -140,7 +140,7 @@ do_falling_ramp_check
 +
     lda newy
     cmp ramp_y
-    bcc +
+    bcs +
     rts ; has not reached the ramp surface yet
 +
     lda ramp_y

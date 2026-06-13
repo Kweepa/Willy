@@ -319,6 +319,7 @@ check_jump
     beq collide_end
     lda #0
     sta inairtime
+    sta is_on_ramp
     jmp collide_end
 move_up_down
     lda #1
