@@ -528,18 +528,18 @@ def derive_ramp_params(
     row_step = row_step_b if row_step_b < 128 else row_step_b - 256
 
     if ramp_type == RAMP_UP_RIGHT:
-        rx1 = col_start * 4 - 3
-        rx2 = col_end * 4 + 5   # exclusive upper bound (max ramp x + 1)
+        rx1 = col_start * 4 - 4
+        rx2 = col_end * 4 + 1   # exclusive upper bound
         floor_h = ramp_floor_height(tilemap, col_start, row_start, row_step, room)
         ry = floor_h - 16         # same py as standing on adjacent floor at rx1
         e, a = 0xFF, 1
     else:
         rx1 = col_start * 4 - 1
-        rx2 = col_end * 4 + 1   # exclusive upper bound (max pc + 1)
+        rx2 = col_end * 4 - 3   # exclusive upper bound
         e, a = 0, 0
         ry = ramp_surface_abs(
             rx1, col_start, col_end, row_start, row_step, ramp_type
-        ) - 16
+        ) - 18
     return (rx1, rx2, ry, e, a)
 
 
