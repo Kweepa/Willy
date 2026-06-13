@@ -37,7 +37,7 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@spawn` | px py | Willy start (quarter-char X, 2-pixel Y) |
 | `@border` | colour | Border colour (BLK WHT RED CYN PUR GRN BLU YEL). `mkroom` stores `border \| 8` in meta — full VIC `$900F` byte (white background + border). |
 | `@belt` | speed | Conveyor speed: `-1`, `0`, or `1` |
-| `@ramp` | type | `0`=none, `1`=up-right, `2`=up-left. Col/row bounds are derived at build time from tile `4` placement (one ramp per room). |
+| `@ramp` | type | `0`=none, `1`=up-right, `2` or `-1`=up-left. Build bakes `rx1`, `rx2`, `ry` (px bounds + base py−16); no ramp uses `rx1=rx2=99`. |
 | `@guardiansprites` | block | 256 bytes: 8 frames × 32 bytes. Author in Skool interleaved format (left, right byte pairs per scanline). `mkroom` converts to column-major (16-byte left column, 16-byte right column) in the PRG. |
 | `@hguard` | index | Horizontal guardian sprite index |
 | `@vguard` | index | Vertical guardian sprite index |

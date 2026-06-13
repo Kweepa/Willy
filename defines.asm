@@ -36,7 +36,7 @@ PLAYER_SPRITE_FRAME = 8
 
 RAMP_NONE = 0
 RAMP_UP_RIGHT = 1
-RAMP_UP_LEFT = 2
+RAMP_UP_LEFT = $FF
 
 ; px is quarter-char units; 24-col playfield (cols 0-23)
 EDGE_WEST_PX = 1

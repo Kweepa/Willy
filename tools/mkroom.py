@@ -23,7 +23,7 @@ GUARDIAN_DATA_BYTES = 54          # SoA: 9 fields x 6 guardians
 MAX_GUARDIANS = 6
 RUNTIME_UDG_PAD = 336             # $1CB0-$1DFF
 TAIL_BYTES = 104
-META_SIZE = 14 + ITEM_DRAW_BYTES
+META_SIZE = 13 + ITEM_DRAW_BYTES
 IMAGE_LOAD = 0x1A78
 SCREEN_BASE = 0x1E00
 COLOR_BASE = 0x9600
@@ -316,7 +316,10 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
             elif tag == "belt":
                 room["belt"] = int(parts[1])
             elif tag == "ramp":
-                room["ramp"] = int(parts[1])
+                ramp_type = int(parts[1])
+                if ramp_type in (-1, 2):
+                    ramp_type = RAMP_UP_LEFT
+                room["ramp"] = ramp_type
             elif tag == "tilecolors":
                 if len(parts[1:]) != TILE_COLOR_BYTES:
                     raise ValueError(
@@ -394,6 +397,29 @@ def belt_byte(speed: int) -> int:
 
 
 TILE_RAMP = 4
+RAMP_NONE = 0
+RAMP_UP_RIGHT = 1
+RAMP_UP_LEFT = 0xFF
+RAMP_BOUNDS_NONE = 99
+
+
+def ramp_surface_abs(
+    px: int,
+    col_start: int,
+    col_end: int,
+    row_start: int,
+    row_step: int,
+    ramp_type: int,
+) -> int:
+    """Absolute Y of ramp walking surface at px."""
+    mid_col = (px + 3) >> 2
+    feet_row = row_start + (mid_col - col_start) * row_step
+    x_offset = ((px + 3) & 3) * 2
+    if ramp_type == RAMP_UP_RIGHT:
+        y_surface = 6 - x_offset
+    else:
+        y_surface = x_offset
+    return feet_row * 8 + y_surface
 
 
 def derive_ramp_bounds(
@@ -447,6 +473,33 @@ def derive_ramp_bounds(
     return (col_start, col_end, row_start, row_step & 0xFF)
 
 
+def derive_ramp_params(
+    tilemap: list, ramp_type: int, room: dict | None = None
+) -> tuple[int, int, int]:
+    """Return baked (rx1, rx2, ry) px bounds and base target py."""
+    if ramp_type == RAMP_NONE:
+        return (RAMP_BOUNDS_NONE, RAMP_BOUNDS_NONE, 0)
+
+    col_start, col_end, row_start, row_step_b = derive_ramp_bounds(
+        tilemap, ramp_type, room
+    )
+    row_step = row_step_b if row_step_b < 128 else row_step_b - 256
+
+    if ramp_type == RAMP_UP_RIGHT:
+        rx1 = col_start * 4 + 3
+        rx2 = col_end * 4 + 4
+        base_px = rx1
+    else:
+        rx1 = col_start * 4 - 1
+        rx2 = col_end * 4
+        base_px = rx2
+
+    ry = ramp_surface_abs(
+        base_px, col_start, col_end, row_start, row_step, ramp_type
+    ) - 16
+    return (rx1, rx2, ry)
+
+
 def build_meta(room: dict) -> bytes:
     g = room["guardians"]
     if len(g) > MAX_GUARDIANS:
@@ -458,13 +511,10 @@ def build_meta(room: dict) -> bytes:
     meta.append(room["spawn"][1] & 0xFF)
     meta.append(belt_byte(room["belt"]))
     meta.append(room["ramp"] & 0xFF)
-    col_start, col_end, row_start, row_step = derive_ramp_bounds(
-        room["tilemap"], room["ramp"], room
-    )
-    meta.append(col_start & 0xFF)
-    meta.append(col_end & 0xFF)
-    meta.append(row_start & 0xFF)
-    meta.append(row_step & 0xFF)
+    rx1, rx2, ry = derive_ramp_params(room["tilemap"], room["ramp"], room)
+    meta.append(rx1 & 0xFF)
+    meta.append(rx2 & 0xFF)
+    meta.append(ry & 0xFF)
     meta.extend(room["conn"])
     meta.extend(build_item_draw(room))
     if len(meta) != META_SIZE:
