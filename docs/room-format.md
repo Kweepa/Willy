@@ -37,7 +37,7 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@spawn` | px py | Willy start (quarter-char X, 2-pixel Y) |
 | `@border` | colour | Border colour (BLK WHT RED CYN PUR GRN BLU YEL). `mkroom` stores `border \| 8` in meta — full VIC `$900F` byte (white background + border). |
 | `@belt` | speed | Conveyor speed: `-1`, `0`, or `1` |
-| `@ramp` | type | `0`=none, `1`=up-right, `2` or `-1`=up-left. Build bakes `rx1`, `rx2`, `ry`, `E`, `A` — `rx1`/`rx2` are ramp x (0..95); up-right: `rx1=col_start*4-3`, `rx2=col_end*4+1` (exclusive); `ry=floor_height-18` (feet offset − 2px toe at base); up-left: `ramp_surface_abs` at `rx1` minus 18, `rx2=col_end*4-3`; `E`/`A` are `$FF`/`$01` (up-right) or `$00`/`$00` (up-left); no ramp uses `rx1=rx2=99`, `E=A=0`. |
+| `@ramp` | type | `0`=none, `1`=up-right, `2` or `-1`=up-left. Build bakes `rx1`, `rx2`, `ry`, `E`, `A` — `rx1`/`rx2` are ramp x (0..95); up-right: `rx1=col_start*4-4`, `rx2=col_end*4+1` (exclusive); up-left: `rx1=col_start*4`, `rx2=col_end*4+5` (exclusive); `ry=ramp_surface_abs(rx1)-16-toe` (`toe` 0 up-right, 6 up-left); `E`/`A` are `$FF`/`$01` (up-right) or `$00`/`$00` (up-left); no ramp uses `rx1=rx2=99`, `E=A=0`. |
 | `@guardiansprites` | block | 256 bytes: 8 frames × 32 bytes. Author in Skool interleaved format (left, right byte pairs per scanline). `mkroom` converts to column-major (16-byte left column, 16-byte right column) in the PRG. |
 | `@hguard` | index | Horizontal guardian sprite index |
 | `@vguard` | index | Vertical guardian sprite index |

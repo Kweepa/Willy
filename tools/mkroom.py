@@ -397,14 +397,17 @@ def belt_byte(speed: int) -> int:
 
 
 TILE_RAMP = 4
-TILE_PLATFORM = 1
-TILE_SOLID = 2
-TILE_CONVEYOR = 5
 RAMP_NONE = 0
 RAMP_UP_RIGHT = 1
 RAMP_UP_LEFT = 0xFF
 RAMP_BOUNDS_NONE = 99
-FLOOR_TILES = frozenset({TILE_PLATFORM, TILE_SOLID, TILE_CONVEYOR})
+
+# Feet py = surface - RAMP_FEET_OFFSET - toe[ramp_type]
+RAMP_FEET_OFFSET = 16
+RAMP_RY_TOE: dict[int, int] = {
+    RAMP_UP_RIGHT: 0,
+    RAMP_UP_LEFT: 6,
+}
 
 
 def ramp_surface_abs(
@@ -424,6 +427,23 @@ def ramp_surface_abs(
     else:
         y_surface = x_offset
     return feet_row * 8 + y_surface
+
+
+def ramp_baked_ry(
+    rx1: int,
+    col_start: int,
+    col_end: int,
+    row_start: int,
+    row_step: int,
+    ramp_type: int,
+) -> int:
+    """Baked meta ry: feet py at ramp entry px rx1."""
+    toe = RAMP_RY_TOE.get(ramp_type, 0)
+    return (
+        ramp_surface_abs(rx1, col_start, col_end, row_start, row_step, ramp_type)
+        - RAMP_FEET_OFFSET
+        - toe
+    )
 
 
 def derive_ramp_bounds(
@@ -477,44 +497,6 @@ def derive_ramp_bounds(
     return (col_start, col_end, row_start, row_step & 0xFF)
 
 
-def _tile_at(tilemap: list, col: int, row: int) -> int | None:
-    if row < 0 or row >= TILEMAP_ROWS or col < 0 or col >= WIDTH:
-        return None
-    line = tilemap[row].strip()
-    if col >= len(line):
-        return None
-    return int(line[col])
-
-
-def ramp_floor_height(
-    tilemap: list,
-    col_start: int,
-    row_start: int,
-    row_step: int,
-    room: dict | None = None,
-) -> int:
-    """Pixel Y of flat floor beside the up-right ramp base (top of floor char row)."""
-    if row_step > 0:
-        floor_row = row_start - 1
-    else:
-        floor_row = row_start + 1
-
-    for col in (col_start, col_start - 1, col_start + 1):
-        tile = _tile_at(tilemap, col, floor_row)
-        if tile in FLOOR_TILES:
-            return floor_row * 8
-
-    for col in range(WIDTH):
-        tile = _tile_at(tilemap, col, floor_row)
-        if tile in FLOOR_TILES:
-            return floor_row * 8
-
-    raise room_error(
-        room,
-        f"no floor tile (1/2/5) beside up-right ramp at row {floor_row}",
-    )
-
-
 def derive_ramp_params(
     tilemap: list, ramp_type: int, room: dict | None = None
 ) -> tuple[int, int, int, int, int]:
@@ -530,16 +512,14 @@ def derive_ramp_params(
     if ramp_type == RAMP_UP_RIGHT:
         rx1 = col_start * 4 - 4
         rx2 = col_end * 4 + 1   # exclusive upper bound
-        floor_h = ramp_floor_height(tilemap, col_start, row_start, row_step, room)
-        ry = floor_h - 16         # same py as standing on adjacent floor at rx1
         e, a = 0xFF, 1
     else:
-        rx1 = col_start * 4 - 1
-        rx2 = col_end * 4 - 3   # exclusive upper bound
+        rx1 = col_start * 4
+        rx2 = col_end * 4 + 5   # exclusive upper bound
         e, a = 0, 0
-        ry = ramp_surface_abs(
-            rx1, col_start, col_end, row_start, row_step, ramp_type
-        ) - 18
+    ry = ramp_baked_ry(
+        rx1, col_start, col_end, row_start, row_step, ramp_type
+    )
     return (rx1, rx2, ry, e, a)
 
 
