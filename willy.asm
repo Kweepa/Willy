@@ -74,278 +74,110 @@ do_block_below
     lda #0
     rts
 
-; try_ramp - adjust py after horizontal step; no carry return (side effects only)
-try_ramp
-    lda was_on_ground
-    bne +
-    jmp try_ramp_done
-+
-    lda meta_content_src + meta_off_ramp
-    bne +
-    jmp try_ramp_done
-+
-    jsr GetRampY
-    bcc try_ramp_fail
-
-    sta py
-    ldx px
-    ldy py
-    jsr ConvertXYToScreenAddr
-    lda #1
-    sta on_ground
-    lda #27
-    sta inairtime
-try_ramp_done
-    rts
-
-try_ramp_fail
-    ; Check if there is a flat floor just below him to transition onto
-    lda py
-    clc
-    adc #7
-    and #$f8
-    sta ramp_tmp                 ; Use ramp_tmp as py_aligned
-
-    ; Check if py_aligned - py is <= 3 (meaning we are stepping down 1, 2, or 3 pixels)
-    sec
-    sbc py
-    cmp #4
-    bcs try_ramp_restore_ptr            ; If distance is >= 4, don't snap!
-
-    ; Let's check if there is a flat floor under px, py_aligned
-    ldx px
-    ldy ramp_tmp                 ; py_aligned
-    jsr ConvertXYToScreenAddr    ; This sets map_ptr for py_aligned
-
-    ldy #72                      ; Row below feet when py is aligned
-    jsr try_touch_below
-    bne snap_to_flat
-    
-    ; If px is not aligned, also check the right column!
-    lda px
-    and #$03
-    beq try_ramp_restore_ptr
-    iny                          ; ldy #73
-    jsr try_touch_below
-    bne snap_to_flat
-
-try_ramp_restore_ptr
-    ; Restore map_ptr for original px, py
-    ldx px
-    ldy py
-    jsr ConvertXYToScreenAddr
-    rts
-
-snap_to_flat
-    lda ramp_tmp
-    sta py
-    ldx px
-    ldy py
-    jsr ConvertXYToScreenAddr    ; Restore map_ptr for new py
-    lda #1
-    sta on_ground
-    lda #27
-    sta inairtime
-    rts
-
-; GetRampY - target py for Willy standing/landing on a ramp tile
-; Input:  px, py, was_on_ground, newy, last_py (ZP)
-;         meta_content_src ramp type + cached bounds (col start/end, row, row_step)
-; Output: carry set, A = target py — ramp found and landing valid
-;         carry clear — no ramp or landing rejected
-; Clobbers: A, X, ramp_tmp..ramp_tmp2
-GetRampY
-    lda meta_content_src + meta_off_ramp
-    bne +
-    jmp get_ramp_fail
-+
-
-    ; mid_col = (px + 3) >> 2
-    lda px
-    clc
-    adc #3
-    lsr
-    lsr
-    sta ramp_tmp
-
-    lda ramp_tmp
-    cmp meta_content_src + meta_off_ramp_col_start
-    bcs +
-    jmp get_ramp_fail
-+
-    sec
-    sbc meta_content_src + meta_off_ramp_col_end
-    bcc +
-    beq +
-    jmp get_ramp_fail
-+
-
-    ; feet_row = row + (mid_col - col_start) * row_step
-    lda meta_content_src + meta_off_ramp_row
-    sta ramp_tmp1
-
-    lda ramp_tmp
-    sec
-    sbc meta_content_src + meta_off_ramp_col_start
-    beq found_ramp
-
-    ldx meta_content_src + meta_off_ramp_row_step
-    beq found_ramp
-
-    cpx #$ff
-    bne ramp_step_pos
-
-    sta ramp_tmp2
-    lda ramp_tmp1
-    sec
-    sbc ramp_tmp2
-    sta ramp_tmp1
-    jmp found_ramp
-
-ramp_step_pos
-    clc
-    adc ramp_tmp1
-    sta ramp_tmp1
-
-found_ramp
-    ; Let's calculate x_offset = ((px + 3) & 3) * 2
-    lda px
-    clc
-    adc #3
-    and #3
-    asl
-    sta ramp_tmp2
-    
-    ; Calculate y_surface based on ramp_type
-    lda meta_content_src + meta_off_ramp
-    cmp #RAMP_UP_RIGHT
-    bne +
-    
-    ; UP_RIGHT ramp: y_surface = 6 - x_offset
-    lda #6
-    sec
-    sbc ramp_tmp2
-    jmp ++
-+
-    ; UP_LEFT ramp: y_surface = x_offset
-    lda ramp_tmp2
-++
-    sta ramp_tmp2
-    
-    ; Calculate y_ramp_abs = (feet_row * 8) + y_surface
-    lda ramp_tmp1      ; feet_row of the ramp we found
-    asl
-    asl
-    asl
-    clc
-    adc ramp_tmp2
-    sta ramp_tmp2
-
-    ; Verify if we are allowed to stand/land on the ramp
-    lda was_on_ground
-    beq +
-
-    ; If was_on_ground is true, we must be close to the ramp surface (|py + 16 - y_ramp_abs| <= 3)
-    lda py
-    clc
-    adc #16
-    sec
-    sbc ramp_tmp2                  ; ramp_tmp2 is y_ramp_abs
-    clc
-    adc #3
-    cmp #7
-    bcs not_valid_landing
-    jmp valid_landing
-+
-    ; If was_on_ground is false, we must be descending to land on it (newy >= last_py)
-    lda newy
-    cmp last_py
-    bcc not_valid_landing
-
-    ; Penetration check: 0 <= (newy + 16) - ramp_tmp2 <= 3
-    lda newy
-    clc
-    adc #16
-    sec
-    sbc ramp_tmp2                  ; A = (newy + 16) - ramp_tmp2
-    bcc not_valid_landing          ; If carry clear, we are above the ramp (diff < 0)
-    cmp #4                         ; Is diff < 4? (i.e. 0, 1, 2, or 3 pixels)
-    bcs not_valid_landing
-
-valid_landing
-    lda ramp_tmp2
-    sec
-    sbc #16                       ; target py
-    sec                           ; ramp found
-    rts
-
-not_valid_landing
-    jmp get_ramp_fail
-
-get_ramp_fail
-    clc
-    rts
-
 CollideLeftRight
+    jmp clr_start
+clr_done
+    rts
+clr_start
     lda left_right_ctr
-    bne end_collide_left_right
+    bne clr_done
     lda xadd
     bpl collide_right
     lda px
     cmp #EDGE_WEST_PX
-    beq end_collide_left_right
+    beq clr_done
     lda px
     and #$03
     bne move_left
     ldy #23
     jsr try_touch
-    bne end_collide_left_right
+    bne clr_done
     ldy #47
     jsr try_touch
-    bne end_collide_left_right
+    bne clr_done
     lda py
     and #$07
     beq move_left
     ldy #71
     jsr try_touch
-    bne end_collide_left_right
+    bne clr_done
 move_left
     dec px
     ldx px
     ldy py
     jsr ConvertXYToScreenAddr
-    jsr try_ramp
-    jmp end_collide_left_right
+    jsr calculate_ramp_y
+    lda xadd
+    beq +
+    lda was_on_ground
+    bne ++
+    lda is_on_ramp
+    beq +
+++
+    jsr do_walking_ramp_check
++
+    lda is_on_ramp
+    beq +
+    ldx px
+    ldy py
+    jsr ConvertXYToScreenAddr
+    lda #1
+    sta on_ground
+    lda #27
+    sta inairtime
++
+    jmp clr_done
 
 collide_right
     lda xadd
-    beq end_collide_left_right
+    beq clr_done
     lda px
     cmp #EDGE_EAST_PX
-    beq end_collide_left_right
+    beq clr_done
     lda px
     and #$03
     bne move_right
     ldy #25
     jsr try_touch
-    bne end_collide_left_right
+    bne cr_block
     ldy #49
     jsr try_touch
-    bne end_collide_left_right
+    bne cr_block
     lda py
     and #$07
     beq move_right
     ldy #73
     jsr try_touch
-    bne end_collide_left_right
+    bne cr_block
+    jmp move_right
+cr_block
+    jmp clr_done
 move_right
     inc px
     ldx px
     ldy py
     jsr ConvertXYToScreenAddr
-    jsr try_ramp
-end_collide_left_right
-    rts
+    jsr calculate_ramp_y
+    lda xadd
+    beq +
+    lda was_on_ground
+    bne ++
+    lda is_on_ramp
+    beq +
+++
+    jsr do_walking_ramp_check
++
+    lda is_on_ramp
+    beq +
+    ldx px
+    ldy py
+    jsr ConvertXYToScreenAddr
+    lda #1
+    sta on_ground
+    lda #27
+    sta inairtime
++
+    jmp clr_done
 
 Collide
     lda py
@@ -388,6 +220,7 @@ Collide
     ldy py
     jsr ConvertXYToScreenAddr
     jsr CollideLeftRight
+    jsr calculate_ramp_y
     lda py
     and #$f8
     sta align_tmp
@@ -429,12 +262,16 @@ Collide
     jmp move_up_down
 +
 collide_down
-    ; Is there a ramp under his feet? Check this first, regardless of alignment!
-    jsr GetRampY
-    bcc +
-    
-    ; Ramp found! Snap py directly to target py and land!
-    sta py
+    lda on_ground
+    bne +
+    lda is_on_ramp
+    bne +
+    lda xadd
+    bne +
+    jsr do_falling_ramp_check
++
+    lda is_on_ramp
+    beq +
     jmp check_jump
 +
     lda py
@@ -517,19 +354,10 @@ hit_below
     sta inairtime
     lda #0
     sta yadd
-    
-    jsr GetRampY
-    bcc +
-    
-    ; Landing on a ramp! Set py directly to the target py
-    sta py
-    jmp ++
-+
-    ; Landing on flat ground, so snap to flat floor grid!
+
     lda newy
     and #$f8
     sta newy
-++
     jmp move_up_down
 
 CheckDeathFall

@@ -72,9 +72,9 @@ spawn_px        = $87          ; respawn position (game start or last room entry
 spawn_py        = $88
 
 ramp_tmp        = $54
-ramp_tmp1       = $55
-ramp_tmp2       = $56
-ramp_tmp3       = $57
+ramp_y          = $55
+is_in_ramp_bounds = $56
+is_on_ramp      = $57
 
 ts              = $50
 

@@ -8,6 +8,7 @@
 !source "gameloop.asm"
 !source "map.asm"
 !source "loader.asm"
+!source "ramp.asm"
 !source "willy.asm"
 !source "util.asm"
 !source "input.asm"

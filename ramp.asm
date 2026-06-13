@@ -1,31 +1,47 @@
-    ; call this once per frame, irrespective of movement
+; ===========================================================================
+; call this once per frame, irrespective of movement
+
 calculate_ramp_y
+    lda #0
+    sta is_in_ramp_bounds
     lda px
     clc
     adc xadd
     tax
     sec
-    sbc #meta_content_src + meta_off_ramp_rx1
+    sbc meta_ramp_rx1
+    tay
     bpl +
     rts ; outside ramp lower bound
 +
-    clc
-    adc #meta_content_src + meta_off_ramp_ry
-    sta ramp_y
-
-    ; check upper bound
+    ; check upper bound (rx1 <= pc < rx2; rx2 baked as max pc + 1)
 
     txa
-    sec
-    sbc #meta_content_src + meta_off_ramp_rx2
-    bne +
+    cmp meta_ramp_rx2
+    bcc +
     rts ; outside ramp upper bound
 +
+    ; ramp_y = ry + ((2 * dx EOR E) + A)  — E/A baked per ramp type
+
+    tya
+    sec
+    sbc xadd
+    asl
+    eor meta_ramp_E
+    clc
+    adc meta_ramp_A
+    adc meta_ramp_ry
+    sta ramp_y
+
     lda #1
     sta is_in_ramp_bounds
     rts
 
-    ; call this when about to move when on the ground or on a ramp (on_ground or is_on_ramp)
+; ===========================================================================
+; Call when about to move horizontally on the ground or on a ramp — adjusts py
+; by +/-2 to follow the slope. Caller (CollideLeftRight) must gate on
+; (was_on_ground OR is_on_ramp) and xadd != 0.
+
 do_walking_ramp_check
     lda #0
     sta is_on_ramp
@@ -42,17 +58,21 @@ do_walking_ramp_check
 +
     ; depending on ramp direction + player movement direction, increment or decrement py by 2
     lda xadd
-    eor #meta_content_src + meta_off_ramp
+    eor meta_ramp
     beq +
-    dec py
-    dec py
+    inc py
+    inc py
     rts
 +
-    inc py
-    inc py
+    dec py
+    dec py
     rts
 
-    ; call this when falling straight down (xadd is 0 and yadd is positive, not on ground or on ramp)
+; ===========================================================================
+; Call when falling straight down onto a ramp (not on ground, not already
+; on ramp, no horizontal movement). Caller (collide_down) must gate on
+; !on_ground, !is_on_ramp, and xadd == 0.
+
 do_falling_ramp_check
     lda #0
     sta is_on_ramp
@@ -63,13 +83,14 @@ do_falling_ramp_check
     lda last_py
     cmp ramp_y
     bcc +
-    rts
+    rts ; was not above the ramp surface last frame
++
+    lda newy
+    cmp ramp_y
+    bcc +
+    rts ; has not reached the ramp surface yet
 +
     lda ramp_y
-    cmp newy
-    bcs +
-    rts
-+
     sta py
     lda #1
     sta is_on_ramp

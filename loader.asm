@@ -90,7 +90,7 @@ draw_item_done
 
 ;
 ; ParseRoomMeta - read room meta at meta_content_src ($1F98).
-; Layout: guardians, border, spawn x2, belt, ramp, ramp bounds x4, conn x4, item draw code
+; Layout: guardians, border, spawn x2, belt, ramp, rx1, rx2, ry, E, A, conn x4, item draw code
 ParseRoomMeta
     lda meta_content_src + meta_off_border
     sta $900f

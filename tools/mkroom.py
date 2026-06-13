@@ -23,7 +23,7 @@ GUARDIAN_DATA_BYTES = 54          # SoA: 9 fields x 6 guardians
 MAX_GUARDIANS = 6
 RUNTIME_UDG_PAD = 336             # $1CB0-$1DFF
 TAIL_BYTES = 104
-META_SIZE = 13 + ITEM_DRAW_BYTES
+META_SIZE = 15 + ITEM_DRAW_BYTES
 IMAGE_LOAD = 0x1A78
 SCREEN_BASE = 0x1E00
 COLOR_BASE = 0x9600
@@ -397,10 +397,14 @@ def belt_byte(speed: int) -> int:
 
 
 TILE_RAMP = 4
+TILE_PLATFORM = 1
+TILE_SOLID = 2
+TILE_CONVEYOR = 5
 RAMP_NONE = 0
 RAMP_UP_RIGHT = 1
 RAMP_UP_LEFT = 0xFF
 RAMP_BOUNDS_NONE = 99
+FLOOR_TILES = frozenset({TILE_PLATFORM, TILE_SOLID, TILE_CONVEYOR})
 
 
 def ramp_surface_abs(
@@ -473,12 +477,50 @@ def derive_ramp_bounds(
     return (col_start, col_end, row_start, row_step & 0xFF)
 
 
+def _tile_at(tilemap: list, col: int, row: int) -> int | None:
+    if row < 0 or row >= TILEMAP_ROWS or col < 0 or col >= WIDTH:
+        return None
+    line = tilemap[row].strip()
+    if col >= len(line):
+        return None
+    return int(line[col])
+
+
+def ramp_floor_height(
+    tilemap: list,
+    col_start: int,
+    row_start: int,
+    row_step: int,
+    room: dict | None = None,
+) -> int:
+    """Pixel Y of flat floor beside the up-right ramp base (top of floor char row)."""
+    if row_step > 0:
+        floor_row = row_start - 1
+    else:
+        floor_row = row_start + 1
+
+    for col in (col_start, col_start - 1, col_start + 1):
+        tile = _tile_at(tilemap, col, floor_row)
+        if tile in FLOOR_TILES:
+            return floor_row * 8
+
+    for col in range(WIDTH):
+        tile = _tile_at(tilemap, col, floor_row)
+        if tile in FLOOR_TILES:
+            return floor_row * 8
+
+    raise room_error(
+        room,
+        f"no floor tile (1/2/5) beside up-right ramp at row {floor_row}",
+    )
+
+
 def derive_ramp_params(
     tilemap: list, ramp_type: int, room: dict | None = None
-) -> tuple[int, int, int]:
-    """Return baked (rx1, rx2, ry) px bounds and base target py."""
+) -> tuple[int, int, int, int, int]:
+    """Return baked (rx1, rx2, ry, E, A) px bounds and slope sign."""
     if ramp_type == RAMP_NONE:
-        return (RAMP_BOUNDS_NONE, RAMP_BOUNDS_NONE, 0)
+        return (RAMP_BOUNDS_NONE, RAMP_BOUNDS_NONE, 0, 0, 0)
 
     col_start, col_end, row_start, row_step_b = derive_ramp_bounds(
         tilemap, ramp_type, room
@@ -486,18 +528,19 @@ def derive_ramp_params(
     row_step = row_step_b if row_step_b < 128 else row_step_b - 256
 
     if ramp_type == RAMP_UP_RIGHT:
-        rx1 = col_start * 4 + 3
-        rx2 = col_end * 4 + 4
-        base_px = rx1
+        rx1 = col_start * 4 - 3
+        rx2 = col_end * 4 + 5   # exclusive upper bound (max ramp x + 1)
+        floor_h = ramp_floor_height(tilemap, col_start, row_start, row_step, room)
+        ry = floor_h - 16         # same py as standing on adjacent floor at rx1
+        e, a = 0xFF, 1
     else:
         rx1 = col_start * 4 - 1
-        rx2 = col_end * 4
-        base_px = rx2
-
-    ry = ramp_surface_abs(
-        base_px, col_start, col_end, row_start, row_step, ramp_type
-    ) - 16
-    return (rx1, rx2, ry)
+        rx2 = col_end * 4 + 1   # exclusive upper bound (max pc + 1)
+        e, a = 0, 0
+        ry = ramp_surface_abs(
+            rx1, col_start, col_end, row_start, row_step, ramp_type
+        ) - 16
+    return (rx1, rx2, ry, e, a)
 
 
 def build_meta(room: dict) -> bytes:
@@ -511,10 +554,12 @@ def build_meta(room: dict) -> bytes:
     meta.append(room["spawn"][1] & 0xFF)
     meta.append(belt_byte(room["belt"]))
     meta.append(room["ramp"] & 0xFF)
-    rx1, rx2, ry = derive_ramp_params(room["tilemap"], room["ramp"], room)
+    rx1, rx2, ry, e, a = derive_ramp_params(room["tilemap"], room["ramp"], room)
     meta.append(rx1 & 0xFF)
     meta.append(rx2 & 0xFF)
     meta.append(ry & 0xFF)
+    meta.append(e & 0xFF)
+    meta.append(a & 0xFF)
     meta.extend(room["conn"])
     meta.extend(build_item_draw(room))
     if len(meta) != META_SIZE:
