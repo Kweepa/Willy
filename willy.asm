@@ -542,6 +542,7 @@ coll_check
 +
 	dey
 	bpl --
+    +BorderDebugColor (WHITE + 8)
     rts
 
 try_killed

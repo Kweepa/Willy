@@ -339,15 +339,16 @@ MoveNormalVerticalGuardian
     jsr ShouldMoveVerticalGuardianThisFrame
     bne +
     jsr MoveGuardian
-+
     jsr GetVerticalGuardianBmpAddr
     jsr CalcGuardianUDGAddr
     jsr CopyVerticalGuardianFrame
++
     jsr DrawVerticalGuardian
     jmp EndGuardianLoop
 
 EndGuardianLoop
     jsr CopyUpGuardianData
+    +BorderDebugGuardianIndex
     inc guardian_index
     lda guardian_index
     cmp meta_content_src + meta_off_guardians

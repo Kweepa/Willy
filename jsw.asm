@@ -3,6 +3,7 @@
 
 !source "zp.asm"
 !source "defines.asm"
+!source "debug.asm"
 
 !source "header.asm"
 !source "gameloop.asm"

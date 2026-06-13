@@ -14,6 +14,7 @@ main_loop
     jsr CheckRoomEdge
     jsr AnimateBelts
     jsr WaitForRaster
+    +BorderDebugColor 8
     lda dead
     beq +
 	jsr DeathFlash

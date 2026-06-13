@@ -23,10 +23,9 @@ udg_base = $1c00
 guardian_udgs = udg_base + GUARDIAN_CHR*8
 player_udg = udg_base + PLAY_CHR*8
 
-; Screen shifted down 4 tile rows ($9001); sync below playfield by same amount
-SCREEN_DOWN_RASTER  = 16
-RASTERLINE_PAL      = $66 + SCREEN_DOWN_RASTER
-RASTERLINE_NTSC     = $54 + SCREEN_DOWN_RASTER
+; Sync at row 15/16 boundary (below playfield, above HUD). Screen shifted down ($9001 = $32).
+RASTERLINE_PAL      = $6E
+RASTERLINE_NTSC     = $62
 
 GUARDIAN_HORIZONTAL = 0
 GUARDIAN_VERTICAL = 1
@@ -43,3 +42,6 @@ EDGE_WEST_PX = 1
 EDGE_EAST_PX = 91              ; column 23 - east exit when px >= 91
 EDGE_EAST_ENTRY_PX = 4         ; west spawn when entering from the east
 EDGE_WEST_ENTRY_PX = 88        ; east spawn when entering from the west (col 22, below east trigger)
+
+; 1 = emit border colour writes for raster timing bars; 0 = no code/size cost
+BORDER_DEBUG = 0
