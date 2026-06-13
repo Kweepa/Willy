@@ -13,7 +13,7 @@ TILEMAP_ROWS = 16             # @tilemap lines (gameplay only)
 TILE_BYTES = WIDTH * SCREEN_ROWS
 UDG_BYTES = 56
 TILE_COLOR_BYTES = 6
-ITEM_DRAW_BYTES = 11
+ITEM_DRAW_BYTES = 16
 OP_LDA_IMM = 0xA9
 OP_STA_ABS = 0x8D
 OP_RTS = 0x60
@@ -30,12 +30,15 @@ TAIL_BYTES = 104
 META_SIZE = 15 + ITEM_DRAW_BYTES
 IMAGE_LOAD = 0x1A78
 SCREEN_BASE = 0x1E00
+MAP_BASE = 0x9400
 COLOR_BASE = 0x9600
 MAX_ITEMS = 1
 ROOM_IMAGE_SIZE = 0x588           # 1416 bytes ($1A78-$1FFF)
 TILE_CHR_BASE = 16
 TILE_CONVEYOR = 5
+TILE_ITEM = 6
 ITEM_CHR = 15
+MEN_CHR = 3
 HUD_TITLE_COLS = 15
 DEFAULT_TILE_COLORS = [0, 1, 3, 2, 5, 4]
 DEFAULT_ITEM_UDG = bytes([48, 72, 136, 144, 104, 4, 10, 4])
@@ -396,6 +399,18 @@ def stamp_hud_title(tiles: bytearray, room: dict) -> None:
         tiles[base + i] = ascii_to_rom_screen(ch)
 
 
+def stamp_hud_men(tiles: bytearray) -> None:
+    """HUD row 16 col 18 — Willy head (chr 7 = player_bmp+$c0); count at col 19 runtime."""
+    base = (SCREEN_ROWS - 1) * WIDTH + 18
+    tiles[base] = MEN_CHR
+
+
+def stamp_hud_item(tiles: bytearray) -> None:
+    """HUD row 16 col 21 — item icon (chr 15); count drawn at cols 22-23 at runtime."""
+    base = (SCREEN_ROWS - 1) * WIDTH + 21
+    tiles[base] = ITEM_CHR
+
+
 def belt_byte(speed: int) -> int:
     return speed & 0xFF
 
@@ -552,12 +567,13 @@ def build_meta(room: dict) -> bytes:
 
 
 def build_item_draw(room: dict) -> bytes:
-    """11 bytes: lda #ITEM_CHR / sta screen / lda #color / sta color_ram / rts."""
+    """16 bytes: lda #ITEM / sta screen / lda #color / sta color / lda #TILE_ITEM / sta map / rts."""
     col, row = room["items"][0]
     if not 0 <= col < WIDTH or not 0 <= row < TILEMAP_ROWS:
         raise room_error(room, f"item cell out of range: col={col} row={row}")
     cell_off = row * WIDTH + col
     scr_addr = SCREEN_BASE + cell_off
+    map_addr = scr_addr + (MAP_BASE - SCREEN_BASE)
     col_addr = COLOR_BASE + cell_off
     color = room["itemcolor"] & 0xFF
     code = bytearray()
@@ -569,6 +585,10 @@ def build_item_draw(room: dict) -> bytes:
     code.append(color)
     code.append(OP_STA_ABS)
     code.extend(struct.pack("<H", col_addr))
+    code.append(OP_LDA_IMM)
+    code.append(TILE_ITEM)
+    code.append(OP_STA_ABS)
+    code.extend(struct.pack("<H", map_addr))
     code.append(OP_RTS)
     if len(code) != ITEM_DRAW_BYTES:
         raise room_error(room, f"item draw code size {len(code)} != {ITEM_DRAW_BYTES}")
@@ -663,6 +683,8 @@ def build_room_image(room: dict) -> bytes:
     """RAM image loaded at $1A78 (1416 bytes)."""
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap", room))
     stamp_hud_title(tiles, room)
+    stamp_hud_men(tiles)
+    stamp_hud_item(tiles)
 
     raw = room["guardiansprites"] or bytes(GUARDIAN_SPRITES_BYTES)
     sprites = deinterleave_guardian_sprites(raw)

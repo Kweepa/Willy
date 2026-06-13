@@ -1,10 +1,15 @@
 ResetGame
     lda #33
     sta map
-    lda #3
+    lda #8
     sta men
     lda #0
-    sta items_left
+    sta items_collected
+    ldx #pickup_got_last - pickup_got
+-
+    sta pickup_got,x
+    dex
+    bpl -
     lda #1
     sta initial_room_load       ; first room load uses @spawn from meta
 	rts

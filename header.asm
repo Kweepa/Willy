@@ -17,11 +17,11 @@ meta_ramp_ry = $1fa0
 meta_ramp_E = $1fa1
 meta_ramp_A = $1fa2
 meta_off_conn = 11
-meta_off_item_draw = 15         ; 11-byte 6502: lda #chr sta scr lda #col sta col rts
-meta_off_item_draw_size = 11
-meta_size = 26
-meta_off_tilecolors = 26
-meta_off_guardian_data = 32
+meta_off_item_draw = 15         ; 16-byte 6502: lda #chr sta scr lda #col sta col lda #TILE_ITEM sta map rts
+meta_off_item_draw_size = 16
+meta_size = 31
+meta_off_tilecolors = 31
+meta_off_guardian_data = 37
 item_draw = meta_content_src + meta_off_item_draw
 tile_color_src = meta_content_src + meta_off_tilecolors
 guardian_data_base = meta_content_src + meta_off_guardian_data
@@ -51,14 +51,20 @@ tile_bytes = 408                 ; 24 x 17
 hud_row_off = 384                ; row 16 * 24
 hud_men_scr = screen_base + hud_row_off + 18
 hud_men_col = color_base + hud_row_off + 18
+hud_men_count_scr = screen_base + hud_row_off + 19
 hud_item_scr = screen_base + hud_row_off + 21
 hud_item_col = color_base + hud_row_off + 21
+hud_items_scr = screen_base + hud_row_off + 22
+hud_items_col = color_base + hud_row_off + 22
 map_base = $9400
 color_base = $9600
 room_image_size = $588           ; 1416 bytes ($1A78–$1FFF)
 tile_color_bytes = 6
 guardian_data_bytes = 54
 max_guardians = 6
+
+pickup_got = $100
+pickup_got_last = pickup_got + $3d
 
 basic_start = $1000
 

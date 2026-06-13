@@ -14,6 +14,8 @@ try_touch_below
     sta typ
     cmp #TILE_EMPTY
     beq ++
+    cmp #TILE_ITEM
+    beq ++
     cmp #TILE_CONVEYOR
     beq do_belt
     cmp #TILE_PLATFORM
@@ -388,8 +390,15 @@ ErasePlayer
 	ldy erase_scr_off,x
 	lda (map_ptr),y
 	and #$0f
+	cmp #TILE_ITEM
+	bne +
+	lda #ITEM_CHR
+	sta (scr_ptr),y
+	jmp ++
++
 	ora #$10
 	sta (scr_ptr),y
+++
 	dex
 	bpl -
     rts
@@ -538,14 +547,17 @@ coll_check
 	lda tmp
 	beq +
 	lda player_overlap,y
-	jsr try_killed
+	jsr HandleOverlapChar
 +
 	dey
 	bpl --
     +BorderDebugColor (WHITE + 8)
     rts
 
-try_killed
+; HandleOverlapChar - A = screen chr under a Willy cell (player_overlap).
+; Items: pickup. Hazards/guardians: kill. Solids: pass through.
+; coll_check only calls us when player_touch is non-zero.
+HandleOverlapChar
     cmp #ITEM_CHR
     bne +
     jsr PickupItemAtOverlap
@@ -560,19 +572,26 @@ try_killed
     rts
 
 PickupItemAtOverlap
-    lda items_left
-    beq pickup_done
+    ldx map
+    lda pickup_got,x
+    bne pickup_done
+    inc pickup_got,x
+    inc items_collected
+    tya
+    pha
     lda draw_player_offsets,y
     tay
     lda #TILE_CHR_BASE
     sta (scr_ptr),y
     lda #TILE_EMPTY
     sta (map_ptr),y
-    lda #BLACK
+    tax
+    lda tile_color_src,x
     sta (col_ptr),y
     lda #180
     sta $900c
-    dec items_left
+    pla
+    tay
 pickup_done
     rts
 

@@ -13,9 +13,11 @@ TILE_SOLID = 2
 TILE_HAZARD = 3
 TILE_RAMP = 4
 TILE_CONVEYOR = 5
+TILE_ITEM = 6                   ; map-only marker for pickup cell (not in author tilemap)
 
 TILE_CHR_BASE = 16
 ITEM_CHR = 15
+MEN_CHR = 7                     ; HUD icon; UDG RAM = player_bmp+$c0 (dual-use, do not overwrite)
 GUARDIAN_CHR = 22
 PLAY_CHR = 58
 

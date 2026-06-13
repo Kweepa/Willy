@@ -11,6 +11,7 @@ main_loop
     jsr MoveGuardians
     jsr GetPlayerInput
     jsr Collide
+    jsr DrawHud
     jsr CheckRoomEdge
     jsr AnimateBelts
     jsr WaitForRaster

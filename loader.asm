@@ -7,7 +7,7 @@
 ;
 ; PRG image layout (1416 bytes at $1A78):
 ;   +$000 guardian sprites 256 @ $1A78
-;   +$100 player_bmp 256 @ $1B78
+;   +$100 player_bmp 256 @ $1B78 (chr 7 UDG @$1C38 = bmp+$c0, HUD head icon)
 ;   +$200 tile UDG 56 @ $1C78 (chr 15-21)
 ;   +$238 runtime pad 336 ($1CB0-$1DFF)
 ;   +$388 screen 408 @ $1E00 (24x17)
@@ -32,6 +32,27 @@ FormatRoomName
     adc #'0'
     sta room_name+2
     sty room_name+1
+    rts
+
+DrawHud
+    lda items_collected
+    ldy #$b0
+-
+    cmp #10
+    bcc +
+    sbc #10
+    iny
+    bne -
++
+    sty hud_items_scr
+    clc
+    adc #$b0
+    sta hud_items_scr+1
+
+    lda men
+    clc
+    adc #$b0
+    sta hud_men_count_scr
     rts
 
 LoadRoom
@@ -82,8 +103,9 @@ PaintColors
     rts
 
 DrawItem
-    lda items_left
-    beq draw_item_done
+    ldx map
+    lda pickup_got,x
+    bne draw_item_done
     jsr item_draw
 draw_item_done
     rts
@@ -101,8 +123,6 @@ ParseRoomMeta
     lda meta_content_src + meta_off_spawn_py
     sta py
 skip_room_spawn
-    lda #1
-    sta items_left
     lda #27
     sta inairtime
     lda #1
