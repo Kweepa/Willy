@@ -30,11 +30,6 @@ ResetMap
 	rts
 
 DrawMap
-	ldx #20
--
-    jsr WaitForRaster
-    dex
-    bne -
     lda #0
     sta dead
     lda initial_room_load

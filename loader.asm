@@ -56,6 +56,15 @@ DrawHud
     rts
 
 LoadRoom
+    ; clear colors
+    lda #0
+    ldx #192
+-
+    sta $95ff,x
+    sta $96bf,x
+    dex
+    bne -
+
     jsr FormatRoomName
     sei
     lda #3
