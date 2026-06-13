@@ -1,4 +1,4 @@
-
+    ; call this once per frame, irrespective of movement
 calculate_ramp_y
     lda px
     clc
@@ -25,6 +25,7 @@ calculate_ramp_y
     sta is_in_ramp_bounds
     rts
 
+    ; call this when about to move when on the ground or on a ramp (on_ground or is_on_ramp)
 do_walking_ramp_check
     lda #0
     sta is_on_ramp
@@ -51,6 +52,7 @@ do_walking_ramp_check
     inc py
     rts
 
+    ; call this when falling straight down (xadd is 0 and yadd is positive, not on ground or on ramp)
 do_falling_ramp_check
     lda #0
     sta is_on_ramp
