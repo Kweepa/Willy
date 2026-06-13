@@ -4,7 +4,6 @@
 @spawn 64 104
 @border GRN
 @belt -1
-@ramp 1
 
 @guardiansprites
 ; balls
@@ -29,28 +28,25 @@
 @vguard 0
 
 @tilemap
-220000000000000000000002
-220000000000000000000002
-220000000000000000000002
-000000000000000000000002
-000000000000000000000002
-111111111110042111111112
-200000000000402000000002
-200000000004002000000002
-200000000040002000000002
-200000000400002000000002
-200000004000002000000002
-200000040000002000000002
-200000400000002000000002
-000011000000000000000002
-000000000000000055500002
-111111111111111111111111
+WW                     W
+WW                     W
+WW                     W
+                       W
+                       W
+FFFFFFFFFFF  /WFFFFFFFFW
+W           / W        W
+W          /  W        W
+W         /   W        W
+W        /    W        W
+W       /     W        W
+W      /      W        W
+W     /       W        W
+    FF            +    W
+                <<<    W
+FFFFFFFFFFFFFFFFFFFFFFFF
 
 @tilecolors WHT RED YEL YEL WHT CYN
 @itemcolor YEL
-
-@items
-18 13
 
 @guardians
 y=24 x=12(0..19) v=-1 f=0..3 GRN # horizontal, because y is constant (measured in pixels) and x (measured in tiles) has a range. v starts negative here

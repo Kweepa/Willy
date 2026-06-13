@@ -8,18 +8,23 @@ Human-editable room descriptions for the JSW VIC-20 port. Convert with [`tools/m
 - **Rows 0–15:** gameplay (author in `@tilemap`).
 - **Row 16:** HUD row — left-justified `@title`; men and item count drawn at runtime.
 
-## Tile digits (tilemap)
+## Tile characters (tilemap)
 
-| Digit | Type | Notes |
-|-------|------|--------|
-| `0` | Empty | Passable |
-| `1` | Platform | Walk on / through |
-| `2` | Solid | Blocks entry |
-| `3` | Hazard | Kills Willy |
-| `4` | Ramp | Slope (see `@ramp`) |
-| `5` | Conveyor | Uses `@belt` speed |
+| Char | Type | Notes |
+|------|------|--------|
+| ` ` or `.` | Empty | Passable |
+| `F` | Floor | Walk on / through (platform) |
+| `W` | Wall | Solid; blocks entry |
+| `*` | Hazard | Kills Willy |
+| `/` | Ramp | Up-right slope |
+| `\` | Ramp | Up-left slope |
+| `<` | Conveyor | Left belt; must match `@belt -1` |
+| `>` | Conveyor | Right belt; must match `@belt 1` |
+| `+` | Pickup | Marks the collectable position (exactly one per room); baked as empty, drawn at runtime |
 
-Author digits **0–5** in `@tilemap`; `mkroom` stores screen codes **16–21** (tile type + 16). Item pickup (screen chr **15**) is not in the tilemap — position comes from `@items` and is drawn at runtime. UDG bitmaps: index **6** = item (chr 15), indices **0–5** = tiles (chr 16–21) in `@tileudg`.
+Author ASCII chars in `@tilemap`; `mkroom` stores screen codes **16–21** (tile type + 16). Ramp direction is **inferred** from `/` (up-right) or `\` (up-left) tiles and baked into room meta. The pickup (screen chr **15**) is **not** baked into the screen — `mkroom` extracts its cell from `+` and emits draw code in meta. UDG bitmaps: index **6** = item (chr 15), indices **0–5** = tiles (chr 16–21) in `@tileudg`.
+
+Each `@tilemap` row must be exactly **24 characters** wide. Rows that are entirely spaces are valid (do not delete them).
 
 ## Color digits
 
@@ -37,21 +42,19 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@spawn` | px py | Willy start (quarter-char X, 2-pixel Y) |
 | `@border` | colour | Border colour (BLK WHT RED CYN PUR GRN BLU YEL). `mkroom` stores `border \| 8` in meta — full VIC `$900F` byte (white background + border). |
 | `@belt` | speed | Conveyor speed: `-1`, `0`, or `1` |
-| `@ramp` | type | `0`=none, `1`=up-right, `2` or `-1`=up-left. Build bakes `rx1`, `rx2`, `ry`, `E`, `A` — `rx1`/`rx2` are ramp x (0..95); up-right: `rx1=col_start*4-4`, `rx2=col_end*4+1` (exclusive); up-left: `rx1=col_start*4`, `rx2=col_end*4+5` (exclusive); `ry=ramp_surface_abs(rx1)-16-toe` (`toe` 0 up-right, 6 up-left); `E`/`A` are `$FF`/`$01` (up-right) or `$00`/`$00` (up-left); no ramp uses `rx1=rx2=99`, `E=A=0`. |
 | `@guardiansprites` | block | 256 bytes: 8 frames × 32 bytes. Author in Skool interleaved format (left, right byte pairs per scanline). `mkroom` converts to column-major (16-byte left column, 16-byte right column) in the PRG. |
 | `@hguard` | index | Horizontal guardian sprite index |
 | `@vguard` | index | Vertical guardian sprite index |
-| `@tilemap` | block | 17 lines × 24 digits |
+| `@tilemap` | block | 16 lines × 24 characters (gameplay rows 0–15) |
 | `@playerbmp` | block | Optional 256-byte Willy sprite (defaults if omitted). Room **29** (Nightmare Room) uses repo-root `nightmareroomwilly.txt` at cook time (Skool interleaved format, deinterleaved like `@guardiansprites`). |
 | `@colors` | block | 18 lines × 24 digits |
-| `@items` | list | Collectibles: `col row` pairs (screen cells) |
 | `@tilecolors` | list | Six VIC colours for tile types 0–5 |
 | `@itemcolor` | colour | Item pickup cell colour (baked into draw code; default YEL) |
 | `@guardians` | list | Guardian DSL per line (see below). No stored animation frame — computed each tick. Vertical: `frame = fmin + (hguard_frame & mask)`. Horizontal: `frame = (hx & 3) + fmin`, or bidirectional `+ 4` by direction. |
 | `@tileudg` | block | Seven lines: `N: bb bb bb bb bb bb bb bb` (hex bytes; 0–5 tiles, 6 item) |
 | `@guardianbmp` | block | Optional; hex bytes, 128 per guardian in order |
 
-Lines starting with `#` or `;` are comments; `#` may also appear mid-line. Blank lines ignored.
+Lines starting with `#` or `;` are comments; `#` may also appear mid-line. Blank lines outside `@tilemap` are ignored.
 
 ## Binary layout (output of `mkroom.py`)
 
@@ -103,52 +106,32 @@ Save as [`rooms/room01.room`](../rooms/room01.room).
 @spawn 44 56
 @border BLK
 @belt 0
-@ramp 0
 @hguard 0
 @vguard 0
 
 @tilemap
-222222222222222222222222
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000003000002
-200000000011111000000002
-200000000011111000000002
-000000000000000000000000
-000000000000000000000000
+WWWWWWWWWWWWWWWWWWWWWWWW
+W                      W
+W                      W
+W                      W
+W                      W
+W                      W
+W                      W
+W                      W
+W                      W
+W                      W
+W                      W
+W                      W
+W                      W
+W          + *        W
+W          FFFFF       W
+W          FFFFF       W
+                        
+                        
 
-@colors
-000000000000000000000000
-000000000000000000000000
-000000000000000000000000
-000000000000000000000000
-000000000000000000000000
-000000000000000000000000
-000000000000000000000000
-000000000000000000000000
-000000000000000000000000
-000000000000000000000000
-000000000000000000000000
-000000000000000000000000
-000000000000000000000000
-000000000000000003000000
-000000000055555000000000
-000000000055555000000000
-000000000000000000000000
-000000000000000000000000
+@tilecolors BLK WHT WHT RED CYN PUR GRN
 
-@items
-10 13
+@itemcolor YEL
 
 @guardians
 
@@ -161,7 +144,7 @@ Save as [`rooms/room01.room`](../rooms/room01.room).
 5: 00 aa 55 aa 55 aa 55 aa
 ```
 
-**Notes:** Row 13 hazard at column 12. Platform floor rows 14–15 (cols 11–15). Open south on row 15 (cols 1–21 are platform/empty — Willy walks off bottom). Item at (10, 13).
+**Notes:** Row 13 hazard at column 12 (`*`). Floor rows 14–15 (cols 11–15, `F`). Open south on row 15. Pickup at (10, 13) marked with `+` on row 13.
 
 ---
 
@@ -179,53 +162,32 @@ Save as [`rooms/room02.room`](../rooms/room02.room).
 @spawn 44 16
 @border BLU
 @belt 1
-@ramp 0
 @hguard 0
 @vguard 0
 
 @tilemap
-222222222222222222222222
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000555555000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000000000000000002
-200000000011111000000002
-200000000011111000000002
-000000000000000000000000
-000000000000000000000000
+WWWWWWWWWWWWWWWWWWWWWWWW
+W                      W
+W                      W
+W                      W
+W                      W
+W                      W
+W                      W
+W                      W
+W       >>>>>>>        W
+W                      W
+W                      W
+W                      W
+W                      W
+W                      W
+W          FFFFF       W
+W    +     FFFFF       W
+                        
+                        
 
-@colors
-666666666666666666666666
-600000000000000000000006
-600000000000000000000006
-600000000000000000000006
-600000000000000000000006
-600000000000000000000006
-600000000000000000000006
-600000000000000000000006
-600000000777777000000006
-600000000000000000000006
-600000000000000000000006
-600000000000000000000006
-600000000000000000000006
-600000000000000000000006
-600000000055555000000006
-600000000055555000000006
-000000000000000000000000
-000000000000000000000000
+@tilecolors BLU WHT WHT RED CYN PUR GRN
 
-@items
-6 10
-18 10
+@itemcolor YEL
 
 @guardians
 
@@ -238,7 +200,7 @@ Save as [`rooms/room02.room`](../rooms/room02.room).
 5: aa 55 aa 55 aa 55 aa 55
 ```
 
-**Notes:** `@conn 1` = north to room 1. Spawn near top (`py=16`) for entry from north. Conveyor row 8 (cols 11–16). Two items on row 10.
+**Notes:** `@conn 1` = north to room 1. Spawn near top (`py=16`) for entry from north. Conveyor row 8 (cols 11–16, `>`). One pickup at (4, 14) marked with `+`.
 
 ---
 
@@ -283,6 +245,8 @@ Save the scripts below as [`tools/mkroom.py`](../tools/mkroom.py) and [`tools/mk
 ---
 
 ## Reference script: `tools/mkroom.py`
+
+> **Note:** The abbreviated listing below is outdated (numeric tilemaps, `@items`). Use the real [`tools/mkroom.py`](../tools/mkroom.py) — ASCII tilemap chars and `+` pickup markers as documented above.
 
 ```python
 #!/usr/bin/env python3

@@ -35,8 +35,28 @@ COLOR_BASE = 0x9600
 MAX_ITEMS = 1
 ROOM_IMAGE_SIZE = 0x588           # 1416 bytes ($1A78-$1FFF)
 TILE_CHR_BASE = 16
+TILE_EMPTY = 0
+TILE_PLATFORM = 1
+TILE_SOLID = 2
+TILE_HAZARD = 3
+TILE_RAMP = 4
 TILE_CONVEYOR = 5
 TILE_ITEM = 6
+RAMP_NONE = 0
+RAMP_UP_RIGHT = 1
+RAMP_UP_LEFT = 0xFF
+RAMP_BOUNDS_NONE = 99
+TILE_CHAR_MAP = {
+    " ": TILE_EMPTY,
+    ".": TILE_EMPTY,
+    "F": TILE_PLATFORM,
+    "W": TILE_SOLID,
+    "*": TILE_HAZARD,
+    "/": TILE_RAMP,
+    "\\": TILE_RAMP,
+    "<": TILE_CONVEYOR,
+    ">": TILE_CONVEYOR,
+}
 ITEM_CHR = 15
 MEN_CHR = 3
 HUD_TITLE_COLS = 15
@@ -226,6 +246,78 @@ def parse_guardian_line(
     }
 
 
+def parse_tile_char(ch: str, room: dict | None = None) -> int:
+    """Map ASCII tilemap character to tile type 0-5. '+' bakes as empty."""
+    if ch == "+":
+        return TILE_EMPTY
+    try:
+        return TILE_CHAR_MAP[ch]
+    except KeyError:
+        raise room_error(room, f"unknown tilemap character {ch!r}")
+
+
+def extract_item_from_tilemap(
+    tilemap: list, room: dict | None = None
+) -> tuple[int, int]:
+    """Return (col, row) of the single '+' pickup marker."""
+    found: list[tuple[int, int]] = []
+    for row, line in enumerate(tilemap):
+        if row >= TILEMAP_ROWS:
+            continue
+        for col, ch in enumerate(line):
+            if ch == "+":
+                found.append((col, row))
+    if len(found) != MAX_ITEMS:
+        raise room_error(
+            room,
+            f"tilemap must have exactly {MAX_ITEMS} '+' pickup marker(s), found {len(found)}",
+        )
+    return found[0]
+
+
+def infer_ramp_from_tilemap(
+    tilemap: list, room: dict | None = None
+) -> int:
+    """Derive ramp type from '/' (up-right) or '\\' (up-left) tiles."""
+    has_up_right = False
+    has_up_left = False
+    for row, line in enumerate(tilemap):
+        if row >= TILEMAP_ROWS:
+            continue
+        for ch in line:
+            if ch == "/":
+                has_up_right = True
+            elif ch == "\\":
+                has_up_left = True
+    if has_up_right and has_up_left:
+        raise room_error(room, "tilemap has mixed ramp directions ('/' and '\\')")
+    if has_up_right:
+        return RAMP_UP_RIGHT
+    if has_up_left:
+        return RAMP_UP_LEFT
+    return RAMP_NONE
+
+
+def validate_tilemap_belt(
+    tilemap: list, belt: int, room: dict | None = None
+) -> None:
+    """Check conveyor chars match @belt direction."""
+    for row, line in enumerate(tilemap):
+        if row >= TILEMAP_ROWS:
+            continue
+        for col, ch in enumerate(line):
+            if ch == "<" and belt == 1:
+                raise room_error(
+                    room,
+                    f"conveyor '<' at col {col} row {row} but @belt 1 (expect '>')",
+                )
+            elif ch == ">" and belt == -1:
+                raise room_error(
+                    room,
+                    f"conveyor '>' at col {col} row {row} but @belt -1 (expect '<')",
+                )
+
+
 def parse_room(text: str, source: Path | str | None = None) -> dict:
     lines = text.splitlines()
     loc = lambda line_no=None: fmt_loc(source, line_no)
@@ -293,9 +385,8 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         block_lines.clear()
 
     for line_no, raw in enumerate(lines, start=1):
-        line = raw.split("#", 1)[0].strip()
-        if not line or line.startswith(";"):
-            continue
+        raw_content = raw.split("#", 1)[0].rstrip("\r\n")
+        line = raw_content.strip()
         if line.startswith("@"):
             flush_block()
             parts = line.split()
@@ -306,7 +397,6 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
                 "guardiansprites",
                 "playerbmp",
                 "guardians",
-                "items",
             ):
                 block = tag
                 continue
@@ -322,11 +412,6 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
                 room["border"] = parse_vic_color(parts[1])
             elif tag == "belt":
                 room["belt"] = int(parts[1])
-            elif tag == "ramp":
-                ramp_type = int(parts[1])
-                if ramp_type in (-1, 2):
-                    ramp_type = RAMP_UP_LEFT
-                room["ramp"] = ramp_type
             elif tag == "tilecolors":
                 if len(parts[1:]) != TILE_COLOR_BYTES:
                     raise ValueError(
@@ -336,26 +421,26 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
             elif tag == "itemcolor":
                 room["itemcolor"] = parse_vic_color(parts[1])
             continue
+        if block == "tilemap":
+            if raw_content.lstrip().startswith(";"):
+                continue
+            if not raw_content and not line:
+                continue
+            block_lines.append(raw_content)
+            continue
+        if not line or line.startswith(";"):
+            continue
         if block == "guardians":
             if line:
                 room["guardians"].append(
                     parse_guardian_line(line, source=source, line_no=line_no)
                 )
-        elif block == "items":
-            cols = [int(x) for x in line.split()]
-            for i in range(0, len(cols) - 1, 2):
-                room["items"].append((cols[i], cols[i + 1]))
-            if len(room["items"]) > MAX_ITEMS:
-                raise ValueError(
-                    f"{loc(line_no)}too many items ({len(room['items'])}, max {MAX_ITEMS})"
-                )
-        elif block in ("tilemap", "tileudg", "guardiansprites", "playerbmp"):
+        elif block in ("tileudg", "guardiansprites", "playerbmp"):
             block_lines.append(line)
     flush_block()
-    if len(room["items"]) != MAX_ITEMS:
-        raise ValueError(
-            f"{loc()}room {room['id']}: must have exactly {MAX_ITEMS} item (col row pair in @items)"
-        )
+    room["items"] = [extract_item_from_tilemap(room["tilemap"], room)]
+    room["ramp"] = infer_ramp_from_tilemap(room["tilemap"], room)
+    validate_tilemap_belt(room["tilemap"], room["belt"], room)
     if source:
         room["_source"] = str(source)
     return room
@@ -368,15 +453,12 @@ def grid_bytes(rows: list, name: str, room: dict | None = None) -> bytes:
         )
     out = bytearray()
     for r, row in enumerate(rows):
-        row = row.strip()
         if len(row) != WIDTH:
             raise room_error(
                 room, f"{name} row {r}: expected {WIDTH} cols, got {len(row)} ({row!r})"
             )
         for ch in row:
-            v = int(ch)
-            if v > TILE_CONVEYOR:
-                raise room_error(room, f"tile out of range 0-{TILE_CONVEYOR}: {v}")
+            v = parse_tile_char(ch, room)
             out.append(v + TILE_CHR_BASE)
     out.extend([TILE_CHR_BASE] * WIDTH)  # HUD row 16 — title stamped later
     return bytes(out)
@@ -414,12 +496,6 @@ def stamp_hud_item(tiles: bytearray) -> None:
 def belt_byte(speed: int) -> int:
     return speed & 0xFF
 
-
-TILE_RAMP = 4
-RAMP_NONE = 0
-RAMP_UP_RIGHT = 1
-RAMP_UP_LEFT = 0xFF
-RAMP_BOUNDS_NONE = 99
 
 # Feet py = surface - RAMP_FEET_OFFSET - toe[ramp_type]
 RAMP_FEET_OFFSET = 16
@@ -473,19 +549,15 @@ def derive_ramp_bounds(
     for row, line in enumerate(tilemap):
         if row >= TILEMAP_ROWS:
             continue
-        for col, ch in enumerate(line.strip()):
-            if int(ch) == TILE_RAMP:
+        for col, ch in enumerate(line):
+            if ch in ("/", "\\"):
                 cells.append((col, row))
 
-    if ramp_type == 0:
-        if cells:
-            raise room_error(
-                room, f"@ramp 0 but tilemap has {len(cells)} ramp tile(s)"
-            )
+    if ramp_type == RAMP_NONE:
         return (0, 0, 0, 0)
 
     if not cells:
-        raise room_error(room, f"@ramp {ramp_type} but no ramp tiles (4) in tilemap")
+        raise room_error(room, "ramp type set but no ramp tiles (/ or \\) in tilemap")
 
     col_start = min(col for col, _ in cells)
     col_end = max(col for col, _ in cells)
