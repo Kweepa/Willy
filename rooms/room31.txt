@@ -28,14 +28,14 @@
                         
                         
                         
-                        
-WWWWFFFFFFFFFFFFFFF/WWWW
-WWWWFFFFFFFFFFFFFF/WWWWW
-WWWWFFFFFFFFFFFFF/WWWWWW
-WWWWWWWWWWWW+WWWWWWWWWWW
+   +                    
+WWWW               /WWWW
+WWWW              /WWWWW
+WWWW             /WWWWWW
+WWWWWW WWWWWWWWWWWWWWWWW
 
 @tilecolors WHT BLU RED WHT WHT WHT
-@itemcolor BLK
+@itemcolor PUR
 
 @guardians
 y=104 x=8(4..8) v=-1 f=0..7 YEL
@@ -43,8 +43,8 @@ y=104 x=8(4..8) v=-1 f=0..7 YEL
 @tileudg
 0: 0,0,0,0,0,0,0,0
 1: 0,0,0,0,0,0,0,0
-2: 68,68,187,68,68,68,187,68
-3: 0,0,0,0,0,0,0,0 ; invert
+2: 68,68,187,68,68,68,187,68 ; invert
+3: 0,0,0,0,0,0,0,0
 4: 3,3,15,15,63,63,255,255
-5: 0,0,0,0,0,0,0,0 ; invert
+5: 0,0,0,0,0,0,0,0
 6: 112,32,32,80,80,136,136,136

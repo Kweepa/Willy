@@ -61,6 +61,7 @@ AnimateBelts
     lda left_right_ctr
     bne no_belt_animate
     lda meta_content_src + meta_off_belt
+    beq no_belt_animate
     bpl belt_animate_right
     lda udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8
     asl

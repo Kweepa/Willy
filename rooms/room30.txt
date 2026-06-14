@@ -1,6 +1,6 @@
 @room 30
 @title The Banyan Tree
-@conn 255 29 255 255
+@conn 255 29 255 31
 @spawn 8 16
 @border PUR
 @belt 0
@@ -33,7 +33,7 @@
           WW            
           WF            
           WFF           
-         /WFFFFF        
+         /FFFFFF        
         /    F  F       
        /     F  F       
       /         F       
