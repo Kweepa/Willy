@@ -18,7 +18,7 @@ MODULES = [
 ]
 
 RAM = [
-    ("guardian_sprites_base", 0x1A78, 256, "from room PRG"),
+    ("guardian_sprites_base", 0x1A58, 288, "from room PRG (9 frames)"),
     ("player_bmp", 0x1B78, 256, "from room PRG"),
     ("tile UDGs chr 15-21", 0x1C78, 56, "chr 15=item, 16-21=tiles"),
     ("guardian_udgs chr 22+", 0x1CB0, 288, "runtime UDG workspace"),
@@ -46,8 +46,8 @@ def main():
     bounds.sort()
     prg_end = labels.get("prg_end", max(labels.values()))
     load_base = 0x1000
-    room_base = 0x1A78
-    room_size = 0x588
+    room_base = 0x1A58
+    room_size = 0x5A8
 
     total = prg_end - load_base
     overlap = prg_end - room_base

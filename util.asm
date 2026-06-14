@@ -75,7 +75,7 @@ ConvertXYToScreenAddr
     sta col_ptr + 1
     rts
 
-; A = frame index 0-15 -> arr = guardian_sprites_base + frame*32
+; A = frame index 0-16 -> arr = guardian_sprites_base + frame*32
 GetSpriteFrameAddr
     sta tmp
     lda #0

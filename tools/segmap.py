@@ -14,7 +14,7 @@ for line in lbl.read_text().splitlines():
 
 prg_end = labels.get("prg_end", max(labels.values()))
 load_base = 0x1000
-room_base = 0x1A78
+room_base = 0x1A58
 resident_limit = room_base - load_base
 
 MODULES = [

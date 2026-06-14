@@ -24,7 +24,7 @@ ITEM_DRAW_BYTES = 16
 OP_LDA_IMM = 0xA9
 OP_STA_ABS = 0x8D
 OP_RTS = 0x60
-GUARDIAN_SPRITES_BYTES = 256
+GUARDIAN_SPRITES_BYTES = 288  # 9 frames x 32 bytes
 PLAYER_BMP_BYTES = 256
 NIGHTMARE_ROOM_ID = 29
 NIGHTMARE_PLAYER_BMP_PATH = (
@@ -35,12 +35,12 @@ MAX_GUARDIANS = 6
 RUNTIME_UDG_PAD = 336             # $1CB0-$1DFF
 TAIL_BYTES = 104
 META_SIZE = 15 + ITEM_DRAW_BYTES
-IMAGE_LOAD = 0x1A78
+IMAGE_LOAD = 0x1A58
 SCREEN_BASE = 0x1E00
 MAP_BASE = 0x9400
 COLOR_BASE = 0x9600
 MAX_ITEMS = 1
-ROOM_IMAGE_SIZE = 0x588           # 1416 bytes ($1A78-$1FFF)
+ROOM_IMAGE_SIZE = 0x5A8           # 1448 bytes ($1A58-$1FFF)
 TILE_CHR_BASE = 16
 TILE_EMPTY = 0
 TILE_PLATFORM = 1
@@ -119,7 +119,7 @@ GUARDIAN_DSL_H = re.compile(
     r"y\s*=\s*(\d+)\s+"
     r"x\s*=\s*(\d+)\((\d+)\.\.(\d+)\)\s+"
     r"v\s*=\s*([+-]?\d+)\s+"
-    r"f\s*=\s*(\d+)\.\.(\d+)\s+"
+    r"f\s*=\s*(\d+)(?:\.\.(\d+))?\s+"
     r"(\w+)",
     re.I,
 )
@@ -127,7 +127,7 @@ GUARDIAN_DSL_V = re.compile(
     r"x\s*=\s*(\d+)\s+"
     r"y\s*=\s*(\d+)\((\d+)\.\.(\d+)\)\s+"
     r"v\s*=\s*([+-]?\d+)\s+"
-    r"f\s*=\s*(\d+)\.\.(\d+)\s+"
+    r"f\s*=\s*(\d+)(?:\.\.(\d+))?\s+"
     r"(\w+)",
     re.I,
 )
@@ -226,9 +226,9 @@ def parse_guardian_line(
         axis = 1
 
     fmin_i = int(fmin)
-    fmax_i = int(fmax)
-    if not 0 <= fmin_i <= 7 or not 0 <= fmax_i <= 7 or fmin_i > fmax_i:
-        raise ValueError(f"{loc}frame range out of range 0-7: {fmin}..{fmax}")
+    fmax_i = int(fmax) if fmax is not None else fmin_i
+    if not 0 <= fmin_i <= 8 or not 0 <= fmax_i <= 8 or fmin_i > fmax_i:
+        raise ValueError(f"{loc}frame range out of range 0-8: {fmin}..{fmax}")
 
     if axis == 1:
         frame_count = fmax_i - fmin_i + 1
@@ -712,11 +712,13 @@ def deinterleave_guardian_frame(frame: bytes) -> bytes:
     return bytes(out)
 
 
-def deinterleave_guardian_sprites(data: bytes) -> bytes:
-    data = data[:GUARDIAN_SPRITES_BYTES].ljust(GUARDIAN_SPRITES_BYTES, b"\x00")
+def deinterleave_guardian_sprites(
+    data: bytes, nbytes: int = GUARDIAN_SPRITES_BYTES
+) -> bytes:
+    data = data[:nbytes].ljust(nbytes, b"\x00")
     return b"".join(
         deinterleave_guardian_frame(data[i : i + 32])
-        for i in range(0, GUARDIAN_SPRITES_BYTES, 32)
+        for i in range(0, nbytes, 32)
     )
 
 
@@ -746,7 +748,7 @@ def load_nightmare_player_bmp() -> bytes:
         raise ValueError(
             f"{NIGHTMARE_PLAYER_BMP_PATH}: expected {PLAYER_BMP_BYTES} bytes, got {len(bs)}"
         )
-    return deinterleave_guardian_sprites(bytes(bs))
+    return deinterleave_guardian_sprites(bytes(bs), PLAYER_BMP_BYTES)
 
 
 def player_bmp_for_room(room: dict) -> bytes:
@@ -756,7 +758,7 @@ def player_bmp_for_room(room: dict) -> bytes:
 
 
 def build_room_image(room: dict) -> bytes:
-    """RAM image loaded at $1A78 (1416 bytes)."""
+    """RAM image loaded at $1A58 (1448 bytes)."""
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap", room))
     stamp_hud_title(tiles, room)
     stamp_hud_men(tiles)
@@ -810,10 +812,18 @@ def main():
     if args.all:
         indir = Path(args.input or "rooms")
         outdir = Path(args.output or "rooms/out")
+        errors: list[tuple[Path, str]] = []
         for src in sorted(indir.glob("room*.txt")):
-            text = src.read_text(encoding="utf-8")
-            room = parse_room(text, source=src)
-            convert_file(src, outdir / str(room["id"]), room=room)
+            try:
+                text = src.read_text(encoding="utf-8")
+                room = parse_room(text, source=src)
+                convert_file(src, outdir / str(room["id"]), room=room)
+            except (ValueError, OSError) as e:
+                errors.append((src, str(e)))
+                print(f"error: {src.name}: {e}", file=sys.stderr)
+        if errors:
+            print(f"\n{len(errors)} room(s) failed", file=sys.stderr)
+            sys.exit(1)
         return
     if not args.input or not args.output:
         ap.error("need input and output, or --all")
