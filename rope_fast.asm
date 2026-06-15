@@ -1,5 +1,7 @@
+; rope implementation - takes about 110 scan lines to for rope_draw
+
 ; zero page assignments - need the rest of the zp to fit around this
-rope_udg = $6a ; (0..23-ish)
+rope_udg = $6a ; (0..15)
 rope_frame = $6b ; (0..53)
 rope_swing_side = $6c ; (0 or 1)
 rope_swing_dir = $6d ; (-1 or 1)
@@ -9,14 +11,14 @@ rope_y = $71 ; (0..7, index in current UDG)
 rope_udg_mem = $72 ; and $73, current UDG mem address
 rope_index = $74 ; used during the drawing loop, rope_frame + i
 rope_udg_advance = $75 ; used during drawing loop to specify whether to advance the UDG (screen x or y changed)
-rope_old_screen_pos = $76 ; 48 byte address table
-rope_segment_y = $a6 ; 32 byte y value for segment
-rope_willy_is_holding = $c6 ; whether willy is grabbing the rope
-rope_willy_seg = $c7 ; which segment willy is holding
-rope_segment_cur_x = $c8 ; segment willy's holding x value
-rope_segment_cur_y = $c9 ; segment willy's holding y value
-rope_seg_skip_above = $ca; precomputed: stop tracking cur x/y when rope_loop_count >= this
-rope_loop_count = $cb
+rope_old_screen_pos = $76 ; 32 byte address table (16 slots)
+rope_segment_y = $96 ; 32 byte y value for segment
+rope_willy_is_holding = $b6 ; whether willy is grabbing the rope
+rope_willy_seg = $b7 ; which segment willy is holding
+rope_segment_cur_x = $b8 ; segment willy's holding x value
+rope_segment_cur_y = $b9 ; segment willy's holding y value
+rope_seg_skip_above = $ba; precomputed: stop tracking cur x/y when rope_loop_count >= this
+rope_loop_count = $bb
 
 ROPE_FIRST_UDG = 32
 ROPE_FIRST_UDG_ADDRESS = $1c00 + 32*8
@@ -67,7 +69,7 @@ rope_draw
 ; first clear the old rope
 
     lda #0
-    ldx #159 ; tweak this based on max num udgs that can be used
+    ldx #127 ; 16 UDG slots * 8 bytes
 -
     sta ROPE_FIRST_UDG_ADDRESS-1,x
     dex
