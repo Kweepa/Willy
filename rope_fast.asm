@@ -1,9 +1,3 @@
-; TODO:
-;  - during the loop
-;    - update rope_segment_cur_x and rope_segment_cur_y and write to rope_segment_y
-;    - if holding, stop updating those values when we hit the held segment
-;    - if not holding, it updates all rope_segment_y
-
 ; zero page assignments - need the rest of the zp to fit around this
 rope_udg = $6a ; (0..23-ish)
 rope_frame = $6b ; (0..53)
@@ -21,6 +15,8 @@ rope_willy_is_holding = $c6 ; whether willy is grabbing the rope
 rope_willy_seg = $c7 ; which segment willy is holding
 rope_segment_cur_x = $c8 ; segment willy's holding x value
 rope_segment_cur_y = $c9 ; segment willy's holding y value
+rope_seg_skip_above = $ca; precomputed: stop tracking cur x/y when rope_loop_count >= this
+rope_loop_count = $cb
 
 ROPE_FIRST_UDG = 32
 ROPE_FIRST_UDG_ADDRESS = $1c00 + 32*8
@@ -123,12 +119,30 @@ rope_draw
     lda #0
     sta rope_y
     sta rope_udg
+    sta rope_loop_count
     ; write address $1d00
     sta rope_udg_mem
     lda #$1d
     sta rope_udg_mem+1
 
-    ; loop over rope_frame..rope_frame+31 backwards (see the table above)
+    ; anchor: col 12 = 96 VIC px; row 0 = py 8 (ROPE_ANCHOR_PY — top of willy 16px hitbox)
+    lda #96
+    sta rope_segment_cur_x
+    lda #8
+    sta rope_segment_cur_y
+
+    ; calculate loop count to stop storing segment x,y
+    lda #32
+    sta rope_seg_skip_above
+    lda rope_willy_is_holding
+    beq +
+    lda rope_willy_seg
+    clc
+    adc #1
+    sta rope_seg_skip_above
++
+
+    ; loop rope_frame..rope_frame+31 backwards; rope_loop_count = segment 0..31 (0=anchor, 31=tip)
     lda rope_frame
     clc
     adc #31
@@ -147,39 +161,58 @@ rope_draw
     ldy rope_swing_side
     beq ++
 -
+    lda rope_loop_count
+    cmp rope_seg_skip_above
+    bcs +
+    dec rope_segment_cur_x
++
     asl rope_bit
     bcc +
     rol rope_bit
     lda #1
     sta rope_udg_advance
     dec rope_screen_pos
-+
-    jmp +
+    jmp +++
 ++
+    lda rope_loop_count
+    cmp rope_seg_skip_above
+    bcs +
+    inc rope_segment_cur_x
     lsr rope_bit
     bcc +
     ror rope_bit
     lda #1
     sta rope_udg_advance
     inc rope_screen_pos
-+ 
++++
     dex
     bpl -
 
 +++
-    ; now shift down Y
+    ; now shift down Y (same value added to rope_y and rope_segment_cur_y when tracking)
     lda #2
     ldx rope_index
     cpx #16
     bpl +
     lda #3
 +
+    tax                    ; step preserved in x
+
+    lda rope_loop_count
+    cmp rope_seg_skip_above
+    bcs +
+    txa
+    clc
+    adc rope_segment_cur_y
+    sta rope_segment_cur_y
++
+    txa
     clc
     adc rope_y
-    cmp #8
     sta rope_y
-    bne ++
-    eor #8 ; set to 0
+    cmp #8
+    bmi ++
+    eor #8 ; set to 0 (rope_y wrapped -> next char row)
     sta rope_y
     lda rope_screen_pos
     clc
@@ -188,9 +221,8 @@ rope_draw
     lda #0
     adc rope_screen_pos+1
     sta rope_screen_pos+1
-
     ldx #1
-    stx rope_udg_advance    
+    stx rope_udg_advance
 ++
 
     lda rope_udg_advance
@@ -217,9 +249,36 @@ rope_draw
     ldy rope_y
     sta (rope_udg_mem),y
 
+    lda rope_loop_count
+    cmp rope_seg_skip_above
+    bcs +
+    tax
+    lda rope_segment_cur_y
+    sta rope_segment_y,x
++
+
+    inc rope_loop_count
     dec rope_index
     lda rope_index
     cmp #rope_frame
     bpl --
 
+    ; snap willy to attach point; px = cur_x/2 (VIC px -> quarter-chars)
+    lda rope_willy_is_holding
+    beq +++
+    lda #1
+    sta on_ground
+    lda rope_segment_cur_x
+    lsr
+    sta px
+    lda meta_content_src + meta_off_conn ; conn[0]: $ff = no east exit / ceiling rope
+    cmp #$ff
+    bne +
+    lda #0
+    sta py
+    rts
++
+    lda rope_segment_cur_y
+    sta py
++++
     rts
