@@ -208,10 +208,10 @@ W    +     FFFFF       W
 
 Vertical guardians follow the same pattern as horizontal ones and as Manic Miner (`Miner-main/guardians.asm`):
 
-- **`CopyVerticalGuardianFrame`** runs only when `ShouldMoveVerticalGuardianThisFrame` passes (guardian moves this tick). This recomposites the sprite into that guardian’s 6-char UDG slot at `guardian_udgs`.
-- **`DrawVerticalGuardian`** runs every tick — it only plasters existing UDG codes to the screen.
+- **`CopyGuardianFrame`** runs only when `ShouldMove*GuardianThisFrame` passes (guardian moves this tick). This recomposites the sprite into that guardian’s 6-char UDG slot at `guardian_udgs`.
+- **`DrawGuardian`** runs every tick — it only plasters existing UDG codes to the screen.
 
-`CopyVerticalGuardianFrame` is expensive (column copy, top/bottom clears, self-modifying source pointers). Rooms with many vertical guardians (e.g. room 29) were slow when the copy ran every frame for every guardian.
+`CopyGuardianFrame` is expensive (column copy, top/bottom clears, self-modifying source pointers). Rooms with many vertical guardians (e.g. room 29) were slow when the copy ran every frame for every guardian.
 
 Set `BORDER_DEBUG = 0` in `defines.asm` to disable raster timing border probes (`debug.asm` macros).
 

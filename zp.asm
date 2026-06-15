@@ -48,8 +48,6 @@ music_note		= $3f
 music_mod       = $42
 music_bit       = $45
 
-hguardian_index = $46
-vguardian_index = $47
 guard_udg_off   = $48
 guard_udg_index = $49
 

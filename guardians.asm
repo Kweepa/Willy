@@ -161,41 +161,29 @@ MoveGuardian
 
 draw_vguard_chrs
     !byte 0,3,1,4,2,5
-draw_hguard_chrs
-    !byte 0,2,1,3
 
-DrawHorizontalGuardian
-    inc hguard_count
-    ldx hx
-    ldy hy
-    jsr ConvertXYToScreenAddr
-
-    ldx #3
--
-    ldy guard_cell_off,x
-    lda hc
-    sta (col_ptr),y
-    lda draw_hguard_chrs,x
-    clc
-    adc guard_udg_index
-    sta (scr_ptr),y
-    dex
-    bpl -
-    rts
-
-DrawVerticalGuardian
+DrawGuardian
+    jsr IsVerticalGuardian
+    php
+    bcc +
     inc vguard_count
+    bne ++
++
+    inc hguard_count
+++
     ldx hx
     ldy hy
     jsr ConvertXYToScreenAddr
 
+    plp
     ldx #3
+    bcc draw_guard_loop
     lda hy
     and #7
-    beq +
+    beq draw_guard_loop
     inx
     inx
-+
+draw_guard_loop
 -
     ldy guard_cell_off,x
     lda hc
@@ -233,16 +221,7 @@ CalcGuardianUDGAddr
     sta arr2+1
     rts
 
-CopyHorizontalGuardianFrame
-    ldy #31
--
-    lda (arr),y
-    sta (arr2),y
-    dey
-    bpl -
-    rts
-
-CopyVerticalGuardianFrame
+CopyGuardianFrame
     lda arr2
     clc
     adc #24
@@ -326,13 +305,13 @@ MoveGuardians
 
 MoveBidirectionalHorizontalGuardian
     jsr ShouldMoveHorizontalGuardianThisFrame
-    bne draw_h_guardian
+    bne draw_guardian
     jsr MoveGuardian
     jsr GetHorizontalGuardianFrame
     jsr CalcGuardianUDGAddr
-    jsr CopyHorizontalGuardianFrame
-draw_h_guardian
-    jsr DrawHorizontalGuardian
+    jsr CopyGuardianFrame
+draw_guardian
+    jsr DrawGuardian
     jmp EndGuardianLoop
 
 MoveNormalVerticalGuardian
@@ -341,9 +320,9 @@ MoveNormalVerticalGuardian
     jsr MoveGuardian
     jsr GetVerticalGuardianBmpAddr
     jsr CalcGuardianUDGAddr
-    jsr CopyVerticalGuardianFrame
+    jsr CopyGuardianFrame
 +
-    jsr DrawVerticalGuardian
+    jsr DrawGuardian
     jmp EndGuardianLoop
 
 EndGuardianLoop
