@@ -84,17 +84,13 @@ lr_touch_c
     !byte 71, 73
 
 CollideLeftRight
-    jmp clr_start
-clr_done
-    rts
-clr_start
     lda left_right_ctr
     bne clr_done
     lda xadd
     beq clr_done
     bmi lr_dir_left
     ldx #1
-    jmp lr_dir_ok
+    bne lr_dir_ok
 lr_dir_left
     ldx #0
 lr_dir_ok
@@ -121,7 +117,7 @@ lr_move
     ldx tmp
     beq lr_dec_px
     inc px
-    jmp lr_stepped
+    bne lr_stepped
 lr_dec_px
     dec px
 lr_stepped
@@ -148,7 +144,8 @@ lr_stepped
     lda #27
     sta inairtime
 +
-    jmp clr_done
+clr_done
+    rts
 
 Collide
     lda py
