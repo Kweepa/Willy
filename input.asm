@@ -38,38 +38,22 @@ GetPlayerInput
     beq player_input_done
     lda belt_active
     bne player_input_try_jump
-        ; left (Z)
     ldx #$ef
     ldy #$02
     jsr ScanKeyRow
-    beq player_input_skip
+    beq player_input_right
     lda #-1
     sta lastxmove
-    clc
-    adc xadd
-    cmp #-2
-    bne player_input_skip2
-    lda #-1
-player_input_skip2
     sta xadd
-player_input_skip
-        ; right (X)
+player_input_right
     ldx #$f7
     ldy #$04
     jsr ScanKeyRow
     beq player_input_try_jump
-    sta lastxmove
-    clc
-    adc xadd
-    cmp #2
-    bne player_input_skip3
     lda #1
-player_input_skip3
+    sta lastxmove
     sta xadd
 player_input_try_jump
-    lda on_ground
-    beq player_input_done
-GetJumpIsPressed
     ldx #$ef
     ldy #$01
     jsr ScanKeyRow
