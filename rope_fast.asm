@@ -48,14 +48,16 @@ rope_clear_pre_player_draw
 ; clear the rope UDGs from the screen memory
 ; no need to clear color as we're using white for both the rope and the player
     lda rope_udg
+    beq +
     asl
     tax
 -
-    lda #15 ; empty tile
+    lda #16 ; empty tile
     sta (rope_old_screen_pos,x) ; valid 6502, intended for tables of addresses in ZP
     dex
     dex
     bne -
++
     rts
 
 ; ===========================================================================
@@ -64,11 +66,12 @@ rope_draw
 
 ; first clear the old rope
 
-    ldx #127 ; tweak this based on max num udgs that can be used
+    lda #0
+    ldx #159 ; tweak this based on max num udgs that can be used
 -
-    sta ROPE_FIRST_UDG_ADDRESS,x
+    sta ROPE_FIRST_UDG_ADDRESS-1,x
     dex
-    bpl -
+    bne -
 
 ; then advance the rope frame
 ; we need the index to go from 0 to 53, then back to 0 for a right swing
@@ -80,21 +83,19 @@ rope_draw
     adc rope_swing_dir
     sta rope_frame
     cmp #0
-    beq +
+    beq .rope_flip_dir
     cmp #53
-    beq ++
-    bne +++
-+
+    bne .rope_frame_done
     lda rope_swing_side
     eor #1
     sta rope_swing_side
-++
+.rope_flip_dir
     lda rope_swing_dir
     eor #$ff
     clc
     adc #1
     sta rope_swing_dir
-+++
+.rope_frame_done
 
 ; now step through the rope segments and draw them
 
@@ -148,6 +149,8 @@ rope_draw
     adc #31
     sta rope_index
 
+!zone rope_draw_loop {
+
 rope_loop_top
     lda #0
     sta rope_udg_advance
@@ -155,64 +158,72 @@ rope_loop_top
     ; shift rope_bit by xadd in an x loop
     ldx rope_index
     cpx #(rope_xadd_end - rope_xadd) ; 0 implied after the end of the table
-    bpl +++
+    bpl .xadd_skip
     lda rope_xadd,x
-    beq +++
+    !if ROPE_TEST {
+    sta debug_x_step
+    }
+    beq .xadd_skip
     tax
+.xshift_side
     ldy rope_swing_side
-    beq ++
--
+    beq .xshift_left
+.xshift_right
     lda rope_loop_count
     cmp rope_seg_skip_above
-    bcs +
+    bcs .xshift_right_rot
     dec rope_segment_cur_x
-+
+.xshift_right_rot
     asl rope_bit
-    bcc +
+    bcc .xadd_loop_tail
     rol rope_bit
     lda #1
     sta rope_udg_advance
     dec rope_screen_pos
-    jmp +++
-++
+    jmp .xadd_loop_tail
+.xshift_left
     lda rope_loop_count
     cmp rope_seg_skip_above
-    bcs +
+    bcs .xshift_left_rot
     inc rope_segment_cur_x
+.xshift_left_rot
     lsr rope_bit
-    bcc +
+    bcc .xadd_loop_tail
     ror rope_bit
     lda #1
     sta rope_udg_advance
     inc rope_screen_pos
-+++
+.xadd_loop_tail
     dex
-    bpl -
+    bne .xshift_side
 
-+++
+.xadd_skip
     ; now shift down Y (same value added to rope_y and rope_segment_cur_y when tracking)
-    lda #2
-    ldx rope_index
-    cpx #16
-    bpl +
     lda #3
-+
+    ldx rope_index
+    cpx #32
+    bpl .y_step_ready
+    lda #2
+.y_step_ready
     tax                    ; step preserved in x
+    !if ROPE_TEST {
+    stx debug_y_step
+    }
 
     lda rope_loop_count
     cmp rope_seg_skip_above
-    bcs +
+    bcs .y_track_done
     txa
     clc
     adc rope_segment_cur_y
     sta rope_segment_cur_y
-+
+.y_track_done
     txa
     clc
     adc rope_y
     sta rope_y
     cmp #8
-    bmi ++
+    bmi .y_no_wrap
     eor #8 ; set to 0 (rope_y wrapped -> next char row)
     sta rope_y
     lda rope_screen_pos
@@ -224,10 +235,10 @@ rope_loop_top
     sta rope_screen_pos+1
     ldx #1
     stx rope_udg_advance
-++
+.y_no_wrap
 
     lda rope_udg_advance
-    beq +
+    beq .udg_write_done
     inc rope_udg
     lda rope_udg
     clc
@@ -245,26 +256,31 @@ rope_loop_top
     clc
     adc #8
     sta rope_udg_mem
-+
+.udg_write_done
     lda rope_bit
     ldy rope_y
     sta (rope_udg_mem),y
 
     lda rope_loop_count
     cmp rope_seg_skip_above
-    bcs +
+    bcs .seg_y_done
     tax
     lda rope_segment_cur_y
     sta rope_segment_y,x
-+
+.seg_y_done
 
     inc rope_loop_count
-    dec rope_index
+    !if ROPE_TEST {
+    jsr rope_test_loop_hook
+    }
     lda rope_index
     cmp rope_frame
-    bne +
+    beq .rope_loop_done
+    dec rope_index
     jmp rope_loop_top
-+
+.rope_loop_done
+
+}
 
     ; snap willy to attach point
     lda rope_willy_is_holding
