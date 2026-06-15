@@ -43,6 +43,10 @@ x24rowtab
     !word screen_base + 360
     !word screen_base + 384
 
+; 2x3 character cell offsets for player/guardian erase and draw
+cell_off_2x3
+    !byte 24,25,48,49,72,73
+
 ConvertXYToScreenAddr
     tya
     lsr

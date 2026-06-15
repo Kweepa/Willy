@@ -22,8 +22,9 @@ MODULES = [
     ("gameloop", ["start_game", "start_map", "main_loop"]),
     ("map", ["ResetGame", "DrawMap", "CheckRoomEdge"]),
     ("loader", ["LoadRoom", "room_name", "ParseRoomMeta"]),
+    ("ramp", ["calculate_ramp_y", "do_walking_ramp_check", "do_falling_ramp_check"]),
     ("willy", ["try_touch", "Collide", "DrawPlayer"]),
-    ("util", ["ClearScreen", "UpdateMoveCounters"]),
+    ("util", ["ConvertXYToScreenAddr", "UpdateMoveCounters"]),
     ("input", ["GetPlayerInput", "ScanKeyRow"]),
     ("guardians", ["CopyDownGuardianData", "MoveGuardians", "EraseGuardians"]),
     ("warm boot", ["WarmStart", "init24_val"]),
@@ -62,7 +63,7 @@ rows.sort(key=lambda r: -r[3])
 print(f"PRG: ${load_base:04X}-${prg_end - 1:04X}  ({prg_end - load_base} bytes)")
 print(f"Resident budget below ${room_base:04X}: {resident_limit} bytes")
 print()
-print(f"{'Segment':22} {'Size':>5}  {'Past $1B00':>10}  {'Resident':>8}  Entry")
+print(f"{'Segment':22} {'Size':>5}  {'Past $1A58':>10}  {'Resident':>8}  Entry")
 print("-" * 72)
 for name, start, end, size, past, resident, sym in rows:
     past_s = f"{past} B" if past else "-"
@@ -70,11 +71,14 @@ for name, start, end, size, past, resident, sym in rows:
     print(f"{name:22} {size:5}  {past_s:>10}  {res_s:>8}  {sym}")
 
 resident_total = sum(r[5] for r in rows)
-guard_past = next(r[4] for r in rows if r[0] == "guardians")
+guard_past = next((r[4] for r in rows if r[0] == "guardians"), 0)
 over = resident_total - resident_limit
 print()
 print(f"Resident total: {resident_total} B  (over budget by {over} B)")
-print(f"Trim target: {guard_past} B of guardian code at $1B00+")
+if guard_past:
+    print(f"Trim target: {guard_past} B of guardian code past ${room_base:04X}")
+else:
+    print(f"Headroom below ${room_base:04X}: {resident_limit - resident_total} B")
 print()
 
 for mod_start, mod_name, _ in bounds:
@@ -101,6 +105,6 @@ for mod_start, mod_name, _ in bounds:
     sizes.sort(key=lambda x: -x[0])
     print(f"{mod_name} — routines (largest first):")
     for sz, sym, addr, past in sizes[:10]:
-        extra = f"  [{past} B past $1B00]" if past else ""
+        extra = f"  [{past} B past ${room_base:04X}]" if past else ""
         print(f"  {sz:4} B  ${addr:04X}  {sym}{extra}")
     print()

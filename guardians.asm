@@ -14,9 +14,6 @@ ShouldMoveVerticalGuardianThisFrame
 +
     rts
 
-guard_cell_off
-    !byte 24,25,48,49,72,73
-
 CopyDownGuardianData
     ldx guardian_index
     lda guardian_g_x,x
@@ -56,7 +53,7 @@ IsVerticalGuardian
     rts
 
 EraseBlock
-    ldy guard_cell_off,x
+    ldy cell_off_2x3,x
     lda #TILE_CHR_BASE
     sta (scr_ptr),y
     lda #WHITE
@@ -185,7 +182,7 @@ DrawGuardian
     inx
 draw_guard_loop
 -
-    ldy guard_cell_off,x
+    ldy cell_off_2x3,x
     lda hc
     sta (col_ptr),y
     lda draw_vguard_chrs,x

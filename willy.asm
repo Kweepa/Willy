@@ -74,6 +74,15 @@ do_block_below
     lda #0
     rts
 
+lr_edge_px
+    !byte EDGE_WEST_PX, EDGE_EAST_PX
+lr_touch_a
+    !byte 23, 25
+lr_touch_b
+    !byte 47, 49
+lr_touch_c
+    !byte 71, 73
+
 CollideLeftRight
     jmp clr_start
 clr_done
@@ -82,78 +91,40 @@ clr_start
     lda left_right_ctr
     bne clr_done
     lda xadd
-    bpl collide_right
+    beq clr_done
+    bmi lr_dir_left
+    ldx #1
+    jmp lr_dir_ok
+lr_dir_left
+    ldx #0
+lr_dir_ok
+    stx tmp
     lda px
-    cmp #EDGE_WEST_PX
+    cmp lr_edge_px,x
     beq clr_done
     lda px
     and #$03
-    bne move_left
-    ldy #23
+    bne lr_move
+    ldy lr_touch_a,x
     jsr try_touch
     bne clr_done
-    ldy #47
+    ldy lr_touch_b,x
     jsr try_touch
     bne clr_done
     lda py
     and #$07
-    beq move_left
-    ldy #71
+    beq lr_move
+    ldy lr_touch_c,x
     jsr try_touch
     bne clr_done
-move_left
-    dec px
-    ldx px
-    ldy py
-    jsr ConvertXYToScreenAddr
-    jsr calculate_ramp_y
-    lda xadd
-    beq +
-    lda was_on_ground
-    bne ++
-    lda is_on_ramp
-    beq +
-++
-    jsr do_walking_ramp_check
-+
-    lda is_on_ramp
-    beq +
-    ldx px
-    ldy py
-    jsr ConvertXYToScreenAddr
-    lda #1
-    sta on_ground
-    lda #27
-    sta inairtime
-+
-    jmp clr_done
-
-collide_right
-    lda xadd
-    beq clr_done
-    lda px
-    cmp #EDGE_EAST_PX
-    beq clr_done
-    lda px
-    and #$03
-    bne move_right
-    ldy #25
-    jsr try_touch
-    bne cr_block
-    ldy #49
-    jsr try_touch
-    bne cr_block
-    lda py
-    and #$07
-    beq move_right
-    ldy #73
-    jsr try_touch
-    bne cr_block
-    jmp move_right
-cr_block
-    jmp clr_done
-move_right
+lr_move
+    ldx tmp
+    beq lr_dec_px
     inc px
+    jmp lr_stepped
+lr_dec_px
+    dec px
+lr_stepped
     ldx px
     ldy py
     jsr ConvertXYToScreenAddr
@@ -381,7 +352,7 @@ ErasePlayer
     jsr ConvertXYToScreenAddr
 	ldx #5
 -
-	ldy erase_scr_off,x
+	ldy cell_off_2x3,x
 	lda (map_ptr),y
 	and #$0f
 	cmp #TILE_ITEM
@@ -397,8 +368,6 @@ ErasePlayer
 	bpl -
     rts
 
-erase_scr_off
-	!byte 24,25,48,49,72,73
 draw_player_offsets
 	!byte 24,48,72,25,49,73
 draw_player_chrs
