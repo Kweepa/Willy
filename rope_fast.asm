@@ -12,7 +12,7 @@ rope_udg_mem = $72 ; and $73, current UDG mem address
 rope_index = $74 ; used during the drawing loop, rope_frame + i
 rope_udg_advance = $75 ; used during drawing loop to specify whether to advance the UDG (screen x or y changed)
 rope_old_screen_pos = $76 ; 32 byte address table (16 slots)
-rope_segment_y = $96 ; 32 byte y value for segment
+rope_segment_y = $96 ; 32 byte y value for each segment
 rope_willy_is_holding = $b6 ; whether willy is grabbing the rope
 rope_willy_seg = $b7 ; which segment willy is holding
 rope_segment_cur_x = $b8 ; segment willy's holding x value
@@ -232,8 +232,8 @@ rope_loop_top
     clc
     adc #24
     sta rope_screen_pos
-    lda #0
-    adc rope_screen_pos+1
+    lda rope_screen_pos+1
+    adc #0
     sta rope_screen_pos+1
     ldx #1
     stx rope_udg_advance

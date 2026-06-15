@@ -139,8 +139,14 @@ WarmStart
     sei
     jmp start_game
 
+; VIC init for 24x20 (stores init20_val[5..0] -> $9000..$9005); see warm.asm init24_val for 24x17
 init20_val
-    !byte $0a, $30, $98, $28, $00, $ff
+    !byte $0a   ; $9000  horizontal centre (same as warm.asm)
+    !byte $32   ; $9001  vertical centre ($32 in warm = 17 rows; lower = shift playfield down)
+    !byte $98   ; $9002  24 columns + bit7 (screen $1E00, color $9600)
+    !byte 17<<1 ; $9003  17 rows: doubled count in bits 1-6 ($22 = 17 rows in warm.asm)
+    !byte $00   ; $9004  raster line read (WaitForRaster); write sets light-pen Y
+    !byte $ff   ; $9005  screen block $1E00, charset/UDG block $1C00
 
 debug_frame_scr  = debug_row0 + 3
 debug_loop_scr   = debug_row0 + 8
