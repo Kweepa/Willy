@@ -147,7 +147,8 @@ rope_draw
     clc
     adc #31
     sta rope_index
---
+
+rope_loop_top
     lda #0
     sta rope_udg_advance
 
@@ -260,25 +261,23 @@ rope_draw
     inc rope_loop_count
     dec rope_index
     lda rope_index
-    cmp #rope_frame
-    bpl --
+    cmp rope_frame
+    bne +
+    jmp rope_loop_top
++
 
-    ; snap willy to attach point; px = cur_x/2 (VIC px -> quarter-chars)
+    ; snap willy to attach point
     lda rope_willy_is_holding
-    beq +++
+    beq ++
     lda #1
     sta on_ground
     lda rope_segment_cur_x
     lsr
     sta px
-    lda meta_content_src + meta_off_conn ; conn[0]: $ff = no east exit / ceiling rope
-    cmp #$ff
-    bne +
-    lda #0
-    sta py
-    rts
-+
     lda rope_segment_cur_y
+    bpl +
+    lda #0
++
     sta py
-+++
+++
     rts
