@@ -17,14 +17,12 @@ main_loop
     jsr WaitForRaster
     +BorderDebugColor 8
     lda dead
-    beq +
+    beq main_loop
 	lda #(RED + 8)
 	sta $900f
     dec men
     beq ++
-    jmp start_map
-+
-    jmp main_loop
+    bne start_map
 
 ++
 	jmp start_game

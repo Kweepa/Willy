@@ -49,8 +49,8 @@ do_walking_ramp_check
     sbc ramp_y
     bcc wr_below
     cmp #3
+    bcc wr_snap
     bcs wr_out
-    jmp wr_snap
 
 wr_below:
     lda ramp_y

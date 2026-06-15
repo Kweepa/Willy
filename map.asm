@@ -108,7 +108,7 @@ CheckRoomEdge
     ldy tmp+1
     beq +
     bcc edge_next
-    jmp edge_hit
+    bne edge_hit
 +
     bcs edge_next
 edge_hit

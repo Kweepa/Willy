@@ -40,7 +40,7 @@ do_belt
     beq do_belt_release
     lda #1
     sta xadd
-    jmp do_block_below
+    bne do_block_below
 
 check_left_pressed
     ; belt_spd is positive (pushes right), so check if LEFT is pressed
@@ -50,7 +50,7 @@ check_left_pressed
     beq do_belt_release
     lda #-1
     sta xadd
-    jmp do_block_below
+    bne do_block_below
 
 do_belt_release
     lda #1
@@ -60,12 +60,12 @@ do_belt_conveyor
     lda meta_content_src + meta_off_belt
     sta xadd
     sta lastxmove
-    jmp do_block_below
+    bne do_block_below
 
 do_belt_zero
     lda #0
     sta xadd
-    jmp do_block_below
+    beq do_block_below
 
 do_block_below
     lda #1
@@ -248,8 +248,7 @@ collide_down
     lda newy
     and #$f8
     cmp align_tmp
-    bne +
-    jmp move_up_down
+    beq move_up_down
 +
     ldy #96
     jsr try_touch_below

@@ -2,13 +2,6 @@
 ; WaitForRasterLine
 ;
 
-WaitForRasterLine
-    lda $9004
-    and #$fe
-    cmp #RASTERLINE_PAL
-    bne WaitForRasterLine
-    rts
-
 WaitForRasterLineLessThan
     lda $9004
     and #$fe
@@ -17,8 +10,14 @@ WaitForRasterLineLessThan
     rts
 
 WaitForRaster
-	jsr WaitForRasterLineLessThan
-	jmp WaitForRasterLine
+    jsr WaitForRasterLineLessThan
+
+WaitForRasterLine
+    lda $9004
+    and #$fe
+    cmp #RASTERLINE_PAL
+    bne WaitForRasterLine
+    rts
 
 ; Row-base screen addresses (column 0).
 ; Pixel py: index (py >> 2) & $FE from start (word 0 = one row above screen).

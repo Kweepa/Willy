@@ -298,7 +298,6 @@ MoveGuardians
     jsr CopyDownGuardianData
     jsr IsVerticalGuardian
     bcs MoveNormalVerticalGuardian
-    jmp MoveBidirectionalHorizontalGuardian
 
 MoveBidirectionalHorizontalGuardian
     jsr ShouldMoveHorizontalGuardianThisFrame
@@ -320,7 +319,6 @@ MoveNormalVerticalGuardian
     jsr CopyGuardianFrame
 +
     jsr DrawGuardian
-    jmp EndGuardianLoop
 
 EndGuardianLoop
     jsr CopyUpGuardianData
