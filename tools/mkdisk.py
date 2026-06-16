@@ -57,13 +57,22 @@ def build_with_c1541(
 ) -> None:
     if d64.exists():
         d64.unlink()
-    # Image mode: format <name,id> d64 <path> (not -format name path alone)
-    subprocess.check_call([str(c1541), "-format", "jsw,01", "d64", str(d64)])
+    # Batch mode: format, attach once, then write all files in one c1541 invocation
+    cmd = [
+        str(c1541),
+        "-format",
+        "jsw,01",
+        "d64",
+        str(d64),
+        "-attach",
+        str(d64),
+    ]
     if prg and prg.exists():
-        subprocess.check_call([str(c1541), str(d64), "-write", str(prg), "jsw"])
+        cmd.extend(["-write", str(prg), "jsw"])
     for room_id, room in rooms:
         name = room_dos_name(room_id)
-        subprocess.check_call([str(c1541), str(d64), "-write", str(room), f"{name},p"])
+        cmd.extend(["-write", str(room), f"{name},p"])
+    subprocess.check_call(cmd)
     print(f"Wrote {d64} via {c1541} ({len(rooms)} room files)")
 
 
