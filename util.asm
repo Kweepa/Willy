@@ -22,29 +22,6 @@ WaitForRasterLine
 ; Row-base screen addresses (column 0).
 ; Pixel py: index (py >> 2) & $FE from start (word 0 = one row above screen).
 ; Cell row: index row << 1 from x24rowtab+2 (row 0 = $1E00).
-x24rowtab
-    !word screen_base - 24
-    !word screen_base + 0
-    !word screen_base + 24
-    !word screen_base + 48
-    !word screen_base + 72
-    !word screen_base + 96
-    !word screen_base + 120
-    !word screen_base + 144
-    !word screen_base + 168
-    !word screen_base + 192
-    !word screen_base + 216
-    !word screen_base + 240
-    !word screen_base + 264
-    !word screen_base + 288
-    !word screen_base + 312
-    !word screen_base + 336
-    !word screen_base + 360
-    !word screen_base + 384
-
-; 2x3 character cell offsets for player/guardian erase and draw
-cell_off_2x3
-    !byte 24,25,48,49,72,73
 
 ConvertXYToScreenAddr
     tya

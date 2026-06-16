@@ -156,9 +156,6 @@ MoveGuardian
 +++
     rts
 
-draw_vguard_chrs
-    !byte 0,3,1,4,2,5
-
 DrawGuardian
     jsr IsVerticalGuardian
     php

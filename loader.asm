@@ -66,7 +66,6 @@ LoadRoom
     bne -
 
     jsr FormatRoomName
-    sei
     lda #3
     ldx #<room_name
     ldy #>room_name

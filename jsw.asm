@@ -18,6 +18,7 @@
 prg_end = *
 
 !source "warm.asm"
+!source "runtime_const.asm"
 
 prg_overlap = prg_end - $1a58
 

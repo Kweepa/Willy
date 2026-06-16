@@ -85,11 +85,6 @@ GetConnByte
     rts
 
 ; row: coord(0=px,1=py), cmp(0=le,1=ge), limit+1 for le / limit for ge, conn, entry_px, entry_py
-edge_tbl
-    !byte 0, 1, EDGE_EAST_PX, 1, EDGE_EAST_ENTRY_PX, $ff ; go right
-    !byte 0, 0, EDGE_WEST_PX + 1, 3, EDGE_WEST_ENTRY_PX, $ff ; go left
-    !byte 1, 0, 3, 0, $ff, 103 ; go up
-    !byte 1, 1, 107, 2, $ff, 4 ; go down
 EDGE_ROW_SIZE = 6
 
 CheckRoomEdge

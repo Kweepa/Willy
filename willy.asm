@@ -29,26 +29,21 @@ do_belt
     lda belt_active
     bne do_belt_conveyor
 
-    ; Check opposite key based on belt_spd
     lda meta_content_src + meta_off_belt
-    bpl check_left_pressed
-
-    ; belt_spd is negative (pushes left), so check if RIGHT is pressed
-    ldx #$f7
-    ldy #$04
+    bpl belt_pos_idx
+    ldx #3
+    bne belt_check_key
+belt_pos_idx
+    ldx #0
+belt_check_key
+    stx tmp
+    ldy belt_opp_key+1,x
+    lda belt_opp_key,x
+    tax
     jsr ScanKeyRow
     beq do_belt_release
-    lda #1
-    sta xadd
-    bne do_block_below
-
-check_left_pressed
-    ; belt_spd is positive (pushes right), so check if LEFT is pressed
-    ldx #$ef
-    ldy #$02
-    jsr ScanKeyRow
-    beq do_belt_release
-    lda #-1
+    ldx tmp
+    lda belt_opp_key+2,x
     sta xadd
     bne do_block_below
 
@@ -73,15 +68,6 @@ do_block_below
 ++
     lda #0
     rts
-
-lr_edge_px
-    !byte EDGE_WEST_PX, EDGE_EAST_PX
-lr_touch_a
-    !byte 23, 25
-lr_touch_b
-    !byte 47, 49
-lr_touch_c
-    !byte 71, 73
 
 CollideLeftRight
     lda left_right_ctr
@@ -157,13 +143,6 @@ Collide
     sta belt_active
 +
 	lda #0
-	sta $900c
-	lda on_ground
-	bne +
-	lda inairtime
-	lsr
-	tax
-	lda jumpnotes,x
 	sta $900c
 +
     lda on_ground
@@ -333,15 +312,6 @@ CheckDeathFall
 +
 	rts
 
-jumptab
-!byte -2, -1, -2, -1, -2, -1, -1, -1, -2, -1, -1, 0, -1, -1, -1, 0, -1, 0, -1, 0, 0, -1, 0, 0, 0, 0, 0
-!byte 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 2, 1, 1, 1, 2, 1, 2, 1, 2
-
-jumpnotes
-!byte 150,155,160,165,170,175,180,185,190
-!byte 195,200,205,210,215,210,205,200,195
-!byte 190,185,180,175,170,165,160,155,150
-
 ErasePlayer
     ldx px
     ldy py
@@ -363,11 +333,6 @@ ErasePlayer
 	dex
 	bpl -
     rts
-
-draw_player_offsets
-	!byte 24,48,72,25,49,73
-draw_player_chrs
-	!byte PLAY_CHR, PLAY_CHR+1, PLAY_CHR+2, PLAY_CHR+3, PLAY_CHR+4, PLAY_CHR+5
 
 setudgadd
 	; takes Y
