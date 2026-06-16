@@ -91,7 +91,7 @@ CheckRoomEdge
     ldx #0
 -
     lda edge_tbl+1,x
-    sta tmp+1
+    sta edge_cmp
     lda edge_tbl,x
     bne +
     lda px
@@ -100,7 +100,7 @@ CheckRoomEdge
     lda py
 ++
     cmp edge_tbl+2,x
-    ldy tmp+1
+    ldy edge_cmp
     beq +
     bcc edge_next
     bne edge_hit

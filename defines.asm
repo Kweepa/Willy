@@ -47,3 +47,12 @@ EDGE_WEST_ENTRY_PX = 88        ; east spawn when entering from the west (col 22,
 
 ; 1 = emit border colour writes for raster timing bars; 0 = no code/size cost
 BORDER_DEBUG = 0
+
+; Rope constants (addresses in header.asm)
+ROPE_ANCHOR_COL = 12
+ROPE_ANCHOR_PY = 8
+ROPE_FIRST_UDG = GUARDIAN_CHR + 12
+ROPE_UDG_BYTES = 128
+ROPE_XADD_BYTES = 54
+ROPE_GRAB_COOLDOWN_MAX = 30
+ROPE_SEG_MAX = 31

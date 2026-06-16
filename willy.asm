@@ -134,6 +134,12 @@ clr_done
     rts
 
 Collide
+    lda rope_willy_is_holding
+    beq +
+    lda room_has_rope
+    beq +
+    ;jmp CollideOnRope
++
     lda py
     sta last_py
     lda xadd
@@ -282,6 +288,13 @@ collide_dont_move_y
     lda #0
     sta xadd
 +
+    lda room_has_rope
+    beq collide_draw_player
+    jsr rope_draw
+    lda rope_willy_is_holding
+    bne collide_draw_player
+    ;jsr RopeTryGrab
+collide_draw_player
     jsr DrawPlayer
     rts
 hit_above
@@ -462,7 +475,7 @@ coll_check
 	sta tmp
 -
 	lda tmp
-	ora player_touch-1,x
+	ora player_touch,x
 	sta tmp
 	dex
 	txa

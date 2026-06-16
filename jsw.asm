@@ -15,6 +15,10 @@
 !source "input.asm"
 !source "guardians.asm"
 
+!set ROPE_TEST = 0
+!source "rope_fast.asm"
+;!source "rope.asm"
+
 prg_end = *
 
 !source "warm.asm"

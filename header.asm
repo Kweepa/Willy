@@ -2,6 +2,10 @@
 
 image_base = $1a58
 guardian_sprites_base = $1a58    ; 9 guardian frames x 32 bytes ($1A58-$1B77)
+ROPE_SCRATCH_BASE = guardian_sprites_base + $a0
+ROPE_XADD = ROPE_SCRATCH_BASE
+ROPE_OLD_SCREEN = ROPE_SCRATCH_BASE + 64
+ROPE_SEGMENT_Y = ROPE_SCRATCH_BASE + 96
 player_bmp = $1b78               ; player frames at indices 9-16 (288 bytes into sprite block)
 meta_content_src = $1f98
 ; Meta payload at meta_content_src (see build_meta in mkroom.py)
@@ -20,8 +24,9 @@ meta_off_conn = 11
 meta_off_item_draw = 15         ; 16-byte 6502: lda #chr sta scr lda #col sta col lda #TILE_ITEM sta map rts
 meta_off_item_draw_size = 16
 meta_size = 31
-meta_off_tilecolors = 31
-meta_off_guardian_data = 37
+meta_off_rope = 31
+meta_off_tilecolors = 32
+meta_off_guardian_data = 38
 item_draw = meta_content_src + meta_off_item_draw
 tile_color_src = meta_content_src + meta_off_tilecolors
 guardian_data_base = meta_content_src + meta_off_guardian_data
@@ -47,6 +52,8 @@ guardian_g_fmax = guardian_data_base + g_off_fmax
 guardian_g_color = guardian_data_base + g_off_color
 guardian_g_axis = guardian_data_base + g_off_axis
 screen_base = $1e00
+ROPE_ANCHOR_SCR = screen_base + ROPE_ANCHOR_COL
+ROPE_FIRST_UDG_ADDRESS = udg_base + ROPE_FIRST_UDG * 8
 tile_bytes = 408                 ; 24 x 17
 hud_row_off = 384                ; row 16 * 24
 hud_men_scr = screen_base + hud_row_off + 18

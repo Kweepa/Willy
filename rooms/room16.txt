@@ -4,6 +4,7 @@
 @spawn 44 104
 @border RED
 @belt 0
+@rope
 
 @guardiansprites
 ; entity 13: page 188 sprite 0 f=0..7

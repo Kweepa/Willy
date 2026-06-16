@@ -25,6 +25,20 @@ OP_LDA_IMM = 0xA9
 OP_STA_ABS = 0x8D
 OP_RTS = 0x60
 GUARDIAN_SPRITES_BYTES = 288  # 9 frames x 32 bytes
+ROPE_SCRATCH_OFF = 0xA0
+ROPE_XADD_BYTES = 54
+ROPE_XADD = bytes([
+    1, 2, 3, 2, 2, 2, 3, 1,
+    2, 2, 2, 2, 0, 1, 2, 0,
+    1, 2, 1, 1, 1, 2, 1, 2,
+    1, 2, 1, 2, 1, 2, 1, 2,
+    1, 2, 1, 2, 1, 2, 1, 2,
+    1, 2, 1, 2, 1, 0, 1, 1,
+    1, 1, 1, 0, 1, 1,
+])
+META_OFF_ROPE = 31
+TAIL_OFF_TILECOLORS = 32
+TAIL_OFF_GUARDIAN_DATA = 38
 PLAYER_BMP_BYTES = 256
 NIGHTMARE_ROOM_ID = 29
 NIGHTMARE_PLAYER_BMP_PATH = (
@@ -344,6 +358,7 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         "tileudg": [bytes(8) for _ in range(6)] + [DEFAULT_ITEM_UDG],
         "guardiansprites": b"",
         "playerbmp": b"",
+        "rope": False,
     }
     block = None
     block_lines = []
@@ -419,6 +434,8 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
                 room["border"] = parse_vic_color(parts[1])
             elif tag == "belt":
                 room["belt"] = int(parts[1])
+            elif tag == "rope":
+                room["rope"] = True
             elif tag == "tilecolors":
                 if len(parts[1:]) != TILE_COLOR_BYTES:
                     raise ValueError(
@@ -728,7 +745,8 @@ def build_tail(room: dict) -> bytes:
     colors = build_tile_colors(room)
     gdata = build_guardian_data(room)
     tail[0:META_SIZE] = meta
-    off = META_SIZE
+    tail[META_OFF_ROPE] = 1 if room.get("rope") else 0
+    off = TAIL_OFF_TILECOLORS
     tail[off : off + TILE_COLOR_BYTES] = colors
     off += TILE_COLOR_BYTES
     tail[off : off + GUARDIAN_DATA_BYTES] = gdata
@@ -765,7 +783,11 @@ def build_room_image(room: dict) -> bytes:
     stamp_hud_item(tiles)
 
     raw = room["guardiansprites"] or bytes(GUARDIAN_SPRITES_BYTES)
-    sprites = deinterleave_guardian_sprites(raw)
+    sprites = bytearray(deinterleave_guardian_sprites(raw))
+    if room.get("rope"):
+        end = ROPE_SCRATCH_OFF + len(ROPE_XADD)
+        sprites[ROPE_SCRATCH_OFF:end] = ROPE_XADD
+    sprites = bytes(sprites)
     player = player_bmp_for_room(room)
     udg = build_udg(room)
     tail = build_tail(room)

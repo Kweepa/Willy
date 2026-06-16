@@ -119,11 +119,33 @@ draw_item_done
     rts
 
 ;
-; ParseRoomMeta - read room meta at meta_content_src ($1F98).
-; Layout: guardians, border, spawn x2, belt, ramp, rx1, rx2, ry, E, A, conn x4, item draw code
+; Layout: guardians, border, spawn x2, belt, ramp, rx1, rx2, ry, E, A, conn x4, item draw;
+;         meta_off_rope, tilecolors, guardian SoA
 ParseRoomMeta
     lda meta_content_src + meta_off_border
     sta $900f
+    lda meta_content_src + meta_off_rope
+    sta room_has_rope
+    beq parse_clear_rope_hold
+    lda #0
+    sta rope_frame
+    sta rope_swing_side
+    sta rope_willy_is_holding
+    sta rope_grab_cooldown
+    lda #1
+    sta rope_swing_dir
+    ldx #31
+-
+    lda #0
+    sta rope_old_screen_pos,x
+    sta ROPE_SEGMENT_Y,x
+    dex
+    bpl -
+    jmp parse_room_spawn
+parse_clear_rope_hold
+    lda #0
+    sta rope_willy_is_holding
+parse_room_spawn
     lda use_room_spawn
     beq skip_room_spawn
     lda meta_content_src + meta_off_spawn_px

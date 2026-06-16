@@ -76,6 +76,10 @@ GetSpriteFrameAddr
     rts
 
 UpdateMoveCounters
+    lda rope_grab_cooldown
+    beq +
+    dec rope_grab_cooldown
++
     dec left_right_ctr
     bpl +
     lda #3
