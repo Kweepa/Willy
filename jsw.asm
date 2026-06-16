@@ -24,4 +24,6 @@ prg_overlap = prg_end - $1a58
 
 !if prg_overlap > 0 {
 !warn "PRG extends ", prg_overlap, " bytes past $1A58 room load base - trim resident code/data"
+} else {
+!warn "PRG has ", -prg_overlap, " bytes free before $1A58 room load base"
 }
