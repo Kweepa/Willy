@@ -9,7 +9,7 @@
 ;   $76-$95   rope_old_screen_pos (32 B ZP address table)
 ;   $96-$9C   rope state scalars
 ;   $9D/$9F   left_right_ctr / up_down_ctr (guardian anim)
-;   $A0-$A5   player_overlap (6 B) — overlaps KERNAL jiffy $A0-$A2 (see below)
+;   $A0-$A5   player_overlap (6 B)
 ;   $A6-$D5   player_touch (48 B) — DrawPlayer clears $A0-$D5 each frame; index touch at +0 only (never touch-1)
 ;   $D6-$DB   belt_opp_key (boot)
 ;   $DC-$E1   cell_off_2x3 (boot)
@@ -38,13 +38,21 @@
 ;   $C1-$C2 STAL  I/O start address low/high (LOAD) — not $AE/$AF
 ;   $C3-$C4       KERNAL setup pointer (LOAD)
 ; Reserve for KERNAL during disk I/O: $90-$93, $AE-$AF, $B7-$C4.
-; IEC LOAD also calls STOP scan each byte → writes $F5/$F6 (keyboard ptr); not $D6-$F4.
+; IEC LOAD also calls STOP scan each byte → writes $F5/$F6 (keyboard ptr).
 ; $AC-$AD tape/scroll pointers — no persistent game state there.
 ;
-; $A0-$A2 jiffy clock (KERNAL IRQ) — first 3 bytes of player_overlap; game
-; reuses them anyway (no BASIC; acceptable if overlap refreshed each DrawPlayer).
+; Volatile across LoadRoom (loadram_test: SETNAM/SETLFS/LOAD/CLOSE).
+; Assume overwritten; do not persist game state here between room loads:
 ;
-; WarmStart only: IOINIT ($FDF9) reinitialises much of low ZP ($22+, $30+, $90+).
+;   $A0-$A5   jiffy/serial
+;   $C5-$F4   KERNAL screen editor (keys, cursor, line/colour ptrs, line links).
+;             Includes $C5/$CB (STOP scan), $C7-$D8, $F3/$F4; subset touched
+;             each load; treat whole block as volatile. $D6 = KERNAL cursor row
+;             and belt_opp_key — reload belt keys after LoadRoom if needed.
+;   $0277-$29E  page-0 editor tail ($287 colour-under-cursor, $288 HIBASE, …)
+;
+; Candidate per-room gameplay scratch — rope erase, character
+; clear temp buffer, etc. Do not persist state there across LoadRoom.
 ;
 ; Page $0100 copied tables (WarmStart; stack must stay above $01B4):
 ;   $100-$13D  pickup_got
