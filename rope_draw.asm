@@ -250,7 +250,7 @@ rope_loop_top
 
 }
 
-ROPE_SNIP_SNAP = 0
+ROPE_SNIP_SNAP = 1
 
 !if ROPE_SNIP_SNAP {
     ; snap willy to attach point

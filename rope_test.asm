@@ -1,8 +1,8 @@
-; Rope animation test harness — 24x20 VIC-20 environment for rope_fast.asm
+; Rope animation test harness — 24x20 VIC-20 environment for rope_draw.asm
 
 !set ROPE_TEST = 0
 
-; rope_fast.asm ZP and layout (subset of zp.asm / defines.asm / header.asm)
+; rope_draw.asm ZP and layout (subset of zp.asm / defines.asm / header.asm)
 guardian_sprites_base = $1a58
 GUARDIAN_CHR = 22
 TILE_CHR_BASE = 16
@@ -301,7 +301,7 @@ PrintDec3
 }
 }
 
-!source "rope_fast.asm"
+!source "rope_draw.asm"
 
 InitScreen
     ; clear the empty char UDG
