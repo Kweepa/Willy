@@ -132,6 +132,8 @@ ParseRoomMeta
     sta rope_swing_side
     sta rope_willy_is_holding
     sta rope_grab_cooldown
+    sta rope_udg
+    sta rope_loop_count
     lda #1
     sta rope_swing_dir
     ldx #31

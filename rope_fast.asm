@@ -144,7 +144,9 @@ rope_loop_top
     lda #1
     sta rope_udg_advance
     dec rope_scr
-    jmp .xadd_loop_tail
+    bne .xadd_loop_tail
+    dec rope_scr+1
+    bne .xadd_loop_tail
 .xshift_left
     lda rope_loop_count
     cmp rope_seg_skip_above
@@ -157,6 +159,8 @@ rope_loop_top
     lda #1
     sta rope_udg_advance
     inc rope_scr
+    bne .xadd_loop_tail
+    inc rope_scr+1
 .xadd_loop_tail
     dex
     bne .xshift_side
@@ -246,6 +250,9 @@ rope_loop_top
 
 }
 
+ROPE_SNIP_SNAP = 0
+
+!if ROPE_SNIP_SNAP {
     ; snap willy to attach point
     lda rope_willy_is_holding
     beq ++
@@ -260,4 +267,6 @@ rope_loop_top
 +
     sta py
 ++
+}
+
     rts
