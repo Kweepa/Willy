@@ -311,10 +311,10 @@ MoveNormalVerticalGuardian
     jsr ShouldMoveVerticalGuardianThisFrame
     bne +
     jsr MoveGuardian
++
     jsr GetVerticalGuardianBmpAddr
     jsr CalcGuardianUDGAddr
     jsr CopyGuardianFrame
-+
     jsr DrawGuardian
 
 EndGuardianLoop
