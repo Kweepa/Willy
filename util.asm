@@ -2,15 +2,13 @@
 ; WaitForRasterLine
 ;
 
-WaitForRasterLineLessThan
+WaitForRaster
+    ; wait for raster below sync band (inlined WaitForRasterLineLessThan)
+-
     lda $9004
     and #$fe
     cmp #RASTERLINE_PAL
-    bcs WaitForRasterLineLessThan
-    rts
-
-WaitForRaster
-    jsr WaitForRasterLineLessThan
+    bcs -
 
 WaitForRasterLine
     lda $9004

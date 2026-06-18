@@ -99,24 +99,23 @@ GetHorizontalGuardianFrame
     cmp #4
     bcc +
     lda hd
-    bpl bidir_right
+    bmi +
+    lda tmp
+    clc
+    adc #4
+    jmp GetSpriteFrameAddr   ; tail call — rts resumes at caller after jsr GetHorizontalGuardianFrame
 +
     lda tmp
     clc
     adc ht
-    jmp GetSpriteFrameAddr
-bidir_right
-    lda tmp
-    clc
-    adc #4
-    jmp GetSpriteFrameAddr
+    jmp GetSpriteFrameAddr   ; tail call — rts resumes at caller after jsr GetHorizontalGuardianFrame
 
 GetVerticalGuardianBmpAddr
     lda hguard_frame
     and hfmax
     clc
     adc ht
-    jmp GetSpriteFrameAddr
+    jmp GetSpriteFrameAddr   ; tail call — rts resumes at caller after jsr GetVerticalGuardianBmpAddr
 
 MoveGuardian
     lda guard_axis
@@ -177,18 +176,6 @@ draw_guard_loop
     sta (scr_ptr),y
     dex
     bpl -
-    rts
-
-CalcGuardianUDGIndex
-    lda guardian_index
-    asl
-    clc
-    adc guardian_index
-    asl
-    sta guard_udg_off
-    clc
-    adc #GUARDIAN_CHR
-    sta guard_udg_index
     rts
 
 CalcGuardianUDGAddr
@@ -280,7 +267,16 @@ MoveGuardians
     sta hguard_count
     sta vguard_count
 -
-    jsr CalcGuardianUDGIndex
+    ; UDG slot from guardian_index (inlined CalcGuardianUDGIndex)
+    lda guardian_index
+    asl
+    clc
+    adc guardian_index
+    asl
+    sta guard_udg_off
+    clc
+    adc #GUARDIAN_CHR
+    sta guard_udg_index
     jsr CopyDownGuardianData
     jsr IsVerticalGuardian
     bcs MoveNormalVerticalGuardian

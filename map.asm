@@ -40,8 +40,7 @@ DrawMap
     sta py
     lda #0
     sta use_room_spawn
-    jsr LoadRoom
-    rts
+    jmp LoadRoom               ; tail call — was jsr/rts
 drawmap_first_room
     lda #1
     sta use_room_spawn          ; new game - @spawn from room meta
@@ -52,10 +51,6 @@ drawmap_first_room
     lda #0
     sta initial_room_load
 	rts
-
-GetConnByte
-    lda meta_content_src + meta_off_conn,y
-    rts
 
 ; row: coord(0=px,1=py), cmp(0=le,1=ge), limit+1 for le / limit for ge, conn, entry_px, entry_py
 EDGE_ROW_SIZE = 6
@@ -81,7 +76,7 @@ CheckRoomEdge
     bcs edge_next
 edge_hit
     ldy edge_tbl+3,x
-    jsr GetConnByte
+    lda meta_content_src + meta_off_conn,y   ; conn byte (inlined GetConnByte)
     cmp #$ff
     beq edge_next
     sta map

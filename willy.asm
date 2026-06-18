@@ -16,8 +16,7 @@ try_touch_below
     beq ++
     cmp #TILE_CONVEYOR
     bne +
-    jsr DoBelt
-    rts
+    jmp DoBelt                 ; tail call — was jsr/rts
 +
     cmp #TILE_PLATFORM
     beq do_block_below
@@ -258,8 +257,7 @@ collide_dont_move_y
     bne collide_draw_player
     ;jsr RopeTryGrab
 collide_draw_player
-    jsr DrawPlayer
-    rts
+    jmp DrawPlayer             ; tail call — was jsr/rts
 hit_above
     lda #27
     sta inairtime
@@ -268,7 +266,13 @@ hit_above
     sta newy
     jmp move_up_down
 hit_below
-	jsr CheckDeathFall
+    ; fatal fall if inairtime >= 70 (inlined CheckDeathFall)
+    lda inairtime
+    cmp #70
+    bcc +
+    lda #1
+    sta dead
++
     lda #1
     sta on_ground
     lda #27
@@ -278,15 +282,6 @@ hit_below
     and #$f8
     sta newy
     jmp move_up_down
-
-CheckDeathFall
-	lda inairtime
-	cmp #70
-	bcc +
-	lda #1
-	sta dead
-+
-	rts
 
 ErasePlayer
     ldx px
@@ -310,34 +305,6 @@ ErasePlayer
 	bpl -
     rts
 
-setudgadd
-	; takes Y
-	; modifies and requires X
-	lda #0
-	sta tmp
-    lda (scr_ptr),y
-	sta player_overlap,x
-	inx
-    asl
-    asl
-	rol tmp
-    asl
-	rol tmp
-    sta udg_ptr
-    lda #>udg_base
-	adc tmp
-    sta udg_ptr+1
-    rts
-
-copy_udg
-    ldy #7
--
-    lda (udg_ptr),y
-    sta (play_udg),y
-    dey
-    bpl -
-    rts
-
 DrawPlayer
 	; clear overlaps/touches
 	ldx #(48+6-1)
@@ -359,8 +326,28 @@ DrawPlayer
 	ldx #0
 -
     ldy draw_player_offsets,x
-    jsr setudgadd
-    jsr copy_udg
+    ; screen chr -> UDG ptr (inlined setudgadd)
+    lda #0
+    sta tmp
+    lda (scr_ptr),y
+    sta player_overlap,x
+    inx
+    asl
+    asl
+    rol tmp
+    asl
+    rol tmp
+    sta udg_ptr
+    lda #>udg_base
+    adc tmp
+    sta udg_ptr+1
+    ; copy 8 bytes into player UDG slot (inlined copy_udg)
+    ldy #7
+--
+    lda (udg_ptr),y
+    sta (play_udg),y
+    dey
+    bpl --
 
     lda play_udg
     clc
@@ -456,21 +443,10 @@ coll_check
 HandleOverlapChar
     cmp #ITEM_CHR
     bne +
-    jsr PickupItemAtOverlap
-    jmp dont_kill_player
-+
-    cmp #TILE_HAZARD + TILE_CHR_BASE
-    beq kill_player
-    cmp #TILE_SOLID + TILE_CHR_BASE
-    beq dont_kill_player
-    cmp #GUARDIAN_CHR
-    bcs kill_player
-    rts
-
-PickupItemAtOverlap
+    ; pickup item at overlap cell (inlined PickupItemAtOverlap)
     ldx map
     lda pickup_got,x
-    bne pickup_done
+    bne dont_kill_player
     inc pickup_got,x
     inc items_collected
     tya
@@ -488,7 +464,14 @@ PickupItemAtOverlap
     sta $900c
     pla
     tay
-pickup_done
+    jmp dont_kill_player
++
+    cmp #TILE_HAZARD + TILE_CHR_BASE
+    beq kill_player
+    cmp #TILE_SOLID + TILE_CHR_BASE
+    beq dont_kill_player
+    cmp #GUARDIAN_CHR
+    bcs kill_player
     rts
 
 kill_player

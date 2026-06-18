@@ -83,8 +83,7 @@ LoadRoom
     jsr PaintColors
     jsr DrawItem
     ; jsr DrawHud
-    jsr DrawPlayer
-    rts
+    jmp DrawPlayer             ; tail call — was jsr/rts
 
 PaintColors
     ldy #0
