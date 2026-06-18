@@ -17,6 +17,8 @@ RELOC_B_BASE = $0392
 RELOC_B_LIMIT = $03fc
 RELOC_C_BASE = $0334
 RELOC_C_LIMIT = $033c
+RELOC_D_BASE = $1000
+RELOC_D_LIMIT = $100d
 
 ; Rope runtime in cassette buffer ($033C-$03FB); survives KERNAL disk LOAD
 ROPE_SEGMENT_Y = $33c            ; 32 B segment Y table ($33C-$35B)

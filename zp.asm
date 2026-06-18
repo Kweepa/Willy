@@ -60,6 +60,7 @@
 ;   $0200-$258  reloc block A (FormatRoomName, DrawHud, ShouldMove*, SaveSpawn)
 ;   $0334-$33B  reloc block C (GetCollision)
 ;   $0392-$3FB  reloc block B (ConvertXYToScreenAddr, GetSpriteFrameAddr, CalcGuardian*)
+;   $1000-$100C  reloc block D (ResetMap; overwrites BASIC stub after WarmStart entry)
 ;
 ; Page $0100 copied tables (WarmStart; stack must stay above $01B4):
 ;   $100-$13D  pickup_got

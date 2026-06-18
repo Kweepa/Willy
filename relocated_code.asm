@@ -157,3 +157,18 @@ reloc_c_size = * - reloc_c_src
 !if RELOC_C_BASE + reloc_c_size > RELOC_C_LIMIT {
 !error "reloc block C overflow"
 }
+
+reloc_d_src
+!pseudopc RELOC_D_BASE {
+ResetMap
+    lda #0
+    sta dead
+    sta left_right_ctr
+    sta up_down_ctr
+    sta belt_active
+    rts
+}
+reloc_d_size = * - reloc_d_src
+!if RELOC_D_BASE + reloc_d_size > RELOC_D_LIMIT {
+!error "reloc block D overflow"
+}

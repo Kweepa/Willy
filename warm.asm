@@ -53,6 +53,13 @@ WarmStart
     dex
     bpl -
 
+    ldx #reloc_d_size - 1
+-
+    lda reloc_d_src,x
+    sta RELOC_D_BASE,x
+    dex
+    bpl -
+
     ldx #boot_page_size - 1     ; edge_tbl, x24rowtab, jumptab at $140+
 -
     lda boot_page_pack,x

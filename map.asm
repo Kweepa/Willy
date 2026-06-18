@@ -14,14 +14,6 @@ ResetGame
     sta initial_room_load       ; first room load uses @spawn from meta
 	rts
 
-ResetMap
-    lda #0
-    sta dead
-    sta left_right_ctr
-	sta up_down_ctr
-	sta belt_active
-	rts
-
 DrawMap
     lda #0
     sta dead
