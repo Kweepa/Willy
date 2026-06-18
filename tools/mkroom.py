@@ -22,7 +22,16 @@ UDG_BYTES = 56
 TILE_COLOR_BYTES = 6
 ITEM_DRAW_BYTES = 16
 OP_LDA_IMM = 0xA9
+OP_LDA_ZP = 0xA5
+OP_LDA_ABS = 0xAD
 OP_STA_ABS = 0x8D
+OP_ASL = 0x0A
+OP_LSR = 0x4A
+OP_ROL_ABS = 0x2E              ; ROL abs — not $2D (AND abs)
+OP_ROR_ABS = 0x6E
+OP_AND_ABS = 0x2D
+OP_BNE = 0xD0
+OP_NOP = 0xEA
 OP_RTS = 0x60
 GUARDIAN_SPRITES_BYTES = 288  # 9 frames x 32 bytes
 META_OFF_ROPE = 31
@@ -38,12 +47,15 @@ MAX_GUARDIANS = 6
 RUNTIME_UDG_PAD = 336             # $1CB0-$1DFF
 TAIL_BYTES = 104
 META_SIZE = 15 + ITEM_DRAW_BYTES
-IMAGE_LOAD = 0x1A58
+IMAGE_LOAD = 0x1A45
+CONVEYOR_PREFIX_BYTES = 19          # $1A58 - $1A45
+CONVEYOR_UDG = 0x1CA8               # udg_base + (TILE_CONVEYOR + TILE_CHR_BASE) * 8
+LEFT_RIGHT_CTR = 0x9D
 SCREEN_BASE = 0x1E00
 MAP_BASE = 0x9400
 COLOR_BASE = 0x9600
 MAX_ITEMS = 1
-ROOM_IMAGE_SIZE = 0x5A8           # 1448 bytes ($1A58-$1FFF)
+ROOM_IMAGE_SIZE = 0x5BB           # 1467 bytes ($1A45-$1FFF)
 TILE_CHR_BASE = 16
 TILE_EMPTY = 0
 TILE_PLATFORM = 1
@@ -677,6 +689,49 @@ def build_item_draw(room: dict) -> bytes:
     return bytes(code)
 
 
+def _emit_rotate_group(
+    code: bytearray, addr: int, shift_acc: int, rot_op: int
+) -> None:
+    """3+1+3 bytes: lda abs / shift acc / rol|ror abs."""
+    code.append(OP_LDA_ABS)
+    code.extend(struct.pack("<H", addr))
+    code.append(shift_acc)
+    code.append(rot_op)
+    code.extend(struct.pack("<H", addr))
+
+
+def build_conveyor_animate(room: dict) -> bytes:
+    """19 bytes at image_base: lda left_right_ctr / bne / belt body / rts (+ NOP pad)."""
+    belt = room["belt"]
+    udg_lo = CONVEYOR_UDG
+    udg_hi = CONVEYOR_UDG + 2
+    code = bytearray()
+    code.append(OP_LDA_ZP)
+    code.append(LEFT_RIGHT_CTR)
+    bne_pos = len(code)
+    code.append(OP_BNE)
+    code.append(0)
+    if belt < 0:
+        _emit_rotate_group(code, udg_lo, OP_ASL, OP_ROL_ABS)
+        _emit_rotate_group(code, udg_hi, OP_LSR, OP_ROR_ABS)
+    elif belt > 0:
+        _emit_rotate_group(code, udg_lo, OP_LSR, OP_ROR_ABS)
+        _emit_rotate_group(code, udg_hi, OP_ASL, OP_ROL_ABS)
+    rts_pos = len(code)
+    code.append(OP_RTS)
+    code[bne_pos + 1] = rts_pos - (bne_pos + 2)
+    while len(code) < CONVEYOR_PREFIX_BYTES:
+        code.append(OP_NOP)
+    if len(code) != CONVEYOR_PREFIX_BYTES:
+        raise room_error(
+            room,
+            f"conveyor animate size {len(code)} != {CONVEYOR_PREFIX_BYTES}",
+        )
+    if OP_AND_ABS in code:
+        raise room_error(room, "conveyor animate contains $2D (AND abs), want $2E (ROL abs)")
+    return bytes(code)
+
+
 def build_guardian_data(room: dict) -> bytes:
     out = bytearray(GUARDIAN_DATA_BYTES)
     for i, g in enumerate(room["guardians"]):
@@ -765,7 +820,7 @@ def player_bmp_for_room(room: dict) -> bytes:
 
 
 def build_room_image(room: dict) -> bytes:
-    """RAM image loaded at $1A58 (1448 bytes)."""
+    """RAM image loaded at $1A45 (1467 bytes)."""
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap", room))
     stamp_hud_title(tiles, room)
     stamp_hud_men(tiles)
@@ -776,9 +831,11 @@ def build_room_image(room: dict) -> bytes:
     player = player_bmp_for_room(room)
     udg = build_udg(room)
     tail = build_tail(room)
+    prefix = build_conveyor_animate(room)
 
     blob = (
-        sprites
+        prefix
+        + sprites
         + player
         + udg
         + bytes(RUNTIME_UDG_PAD)

@@ -1,5 +1,5 @@
 ; Jet Set Willy - unexpanded VIC-20
-; PRG from $1000; room image loads to $1A58 (overwrites $1A58+ at runtime)
+; PRG from $1000; room image loads to $1A45 (overwrites $1A45+ at runtime)
 
 !source "zp.asm"
 !source "defines.asm"
@@ -24,10 +24,10 @@ prg_end = *
 !source "warm.asm"
 !source "runtime_const.asm"
 
-prg_overlap = prg_end - $1a58
+prg_overlap = prg_end - $1a45
 
 !if prg_overlap > 0 {
-!warn "PRG extends ", prg_overlap, " bytes past $1A58 room load base - trim resident code/data"
+!warn "PRG extends ", prg_overlap, " bytes past $1A45 room load base - trim resident code/data"
 } else {
-!warn "PRG has ", -prg_overlap, " bytes free before $1A58 room load base"
+!warn "PRG has ", -prg_overlap, " bytes free before $1A45 room load base"
 }

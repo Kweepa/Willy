@@ -1,4 +1,4 @@
-; One-shot boot at end of PRG (below $1A58; not overwritten by room load).
+; One-shot boot at end of PRG (below $1A45; not overwritten by room load).
 ; sei -> VIA #2 IER/T2CL -> stack -> IOINIT -> VIC init -> copy tables -> jmp start_game
 ; Must not RTS here: txs clears the SYS return address on the stack.
 

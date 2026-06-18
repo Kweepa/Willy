@@ -17,7 +17,7 @@ main_loop
     jsr Collide
     jsr DrawHud
     jsr CheckRoomEdge
-    jsr AnimateBelts
+    jsr AnimateConveyors        ; baked per room at $1A45
     jsr WaitForRaster
     +BorderDebugColor 8
     lda dead

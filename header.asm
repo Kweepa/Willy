@@ -1,7 +1,9 @@
 ; unexpanded JSW layout
 
-image_base = $1a58
+image_base = $1a45
+AnimateConveyors = image_base
 guardian_sprites_base = $1a58    ; 9 guardian frames x 32 bytes ($1A58-$1B77)
+guardian_prefix_bytes = guardian_sprites_base - image_base
 player_bmp = $1b78               ; player frames at indices 9-16 (288 bytes into sprite block)
 ; Rope runtime in cassette buffer ($033C-$03FB); not persisted across LOAD
 ROPE_SEGMENT_Y = $33c            ; 32 B segment Y table ($33C-$35B)
@@ -65,7 +67,7 @@ hud_items_scr = screen_base + hud_row_off + 22
 hud_items_col = color_base + hud_row_off + 22
 map_base = $9400
 color_base = $9600
-room_image_size = $5a8           ; 1448 bytes ($1A58–$1FFF)
+room_image_size = $5bb           ; 1467 bytes ($1A45–$1FFF)
 tile_color_bytes = 6
 guardian_data_bytes = 54
 max_guardians = 6

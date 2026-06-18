@@ -51,34 +51,7 @@ drawmap_first_room
     sta use_room_spawn
     lda #0
     sta initial_room_load
-    rts
-
-AnimateBelts
-    ; could replace these first two lines with nop or rts which would save 3 bytes
-    ; if we already had to populate left_right_ctr from room metadata
-    ; alternatively we could stream in the code per room, which would reduce this to 15 bytes
-    ; or less if we can combine several functions
-    lda left_right_ctr
-    bne no_belt_animate
-    lda meta_content_src + meta_off_belt
-    beq no_belt_animate
-    bpl belt_animate_right
-    lda udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8
-    asl
-    rol udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8
-    lda udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8 + 2
-    lsr
-    ror udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8 + 2
-    rts
-belt_animate_right
-    lda udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8
-    lsr
-    ror udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8
-    lda udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8 + 2
-    asl
-    rol udg_base + (TILE_CONVEYOR + TILE_CHR_BASE)*8 + 2
-no_belt_animate
-    rts
+	rts
 
 GetConnByte
     lda meta_content_src + meta_off_conn,y
