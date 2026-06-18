@@ -13,7 +13,7 @@
 ;   +$255 tile UDG 56 @ $1C78 (chr 15-21)
 ;   +$26D runtime pad 336 ($1CB0-$1DFF)
 ;   +$3DC screen 408 @ $1E00 (24x17)
-;   +$5B9 tail 104 @ $1F98 (meta, colors, guardian SoA)
+;   +$5B9 tail 104 @ $1F98 (meta, colors, guardian AoS)
 ;
 
 room_lfn = 15
@@ -122,7 +122,7 @@ draw_item_done
 
 ;
 ; Layout: guardians, border, spawn x2, belt, ramp, rx1, rx2, ry, E, A, conn x4, item draw;
-;         meta_off_rope, tilecolors, guardian SoA
+;         meta_off_rope, tilecolors, guardian AoS
 ParseRoomMeta
     lda meta_content_src + meta_off_border
     sta $900f

@@ -2,7 +2,7 @@
 ;
 ; Layout map ($02-$FF game state; migration: hot pack was $62-$87, now $D6-$FB):
 ;
-;   $02-$61   game scalars (px/py, pointers, guardian hx..ht block at $20-$26, etc.)
+;   $02-$61   game scalars (px/py, pointers, guardian scratch hx..guard_axis $20-$28, etc.)
 ;   $62-$66   spawn_px/py, initial_room_load, room_has_rope, menx (unused)
 ;   $67       edge_cmp — CheckRoomEdge scratch (do not use tmp+1; $03 is arr)
 ;   $6A-$75   rope draw temps
@@ -92,13 +92,15 @@ hy              = $21
 hl              = $22
 hr              = $23
 hd              = $24
-hc              = $25
-ht              = $26
+ht              = $25
+hfmax           = $26
+hc              = $27
+guard_axis      = $28
 
-lastxmove       = $27
-was_on_ground   = $28
-inairtime       = $29
-men             = $2a
+lastxmove       = $29
+was_on_ground   = $2a
+inairtime       = $2b
+men             = $2c
 stream_ptr      = $52
 stream_ptr_hi   = $53
 

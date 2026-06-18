@@ -215,11 +215,11 @@ Vertical guardians follow the same pattern as horizontal ones and as Manic Miner
 
 Set `BORDER_DEBUG = 0` in `defines.asm` to disable raster timing border probes (`debug.asm` macros).
 
-### Future: mirror guardian data in ZP
+### Guardian data layout
 
-Manic Miner copies each guardian’s 7-byte record from room data into ZP `guardian_data` ($62+) once per room load, then `CopyDownGuardianData` / `CopyUpGuardianData` read and write ZP during the frame loop.
+Room tail stores **54 bytes** of guardian state as **AoS**: six records of nine bytes each (`x`, `y`, `min`, `max`, `vel`, `fmin`, `fmax`, `color`, `axis`) at `guardian_data_base` (meta offset 38).
 
-JSW keeps guardian SoA in the room tail at `guardian_data_base` ($1FB8+). Every guardian iteration does scattered loads/stores there twice per frame. **TODO:** on `LoadRoom` / `ParseRoomMeta`, copy the 54-byte SoA block into a ZP buffer (as Miner does) and point `guardian_g_*` at ZP for the runtime loop.
+Each frame, `CopyDownGuardianData` / `CopyUpGuardianData` copy one record between room RAM and the ZP scratch block `hx`–`guard_axis` (`$20`–`$28`) via tight `(arr),y` loops. Only mutable fields (offsets 0–4) are written back on `CopyUp`.
 
 ---
 

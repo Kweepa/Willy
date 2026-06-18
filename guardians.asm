@@ -14,41 +14,40 @@ ShouldMoveVerticalGuardianThisFrame
 +
     rts
 
+CalcGuardianRecPtr
+    lda guardian_index
+    asl
+    asl
+    asl
+    adc guardian_index
+    adc #<guardian_data_base
+    sta arr
+    lda #>guardian_data_base
+    sta arr+1
+    rts
+
 CopyDownGuardianData
-    ldx guardian_index
-    lda guardian_g_x,x
-    sta hx
-    lda guardian_g_y,x
-    sta hy
-    lda guardian_g_min,x
-    sta hl
-    lda guardian_g_max,x
-    sta hr
-    lda guardian_g_vel,x
-    sta hd
-    lda guardian_g_color,x
-    sta hc
-    lda guardian_g_fmin,x
-    sta ht
+    jsr CalcGuardianRecPtr
+    ldy #8
+-
+    lda (arr),y
+    sta hx,y
+    dey
+    bpl -
     rts
 
 CopyUpGuardianData
-    ldx guardian_index
-    lda hx
-    sta guardian_g_x,x
-    lda hy
-    sta guardian_g_y,x
-    lda hl
-    sta guardian_g_min,x
-    lda hr
-    sta guardian_g_max,x
-    lda hd
-    sta guardian_g_vel,x
+    jsr CalcGuardianRecPtr
+    ldy #4
+-
+    lda hx,y
+    sta (arr),y
+    dey
+    bpl -
     rts
 
 IsVerticalGuardian
-    ldx guardian_index
-    lda guardian_g_axis,x
+    lda guard_axis
     cmp #GUARDIAN_VERTICAL
     rts
 
@@ -96,8 +95,7 @@ GetHorizontalGuardianFrame
     sta tmp
     lda ht
     sta tmp_xadd
-    ldx guardian_index
-    lda guardian_g_fmax,x
+    lda hfmax
     sec
     sbc ht
     cmp #4
@@ -122,16 +120,14 @@ leftward_frames
     jmp GetSpriteFrameAddr
 
 GetVerticalGuardianBmpAddr
-    ldx guardian_index
     lda hguard_frame
-    and guardian_g_fmax,x
+    and hfmax
     clc
-    adc guardian_g_fmin,x
+    adc ht
     jmp GetSpriteFrameAddr
 
 MoveGuardian
-    ldx guardian_index
-    lda guardian_g_axis,x
+    lda guard_axis
     tax
     lda hx,x
     clc

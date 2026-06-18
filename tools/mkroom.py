@@ -34,7 +34,8 @@ NIGHTMARE_ROOM_ID = 29
 NIGHTMARE_PLAYER_BMP_PATH = (
     Path(__file__).resolve().parent.parent / "nightmareroomwilly.txt"
 )
-GUARDIAN_DATA_BYTES = 54          # SoA: 9 fields x 6 guardians
+GUARDIAN_DATA_BYTES = 54          # AoS: 9 bytes x 6 guardians
+GUARDIAN_RECORD_BYTES = 9
 MAX_GUARDIANS = 6
 TAIL_BYTES = 104
 META_SIZE = 15 + ITEM_DRAW_BYTES
@@ -141,14 +142,14 @@ GUARDIAN_DSL_V = re.compile(
 )
 
 G_OFF_X = 0
-G_OFF_Y = 6
-G_OFF_MIN = 12
-G_OFF_MAX = 18
-G_OFF_VEL = 24
-G_OFF_FMIN = 30
-G_OFF_FMAX = 36
-G_OFF_COLOR = 42
-G_OFF_AXIS = 48
+G_OFF_Y = 1
+G_OFF_MIN = 2
+G_OFF_MAX = 3
+G_OFF_VEL = 4
+G_OFF_FMIN = 5
+G_OFF_FMAX = 6
+G_OFF_COLOR = 7
+G_OFF_AXIS = 8
 
 
 def parse_byte(s: str) -> int:
@@ -749,15 +750,16 @@ def build_meta(room: dict) -> bytes:
 def build_guardian_data(room: dict) -> bytes:
     out = bytearray(GUARDIAN_DATA_BYTES)
     for i, g in enumerate(room["guardians"]):
-        out[G_OFF_X + i] = g["x"]
-        out[G_OFF_Y + i] = g["y"]
-        out[G_OFF_MIN + i] = g["min"]
-        out[G_OFF_MAX + i] = g["max"]
-        out[G_OFF_VEL + i] = g["vel"]
-        out[G_OFF_FMIN + i] = g["fmin"]
-        out[G_OFF_FMAX + i] = g["fmax"]
-        out[G_OFF_COLOR + i] = g["color"]
-        out[G_OFF_AXIS + i] = g["axis"]
+        base = i * GUARDIAN_RECORD_BYTES
+        out[base + G_OFF_X] = g["x"]
+        out[base + G_OFF_Y] = g["y"]
+        out[base + G_OFF_MIN] = g["min"]
+        out[base + G_OFF_MAX] = g["max"]
+        out[base + G_OFF_VEL] = g["vel"]
+        out[base + G_OFF_FMIN] = g["fmin"]
+        out[base + G_OFF_FMAX] = g["fmax"]
+        out[base + G_OFF_COLOR] = g["color"]
+        out[base + G_OFF_AXIS] = g["axis"]
     return bytes(out)
 
 

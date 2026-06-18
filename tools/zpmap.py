@@ -21,8 +21,7 @@ SIZE_OVERRIDES: dict[str, int] = {
     "map_ptr": 2,
     "udg_ptr": 2,
     "play_udg": 2,
-    "stream_ptr": 2,
-    "hx": 7,  # hx..ht guardian position block ($20-$26)
+    "hx": 9,  # hx..guard_axis guardian scratch ($20-$28)
     "rope_scr": 2,
     "rope_udg_mem": 2,
     "rope_old_screen_pos": 32,
@@ -45,8 +44,10 @@ SKIP_OVERLAP = {
     "hl",
     "hr",
     "hd",
+    "ht",
+    "hfmax",
     "hc",
-    "ht",  # $21-$26 accessed via hx,x base at $20
+    "guard_axis",  # $21-$28 via hx,y base at $20
     "lr_touch_b",
     "lr_touch_c",
     "cell_off_2x3",
