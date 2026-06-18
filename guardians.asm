@@ -93,30 +93,22 @@ GetHorizontalGuardianFrame
     lda hx
     and #$03
     sta tmp
-    lda ht
-    sta tmp_xadd
     lda hfmax
     sec
     sbc ht
     cmp #4
-    bcs bidirectional_frames
+    bcc +
+    lda hd
+    bpl bidir_right
++
     lda tmp
     clc
-    adc tmp_xadd
+    adc ht
     jmp GetSpriteFrameAddr
-
-bidirectional_frames
-    lda hd
-    bmi leftward_frames
+bidir_right
     lda tmp
     clc
     adc #4
-    jmp GetSpriteFrameAddr
-
-leftward_frames
-    lda tmp
-    clc
-    adc tmp_xadd
     jmp GetSpriteFrameAddr
 
 GetVerticalGuardianBmpAddr
@@ -133,14 +125,15 @@ MoveGuardian
     clc
     adc hd
     sta hx,x
+    tay
     lda hd
     bmi +
-    lda hx,x
+    tya
     cmp hr
     bne +++
     beq ++
 +
-    lda hx,x
+    tya
     cmp hl
     bne +++
 ++

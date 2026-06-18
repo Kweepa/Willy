@@ -301,7 +301,7 @@ ErasePlayer
 	bne +
 	lda #ITEM_CHR
 	sta (scr_ptr),y
-	jmp ++
+	bne ++
 +
 	ora #$10
 	sta (scr_ptr),y
@@ -416,10 +416,6 @@ draw_center_loop
     iny
     cpy #16
     bne draw_center_loop
-
-    ldx px
-    ldy py
-    jsr ConvertXYToScreenAddr
 
 	ldx #5
 -

@@ -50,17 +50,14 @@ ConvertXYToScreenAddr
     clc
     adc #>(map_base - screen_base)
     sta map_ptr + 1
-    clc
     adc #>(color_base - map_base)
     sta col_ptr + 1
     rts
 
 ; A = frame index 0-16 -> arr = guardian_sprites_base + frame*32
 GetSpriteFrameAddr
-    sta tmp
-    lda #0
-    sta arr+1
-    lda tmp
+    ldx #0
+    stx arr+1
     ldx #5
 -
     asl
