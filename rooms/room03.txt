@@ -1,5 +1,5 @@
 @room 3
-@title At the Foot of the MegaTree
+@title Foot of Megatree
 @conn 8 2 0 4
 @spawn 44 104
 @border RED

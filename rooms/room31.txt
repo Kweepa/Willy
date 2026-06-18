@@ -1,7 +1,7 @@
 @room 31
 @title Swimming Pool
 @conn 37 30 0 54
-@spawn 44 104
+@spawn 80 80
 @border RED
 @belt 0
 @rope

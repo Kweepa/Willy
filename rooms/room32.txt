@@ -1,5 +1,5 @@
 @room 32
-@title Halfway up the East Wall
+@title Halfway up E Wall
 @conn 38 0 26 33
 @spawn 44 104
 @border RED

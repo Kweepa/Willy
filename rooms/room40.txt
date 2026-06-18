@@ -1,5 +1,5 @@
 @room 40
-@title Dr Jones will never believe this
+@title Dr Jones' dream
 @conn 16 39 0 41
 @spawn 44 104
 @border BLU
@@ -35,8 +35,8 @@ FF   FFFF  W  FWW
       WWFF    FWF       
 <<<<<<<<<<<<<<<<<<<<<<<<
 
-@tilecolors WHT RED WHT PUR CYN YEL
-@itemcolor GRN
+@tilecolors PUR RED PUR PUR CYN YEL
+@itemcolor WHT
 
 @guardians
 x=17 y=72(64..104) v=-2 f=0..3 RED

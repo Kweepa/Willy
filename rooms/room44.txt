@@ -1,5 +1,5 @@
 @room 44
-@title On top of the house
+@title Top of the house
 @conn 0 0 38 14
 @spawn 44 104
 @border PUR

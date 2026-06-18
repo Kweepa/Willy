@@ -1,5 +1,5 @@
 @room 19
-@title The Forgotten Abbey
+@title Forgotten Abbey
 @conn 0 5 0 49
 @spawn 44 104
 @border BLU

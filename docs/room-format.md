@@ -37,7 +37,7 @@ One tag per line, `@name value` or `@name` followed by a block.
 | Tag | Fields | Description |
 |-----|--------|-------------|
 | `@room` | id | Room number (1–63) |
-| `@title` | text | Room name (HUD row 16) |
+| `@title` | text | Room name (HUD row 16, max 18 characters) |
 | `@conn` | N E S W | Neighbours: room number or `FF` (hex ok: `$FF`) |
 | `@spawn` | px py | Willy start (quarter-char X, 2-pixel Y) |
 | `@border` | colour | Border colour (BLK WHT RED CYN PUR GRN BLU YEL). `mkroom` stores `border \| 8` in meta — full VIC `$900F` byte (white background + border). |

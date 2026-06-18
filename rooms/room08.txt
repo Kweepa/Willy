@@ -1,5 +1,5 @@
 @room 8
-@title Inside the MegaTrunk
+@title Inside MegaTrunk
 @conn 12 7 3 9
 @spawn 44 104
 @border GRN

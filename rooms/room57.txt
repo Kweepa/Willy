@@ -1,5 +1,5 @@
 @room 57
-@title Above the West Bedroom
+@title Above W Bedroom
 @conn 0 56 55 0
 @spawn 44 104
 @border RED

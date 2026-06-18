@@ -1,5 +1,5 @@
 @room 39
-@title Emergency Generator
+@title Emergency Dynamo
 @conn 14 38 0 40
 @spawn 44 104
 @border RED
