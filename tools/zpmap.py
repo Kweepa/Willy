@@ -28,7 +28,6 @@ SIZE_OVERRIDES: dict[str, int] = {
     "rope_old_screen_pos": 32,
     "player_overlap": 6,
     "player_touch": 48,
-    "belt_opp_key": 6,
     "cell_off_2x3": 6,
     "lr_edge_px": 2,
     "lr_touch_a": 6,
@@ -61,7 +60,7 @@ SKIP_OVERLAP = {
 # Intentional multi-byte writes (symbol, extent bytes, reason)
 INTENTIONAL_WRITES: dict[str, tuple[int, str]] = {
     "player_overlap": (54, "DrawPlayer clears overlap+touch via player_overlap,x"),
-    "belt_opp_key": (26, "WarmStart copies boot_zp_pack room tables to $D6-$EF"),
+    "cell_off_2x3": (20, "WarmStart copies boot_zp_pack room tables to $DC-$EF"),
     "draw_player_offsets": (6, "WarmStart RelocateDrawPlayerTables"),
     "draw_player_chrs": (6, "WarmStart RelocateDrawPlayerTables"),
 }
@@ -71,7 +70,7 @@ PAGE100_SYMBOLS = {"edge_tbl", "x24rowtab", "jumptab", "pickup_got", "pickup_got
 
 VIRTUAL_REGIONS: list[tuple[str, int, int]] = [
     ("DrawPlayer_clear", 0xA0, 54),
-    ("boot_zp_room_pack", 0xD6, 26),
+    ("boot_zp_room_pack", 0xDC, 20),
 ]
 
 KERNAL_RESERVE = [
@@ -184,10 +183,9 @@ def check_overlaps(regions: list[Region]) -> list[str]:
             if not a.overlaps(b):
                 continue
             if pack and (_inside_pack(a, pack) or _inside_pack(b, pack)):
-                if a.name == "belt_opp_key" or b.name == "belt_opp_key":
-                    continue
-            if clear and a.name == "belt_opp_key":
-                continue  # clear zone ends $D5; pack starts $D6
+                continue
+            if clear and a.name == "cell_off_2x3":
+                continue  # clear zone ends $D5; pack starts $DC
             errors.append(
                 f"overlap: {a.name} {fmt_addr(a.start)}-{fmt_addr(a.end)} "
                 f"vs {b.name} {fmt_addr(b.start)}-{fmt_addr(b.end)}"
@@ -217,7 +215,7 @@ def check_boot_boundary(regions: list[Region]) -> list[str]:
     for r in regions:
         if r.virtual or r.name == "boot_zp_room_pack":
             continue
-        if r.start <= BOOT_PACK_END and r.end > BOOT_PACK_END and r.start >= 0xD6:
+        if r.start <= BOOT_PACK_END and r.end > BOOT_PACK_END and r.start >= 0xDC:
             if r.name not in ("vguard_frame", "hguard_frame"):
                 errors.append(
                     f"boot-pack spill: {r.name} ends at {fmt_addr(r.end)} (room pack ends {fmt_addr(BOOT_PACK_END)})"
@@ -291,7 +289,7 @@ def eval_imm(expr: str, constants: dict[str, int]) -> int | None:
 
 def load_asm_constants() -> dict[str, int]:
     consts: dict[str, int] = {
-        "boot_zp_size": 38,
+        "boot_zp_size": 32,
         "boot_page_size": 114,
         "ROPE_UDG_BYTES": 128,
     }

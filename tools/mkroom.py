@@ -4,6 +4,7 @@
 import argparse
 import re
 import struct
+import subprocess
 import sys
 from pathlib import Path
 
@@ -21,18 +22,9 @@ TILE_BYTES = WIDTH * SCREEN_ROWS
 UDG_BYTES = 56
 TILE_COLOR_BYTES = 6
 ITEM_DRAW_BYTES = 16
-OP_LDA_IMM = 0xA9
-OP_LDA_ZP = 0xA5
-OP_LDA_ABS = 0xAD
-OP_STA_ABS = 0x8D
-OP_ASL = 0x0A
-OP_LSR = 0x4A
-OP_ROL_ABS = 0x2E              ; ROL abs — not $2D (AND abs)
-OP_ROR_ABS = 0x6E
-OP_AND_ABS = 0x2D
-OP_BNE = 0xD0
-OP_NOP = 0xEA
-OP_RTS = 0x60
+BAKE_DIR = Path(__file__).resolve().parent.parent / "bake"
+ACME = Path(r"\app\acme\acme.exe")
+JSW_LBL = Path(__file__).resolve().parent.parent / "jsw.lbl"
 GUARDIAN_SPRITES_BYTES = 288  # 9 frames x 32 bytes
 META_OFF_ROPE = 31
 TAIL_OFF_TILECOLORS = 32
@@ -44,18 +36,19 @@ NIGHTMARE_PLAYER_BMP_PATH = (
 )
 GUARDIAN_DATA_BYTES = 54          # SoA: 9 fields x 6 guardians
 MAX_GUARDIANS = 6
-RUNTIME_UDG_PAD = 336             # $1CB0-$1DFF
 TAIL_BYTES = 104
 META_SIZE = 15 + ITEM_DRAW_BYTES
-IMAGE_LOAD = 0x1A45
-CONVEYOR_PREFIX_BYTES = 19          # $1A58 - $1A45
-CONVEYOR_UDG = 0x1CA8               # udg_base + (TILE_CONVEYOR + TILE_CHR_BASE) * 8
-LEFT_RIGHT_CTR = 0x9D
+IMAGE_LOAD = 0x1A24
+CONVEYOR_PREFIX_BYTES = 19
+DO_BELT_SLOT_BYTES = 33
+GUARDIAN_PREFIX_BYTES = CONVEYOR_PREFIX_BYTES + DO_BELT_SLOT_BYTES
 SCREEN_BASE = 0x1E00
 MAP_BASE = 0x9400
 COLOR_BASE = 0x9600
 MAX_ITEMS = 1
-ROOM_IMAGE_SIZE = 0x5BB           # 1467 bytes ($1A45-$1FFF)
+ROOM_IMAGE_SIZE = 0x5DC           # 1500 bytes ($1A24-$1FFF)
+# Pad pins screen at $1E00: IMAGE_LOAD + prefix + sprites + player + udg + pad == SCREEN_BASE
+RUNTIME_UDG_PAD = 0x150           # 336 bytes ($1CB0-$1DFF)
 TILE_CHR_BASE = 16
 TILE_EMPTY = 0
 TILE_PLATFORM = 1
@@ -519,6 +512,99 @@ def belt_byte(speed: int) -> int:
     return speed & 0xFF
 
 
+def load_scan_key_row() -> int:
+    """Resident ScanKeyRow address from jsw.lbl (assemble jsw.prg first)."""
+    if not JSW_LBL.is_file():
+        raise ValueError(f"missing {JSW_LBL}; assemble jsw.prg before mkroom")
+    for line in JSW_LBL.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"al C:([0-9a-f]+) \.ScanKeyRow", line, re.I)
+        if m:
+            return int(m.group(1), 16)
+    raise ValueError(f"ScanKeyRow not found in {JSW_LBL}")
+
+
+def assemble_room_code(
+    asm_name: str,
+    defines: dict[str, int],
+    slot_bytes: int | None = None,
+) -> bytes:
+    """Assemble a bake/*.asm template to raw bytes via ACME (-f plain)."""
+    if not ACME.is_file():
+        raise ValueError(f"ACME not found at {ACME}")
+    asm_path = BAKE_DIR / asm_name
+    if not asm_path.is_file():
+        raise ValueError(f"missing bake source {asm_path}")
+    tmp_dir = BAKE_DIR / ".tmp"
+    tmp_dir.mkdir(exist_ok=True)
+    out_path = tmp_dir / f"{asm_path.stem}.bin"
+    args = [str(ACME), "-f", "plain", "-o", str(out_path)]
+    if slot_bytes is not None:
+        defines = {**defines, "SLOT_BYTES": slot_bytes}
+    for key, value in defines.items():
+        args.append(f"-D{key}=${value:x}")
+    args.append(str(asm_path))
+    result = subprocess.run(
+        args,
+        cwd=BAKE_DIR,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        msg = result.stderr.strip() or result.stdout.strip() or "ACME failed"
+        raise ValueError(f"{asm_name}: {msg}")
+    data = out_path.read_bytes()
+    if slot_bytes is not None and len(data) != slot_bytes:
+        raise ValueError(
+            f"{asm_name}: size {len(data)} != slot {slot_bytes}"
+        )
+    return data
+
+
+def build_conveyor_animate(room: dict) -> bytes:
+    """19 bytes at image_base — ACME bake/animate_conveyors.asm."""
+    return assemble_room_code(
+        "animate_conveyors.asm",
+        {"BELT": belt_byte(room["belt"])},
+        CONVEYOR_PREFIX_BYTES,
+    )
+
+
+def build_do_belt(room: dict, scan_key_row: int) -> bytes:
+    """DoBelt prefix slot — ACME bake/do_belt.asm."""
+    return assemble_room_code(
+        "do_belt.asm",
+        {"BELT": belt_byte(room["belt"]), "SCANKEYROW": scan_key_row},
+        DO_BELT_SLOT_BYTES,
+    )
+
+
+def build_prefix(room: dict, scan_key_row: int) -> bytes:
+    return build_conveyor_animate(room) + build_do_belt(room, scan_key_row)
+
+
+def build_item_draw(room: dict) -> bytes:
+    """16 bytes in meta tail — ACME bake/item_draw.asm."""
+    col, row = room["items"][0]
+    if not 0 <= col < WIDTH or not 0 <= row < TILEMAP_ROWS:
+        raise room_error(room, f"item cell out of range: col={col} row={row}")
+    cell_off = row * WIDTH + col
+    scr_addr = SCREEN_BASE + cell_off
+    map_addr = scr_addr + (MAP_BASE - SCREEN_BASE)
+    col_addr = COLOR_BASE + cell_off
+    return assemble_room_code(
+        "item_draw.asm",
+        {
+            "SCR_ADDR": scr_addr,
+            "COL_ADDR": col_addr,
+            "MAP_ADDR": map_addr,
+            "ITEM_COLOR": room["itemcolor"] & 0xFF,
+            "ITEM_CHR": ITEM_CHR,
+            "TILE_ITEM": TILE_ITEM,
+        },
+        ITEM_DRAW_BYTES,
+    )
+
+
 # Feet py = surface - RAMP_FEET_OFFSET - toe[ramp_type]
 RAMP_FEET_OFFSET = 16
 RAMP_RY_TOE: dict[int, int] = {
@@ -660,78 +746,6 @@ def build_meta(room: dict) -> bytes:
     return bytes(meta)
 
 
-def build_item_draw(room: dict) -> bytes:
-    """16 bytes: lda #ITEM / sta screen / lda #color / sta color / lda #TILE_ITEM / sta map / rts."""
-    col, row = room["items"][0]
-    if not 0 <= col < WIDTH or not 0 <= row < TILEMAP_ROWS:
-        raise room_error(room, f"item cell out of range: col={col} row={row}")
-    cell_off = row * WIDTH + col
-    scr_addr = SCREEN_BASE + cell_off
-    map_addr = scr_addr + (MAP_BASE - SCREEN_BASE)
-    col_addr = COLOR_BASE + cell_off
-    color = room["itemcolor"] & 0xFF
-    code = bytearray()
-    code.append(OP_LDA_IMM)
-    code.append(ITEM_CHR)
-    code.append(OP_STA_ABS)
-    code.extend(struct.pack("<H", scr_addr))
-    code.append(OP_LDA_IMM)
-    code.append(color)
-    code.append(OP_STA_ABS)
-    code.extend(struct.pack("<H", col_addr))
-    code.append(OP_LDA_IMM)
-    code.append(TILE_ITEM)
-    code.append(OP_STA_ABS)
-    code.extend(struct.pack("<H", map_addr))
-    code.append(OP_RTS)
-    if len(code) != ITEM_DRAW_BYTES:
-        raise room_error(room, f"item draw code size {len(code)} != {ITEM_DRAW_BYTES}")
-    return bytes(code)
-
-
-def _emit_rotate_group(
-    code: bytearray, addr: int, shift_acc: int, rot_op: int
-) -> None:
-    """3+1+3 bytes: lda abs / shift acc / rol|ror abs."""
-    code.append(OP_LDA_ABS)
-    code.extend(struct.pack("<H", addr))
-    code.append(shift_acc)
-    code.append(rot_op)
-    code.extend(struct.pack("<H", addr))
-
-
-def build_conveyor_animate(room: dict) -> bytes:
-    """19 bytes at image_base: lda left_right_ctr / bne / belt body / rts (+ NOP pad)."""
-    belt = room["belt"]
-    udg_lo = CONVEYOR_UDG
-    udg_hi = CONVEYOR_UDG + 2
-    code = bytearray()
-    code.append(OP_LDA_ZP)
-    code.append(LEFT_RIGHT_CTR)
-    bne_pos = len(code)
-    code.append(OP_BNE)
-    code.append(0)
-    if belt < 0:
-        _emit_rotate_group(code, udg_lo, OP_ASL, OP_ROL_ABS)
-        _emit_rotate_group(code, udg_hi, OP_LSR, OP_ROR_ABS)
-    elif belt > 0:
-        _emit_rotate_group(code, udg_lo, OP_LSR, OP_ROR_ABS)
-        _emit_rotate_group(code, udg_hi, OP_ASL, OP_ROL_ABS)
-    rts_pos = len(code)
-    code.append(OP_RTS)
-    code[bne_pos + 1] = rts_pos - (bne_pos + 2)
-    while len(code) < CONVEYOR_PREFIX_BYTES:
-        code.append(OP_NOP)
-    if len(code) != CONVEYOR_PREFIX_BYTES:
-        raise room_error(
-            room,
-            f"conveyor animate size {len(code)} != {CONVEYOR_PREFIX_BYTES}",
-        )
-    if OP_AND_ABS in code:
-        raise room_error(room, "conveyor animate contains $2D (AND abs), want $2E (ROL abs)")
-    return bytes(code)
-
-
 def build_guardian_data(room: dict) -> bytes:
     out = bytearray(GUARDIAN_DATA_BYTES)
     for i, g in enumerate(room["guardians"]):
@@ -819,8 +833,8 @@ def player_bmp_for_room(room: dict) -> bytes:
     return room["playerbmp"] or DEFAULT_PLAYER_BMP
 
 
-def build_room_image(room: dict) -> bytes:
-    """RAM image loaded at $1A45 (1467 bytes)."""
+def build_room_image(room: dict, scan_key_row: int) -> bytes:
+    """RAM image loaded at $1A24 (1500 bytes)."""
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap", room))
     stamp_hud_title(tiles, room)
     stamp_hud_men(tiles)
@@ -831,7 +845,7 @@ def build_room_image(room: dict) -> bytes:
     player = player_bmp_for_room(room)
     udg = build_udg(room)
     tail = build_tail(room)
-    prefix = build_conveyor_animate(room)
+    prefix = build_prefix(room, scan_key_row)
 
     blob = (
         prefix
@@ -847,8 +861,8 @@ def build_room_image(room: dict) -> bytes:
     return blob
 
 
-def build_room_prg(room: dict) -> bytes:
-    return struct.pack("<H", IMAGE_LOAD) + build_room_image(room)
+def build_room_prg(room: dict, scan_key_row: int) -> bytes:
+    return struct.pack("<H", IMAGE_LOAD) + build_room_image(room, scan_key_row)
 
 
 def room_dos_name(room_id: int) -> str:
@@ -859,7 +873,8 @@ def room_dos_name(room_id: int) -> str:
 def convert_file(src: Path, outstem: Path, room: dict | None = None) -> None:
     if room is None:
         room = parse_room(src.read_text(encoding="utf-8"), source=src)
-    data = build_room_prg(room)
+    scan_key_row = load_scan_key_row()
+    data = build_room_prg(room, scan_key_row)
     outstem.parent.mkdir(parents=True, exist_ok=True)
     outstem.write_bytes(data)
     print(

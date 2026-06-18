@@ -10,8 +10,8 @@
 ;   $96-$9C   rope state scalars
 ;   $9D/$9F   left_right_ctr / up_down_ctr (guardian anim)
 ;   $A0-$A5   player_overlap (6 B)
-;   $A6-$D5   player_touch (48 B) — DrawPlayer clears $A0-$D5 each frame; index touch at +0 only (never touch-1)
-;   $D6-$DB   belt_opp_key (boot)
+;   $A6-$D5   player_touch (48 B) — DrawPlayer clears $A0-$D5 each frame
+;   $D6-$DB   (gap)
 ;   $DC-$E1   cell_off_2x3 (boot)
 ;   $E2-$E3   lr_edge_px (boot)
 ;   $E4-$E9   lr_touch_a/b/c (boot)
@@ -49,8 +49,7 @@
 ;   $A0-$A5   jiffy/serial
 ;   $C5-$F4   KERNAL screen editor (keys, cursor, line/colour ptrs, line links).
 ;             Includes $C5/$CB (STOP scan), $C7-$D8, $F3/$F4; subset touched
-;             each load; treat whole block as volatile. $D6 = KERNAL cursor row
-;             and belt_opp_key — reload belt keys after LoadRoom if needed.
+;             each load; treat whole block as volatile. $D6 = KERNAL cursor row.
 ;   $0277-$29E  page-0 editor tail ($287 colour-under-cursor, $288 HIBASE, …)
 ;
 ; Candidate per-room gameplay scratch — rope erase, character
@@ -165,7 +164,6 @@ rope_seg_skip_above = $9a
 rope_loop_count     = $9b
 rope_grab_cooldown  = $9c
 
-belt_opp_key        = $d6
 cell_off_2x3        = $dc
 lr_edge_px          = $e2
 lr_touch_a          = $e4

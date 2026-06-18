@@ -14,7 +14,7 @@ for line in lbl.read_text().splitlines():
 
 prg_end = labels.get("prg_end", max(labels.values()))
 load_base = 0x1000
-room_base = 0x1A45
+room_base = 0x1A24
 resident_limit = room_base - load_base
 
 MODULES = [
@@ -63,7 +63,7 @@ rows.sort(key=lambda r: -r[3])
 print(f"PRG: ${load_base:04X}-${prg_end - 1:04X}  ({prg_end - load_base} bytes)")
 print(f"Resident budget below ${room_base:04X}: {resident_limit} bytes")
 print()
-print(f"{'Segment':22} {'Size':>5}  {'Past $1A45':>10}  {'Resident':>8}  Entry")
+print(f"{'Segment':22} {'Size':>5}  {'Past image_base':>15}  {'Resident':>8}  Entry")
 print("-" * 72)
 for name, start, end, size, past, resident, sym in rows:
     past_s = f"{past} B" if past else "-"

@@ -2,7 +2,6 @@
 ; Not read at runtime; game code uses equates in zp.asm / header.asm.
 
 boot_zp_pack
-    !byte $f7, $04, $01, $ef, $02, $ff             ; belt_opp_key_boot / willy.asm do_belt
     !byte 24, 25, 48, 49, 72, 73                    ; cell_off_2x3_boot / util.asm, guardians.asm
     !byte EDGE_WEST_PX, EDGE_EAST_PX                ; lr_edge_px_boot / willy.asm CollideLeftRight
     !byte 23, 25, 47, 49, 71, 73                    ; lr_touch_a_boot / willy.asm CollideLeftRight
@@ -48,11 +47,11 @@ boot_page_pack_end = *
 !source "rope_xadd_boot.asm"
 
 boot_zp_size = boot_zp_pack_end - boot_zp_pack
-!if boot_zp_size <> 38 {
-!error "boot_zp_size must be 38"
+!if boot_zp_size <> 32 {
+!error "boot_zp_size must be 32"
 }
-!if boot_zp_room_size <> 26 {
-!error "boot_zp_room_size must be 26"
+!if boot_zp_room_size <> 20 {
+!error "boot_zp_room_size must be 20"
 }
 
 boot_page_size = boot_page_pack_end - boot_page_pack

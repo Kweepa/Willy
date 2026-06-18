@@ -15,53 +15,16 @@ try_touch_below
     cmp #TILE_ITEM
     beq ++
     cmp #TILE_CONVEYOR
-    beq do_belt
+    bne +
+    jsr DoBelt
+    rts
++
     cmp #TILE_PLATFORM
     beq do_block_below
     cmp #TILE_SOLID
     beq do_block_below
     lda #0
     rts
-do_belt
-    lda meta_content_src + meta_off_belt
-    beq do_belt_zero
-
-    lda belt_active
-    bne do_belt_conveyor
-
-    lda meta_content_src + meta_off_belt
-    bpl belt_pos_idx
-    ldx #3
-    bne belt_check_key
-belt_pos_idx
-    ldx #0
-belt_check_key
-    stx tmp
-    ldy belt_opp_key+1,x
-    lda belt_opp_key,x
-    tax
-    jsr ScanKeyRow
-    beq do_belt_release
-    ldx tmp
-    lda belt_opp_key+2,x
-    sta xadd
-    bne do_block_below
-
-do_belt_release
-    lda #1
-    sta belt_active
-
-do_belt_conveyor
-    lda meta_content_src + meta_off_belt
-    sta xadd
-    sta lastxmove
-    bne do_block_below
-
-do_belt_zero
-    lda #0
-    sta xadd
-    beq do_block_below
-
 do_block_below
     lda #1
     rts

@@ -1,4 +1,4 @@
-; One-shot boot at end of PRG (below $1A45; not overwritten by room load).
+; One-shot boot at end of PRG (below image_base; not overwritten by room load).
 ; sei -> VIA #2 IER/T2CL -> stack -> IOINIT -> VIC init -> copy tables -> jmp start_game
 ; Must not RTS here: txs clears the SYS return address on the stack.
 
@@ -22,10 +22,10 @@ WarmStart
     dex
     bpl -
 
-    ldx #boot_zp_room_size - 1  ; belt..draw_vguard at $D6
+    ldx #boot_zp_room_size - 1  ; cell_off..draw_vguard at $DC
 -
     lda boot_zp_pack,x
-    sta belt_opp_key,x
+    sta cell_off_2x3,x
     dex
     bpl -
 

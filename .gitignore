@@ -7,6 +7,8 @@ Miner-main/
 *.d64
 !jsw.d64
 /rooms/out/
+bake/.tmp/
+bake/*.bin
 tools/vice_test.log
 AcmeLabelSorter.exe
 
