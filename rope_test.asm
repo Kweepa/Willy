@@ -11,10 +11,9 @@ ROPE_ANCHOR_PY = 8
 ROPE_FIRST_UDG = GUARDIAN_CHR + 12
 ROPE_UDG_BYTES = 128
 ROPE_XADD_BYTES = 54
-ROPE_SCRATCH_BASE = guardian_sprites_base + $a0
-ROPE_XADD = ROPE_SCRATCH_BASE
-ROPE_OLD_SCREEN = ROPE_SCRATCH_BASE + 64
-ROPE_SEGMENT_Y = ROPE_SCRATCH_BASE + 96
+ROPE_SEGMENT_Y = $33c
+ROPE_XADD = $35c
+rope_xadd = ROPE_XADD
 
 rope_udg            = $6a
 rope_frame          = $6b
@@ -167,6 +166,13 @@ WarmStart
 -
     lda init20_val,x
     sta $9000,x
+    dex
+    bpl -
+
+    ldx #boot_rope_xadd_size - 1
+-
+    lda boot_rope_xadd_pack,x
+    sta ROPE_XADD,x
     dex
     bpl -
 
@@ -360,7 +366,6 @@ InitDebugLabels
     rts
 
 InitRope
-    jsr InitRopeXadd
     lda #0
     sta rope_frame
     sta rope_swing_side
@@ -372,24 +377,6 @@ InitRope
     sta debug_y_step
     lda #1
     sta rope_swing_dir
-    rts
-
-rope_xadd_test_data
-    !byte 1,2,3,2,2,2,3,1
-    !byte 2,2,2,2,0,1,2,0
-    !byte 1,2,1,1,1,2,1,2
-    !byte 1,2,1,2,1,2,1,2
-    !byte 1,2,1,2,1,2,1,2
-    !byte 1,2,1,2,1,0,1,1
-    !byte 1,1,1,0,1,1
-
-InitRopeXadd
-    ldx #ROPE_XADD_BYTES - 1
--
-    lda rope_xadd_test_data,x
-    sta ROPE_XADD,x
-    dex
-    bpl -
     rts
 
 DrawDebugHud
@@ -411,3 +398,5 @@ DrawDebugHud
     lda rope_segment_cur_y
     +PrintDec3At debug_cy_scr
     rts
+
+!source "rope_xadd_boot.asm"

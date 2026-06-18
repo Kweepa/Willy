@@ -2,11 +2,11 @@
 
 image_base = $1a58
 guardian_sprites_base = $1a58    ; 9 guardian frames x 32 bytes ($1A58-$1B77)
-ROPE_SCRATCH_BASE = guardian_sprites_base + $a0
-ROPE_XADD = ROPE_SCRATCH_BASE
-ROPE_OLD_SCREEN = ROPE_SCRATCH_BASE + 64
-ROPE_SEGMENT_Y = ROPE_SCRATCH_BASE + 96
 player_bmp = $1b78               ; player frames at indices 9-16 (288 bytes into sprite block)
+; Rope runtime in cassette buffer ($033C-$03FB); not persisted across LOAD
+ROPE_SEGMENT_Y = $33c            ; 32 B segment Y table ($33C-$35B)
+ROPE_XADD = $35c                 ; 54 B horiz shift table ($35C-$391); copied at WarmStart
+rope_xadd = ROPE_XADD
 meta_content_src = $1f98
 ; Meta payload at meta_content_src (see build_meta in mkroom.py)
 meta_off_guardians = 0

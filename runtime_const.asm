@@ -1,5 +1,5 @@
-; Boot source tables — copied once at WarmStart to ZP ($D6+) and page $100 ($140+).
-; Not read at runtime; game code uses equates in zp.asm.
+; Boot source tables — copied once at WarmStart to ZP ($D6+), page $100 ($140+), and cassette buffer ($35C+).
+; Not read at runtime; game code uses equates in zp.asm / header.asm.
 
 boot_zp_pack
     !byte $f7, $04, $01, $ef, $02, $ff             ; belt_opp_key_boot / willy.asm do_belt
@@ -45,6 +45,8 @@ boot_page_pack
     !byte 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 2, 1, 1, 1, 2, 1, 2, 1, 2
 boot_page_pack_end = *
 
+!source "rope_xadd_boot.asm"
+
 boot_zp_size = boot_zp_pack_end - boot_zp_pack
 !if boot_zp_size <> 38 {
 !error "boot_zp_size must be 38"
@@ -56,4 +58,9 @@ boot_zp_size = boot_zp_pack_end - boot_zp_pack
 boot_page_size = boot_page_pack_end - boot_page_pack
 !if boot_page_size <> 114 {
 !error "boot_page_size must be 114"
+}
+
+boot_rope_xadd_size = boot_rope_xadd_pack_end - boot_rope_xadd_pack
+!if boot_rope_xadd_size <> ROPE_XADD_BYTES {
+!error "boot_rope_xadd_size must match ROPE_XADD_BYTES"
 }

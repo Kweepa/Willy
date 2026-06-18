@@ -30,6 +30,8 @@
 ;   $90   ST       serial status (LOAD / IEC)
 ;   $93           load/verify flag (LOAD)
 ;   $AE-$AF       load end pointer (tape buffer end; used during LOAD)
+;   $33C-$35B     ROPE_SEGMENT_Y (32 B; cassette buffer, rope rooms only)
+;   $35C-$391     rope_xadd (54 B; copied from PRG at WarmStart)
 ;   $B7   FNLEN    filename length (SETNAM)
 ;   $BB-$BC FNADR  filename pointer low/high (SETNAM)
 ;   $B8   LFN      logical file number (SETLFS)

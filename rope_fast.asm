@@ -123,7 +123,7 @@ rope_loop_top
     ldx rope_index
     cpx #ROPE_XADD_BYTES ; 0 implied after the end of the table
     bpl .xadd_skip
-    lda ROPE_XADD,x
+    lda rope_xadd,x
     !if ROPE_TEST {
     sta debug_x_step
     }

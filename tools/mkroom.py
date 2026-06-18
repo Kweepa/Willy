@@ -25,17 +25,6 @@ OP_LDA_IMM = 0xA9
 OP_STA_ABS = 0x8D
 OP_RTS = 0x60
 GUARDIAN_SPRITES_BYTES = 288  # 9 frames x 32 bytes
-ROPE_SCRATCH_OFF = 0xA0
-ROPE_XADD_BYTES = 54
-ROPE_XADD = bytes([
-    1, 2, 3, 2, 2, 2, 3, 1,
-    2, 2, 2, 2, 0, 1, 2, 0,
-    1, 2, 1, 1, 1, 2, 1, 2,
-    1, 2, 1, 2, 1, 2, 1, 2,
-    1, 2, 1, 2, 1, 2, 1, 2,
-    1, 2, 1, 2, 1, 0, 1, 1,
-    1, 1, 1, 0, 1, 1,
-])
 META_OFF_ROPE = 31
 TAIL_OFF_TILECOLORS = 32
 TAIL_OFF_GUARDIAN_DATA = 38
@@ -783,11 +772,7 @@ def build_room_image(room: dict) -> bytes:
     stamp_hud_item(tiles)
 
     raw = room["guardiansprites"] or bytes(GUARDIAN_SPRITES_BYTES)
-    sprites = bytearray(deinterleave_guardian_sprites(raw))
-    if room.get("rope"):
-        end = ROPE_SCRATCH_OFF + len(ROPE_XADD)
-        sprites[ROPE_SCRATCH_OFF:end] = ROPE_XADD
-    sprites = bytes(sprites)
+    sprites = bytes(deinterleave_guardian_sprites(raw))
     player = player_bmp_for_room(room)
     udg = build_udg(room)
     tail = build_tail(room)
