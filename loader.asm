@@ -21,42 +21,6 @@ room_lfn = 15
 room_name
     !text "R00"
 
-FormatRoomName
-    lda map
-    ldy #'0'
--
-    cmp #10
-    bcc +
-    sbc #10
-    iny
-    bne -
-+
-    adc #'0'
-    sta room_name+2
-    sty room_name+1
-    rts
-
-DrawHud
-    lda items_collected
-    ldy #$b0
--
-    cmp #10
-    bcc +
-    sbc #10
-    iny
-    bne -
-+
-    sty hud_items_scr
-    clc
-    adc #$b0
-    sta hud_items_scr+1
-
-    lda men
-    clc
-    adc #$b0
-    sta hud_men_count_scr
-    rts
-
 LoadRoom
     ; clear colors
     lda #0
@@ -163,9 +127,4 @@ skip_room_spawn
     sta was_on_ground
     lda py
     sta last_py
-    rts
-
-GetCollision
-    lda (map_ptr),y
-    and #$0f
     rts

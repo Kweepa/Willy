@@ -10,7 +10,15 @@ guardian_prefix_bytes = guardian_sprites_base - image_base
 player_bmp = guardian_sprites_base + 288    ; HUD chr 7 UDG = bmp+$c0 -> $1C38
 runtime_udg_pad = $150                  ; 336 B ($1CB0-$1DFF); pins screen_base after load
 
-; Rope runtime in cassette buffer ($033C-$03FB); not persisted across LOAD
+; Relocated resident code (copied from boot zone at WarmStart)
+RELOC_A_BASE = $0200
+RELOC_A_LIMIT = $0259
+RELOC_B_BASE = $0392
+RELOC_B_LIMIT = $03fc
+RELOC_C_BASE = $0334
+RELOC_C_LIMIT = $033c
+
+; Rope runtime in cassette buffer ($033C-$03FB); survives KERNAL disk LOAD
 ROPE_SEGMENT_Y = $33c            ; 32 B segment Y table ($33C-$35B)
 ROPE_XADD = $35c                 ; 54 B horiz shift table ($35C-$391); copied at WarmStart
 rope_xadd = ROPE_XADD

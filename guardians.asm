@@ -1,31 +1,3 @@
-ShouldMoveHorizontalGuardianThisFrame
-    lda hguard_count
-    and #3
-    cmp left_right_ctr
-    rts
-
-ShouldMoveVerticalGuardianThisFrame
-    lda vguard_count
-    cmp up_down_ctr
-    beq +
-    sec
-    sbc #3
-    cmp up_down_ctr
-+
-    rts
-
-CalcGuardianRecPtr
-    lda guardian_index
-    asl
-    asl
-    asl
-    adc guardian_index
-    adc #<guardian_data_base
-    sta arr
-    lda #>guardian_data_base
-    sta arr+1
-    rts
-
 CopyDownGuardianData
     jsr CalcGuardianRecPtr
     ldy #8
@@ -44,11 +16,6 @@ CopyUpGuardianData
     sta (arr),y
     dey
     bpl -
-    rts
-
-IsVerticalGuardian
-    lda guard_axis
-    cmp #GUARDIAN_VERTICAL
     rts
 
 EraseBlock
@@ -71,7 +38,8 @@ erase_guardian_loop
     ldx hx
     ldy hy
     jsr ConvertXYToScreenAddr
-    jsr IsVerticalGuardian
+    lda guard_axis
+    cmp #GUARDIAN_VERTICAL
     ldx #3
     bcc +
     lda hy
@@ -145,7 +113,8 @@ MoveGuardian
     rts
 
 DrawGuardian
-    jsr IsVerticalGuardian
+    lda guard_axis
+    cmp #GUARDIAN_VERTICAL
     php
     bcc +
     inc vguard_count
@@ -176,19 +145,6 @@ draw_guard_loop
     sta (scr_ptr),y
     dex
     bpl -
-    rts
-
-CalcGuardianUDGAddr
-    lda guard_udg_off
-    asl
-    asl
-    asl
-    clc
-    adc #<guardian_udgs
-    sta arr2
-    lda #>guardian_udgs
-    adc #0
-    sta arr2+1
     rts
 
 CopyGuardianFrame
@@ -278,7 +234,8 @@ MoveGuardians
     adc #GUARDIAN_CHR
     sta guard_udg_index
     jsr CopyDownGuardianData
-    jsr IsVerticalGuardian
+    lda guard_axis
+    cmp #GUARDIAN_VERTICAL
     bcs MoveNormalVerticalGuardian
 
 MoveBidirectionalHorizontalGuardian

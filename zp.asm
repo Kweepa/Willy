@@ -30,8 +30,9 @@
 ;   $90   ST       serial status (LOAD / IEC)
 ;   $93           load/verify flag (LOAD)
 ;   $AE-$AF       load end pointer (tape buffer end; used during LOAD)
-;   $33C-$35B     ROPE_SEGMENT_Y (32 B; cassette buffer, rope rooms only)
+;   $033C-$35B     ROPE_SEGMENT_Y (32 B; cassette buffer, rope rooms only)
 ;   $35C-$391     rope_xadd (54 B; copied from PRG at WarmStart)
+;   $392-$3FB     relocated code block B (see relocated_code.asm)
 ;   $B7   FNLEN    filename length (SETNAM)
 ;   $BB-$BC FNADR  filename pointer low/high (SETNAM)
 ;   $B8   LFN      logical file number (SETLFS)
@@ -54,6 +55,11 @@
 ;
 ; Candidate per-room gameplay scratch — rope erase, character
 ; clear temp buffer, etc. Do not persist state there across LoadRoom.
+;
+; Relocated resident code (WarmStart; survives KERNAL disk LOAD):
+;   $0200-$258  reloc block A (FormatRoomName, DrawHud, ShouldMove*, SaveSpawn)
+;   $0334-$33B  reloc block C (GetCollision)
+;   $0392-$3FB  reloc block B (ConvertXYToScreenAddr, GetSpriteFrameAddr, CalcGuardian*)
 ;
 ; Page $0100 copied tables (WarmStart; stack must stay above $01B4):
 ;   $100-$13D  pickup_got

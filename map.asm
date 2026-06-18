@@ -14,13 +14,6 @@ ResetGame
     sta initial_room_load       ; first room load uses @spawn from meta
 	rts
 
-SaveSpawn
-    lda px
-    sta spawn_px
-    lda py
-    sta spawn_py
-    rts
-
 ResetMap
     lda #0
     sta dead

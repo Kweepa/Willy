@@ -32,6 +32,27 @@ WarmStart
     jsr RelocateDrawPlayerTables
     jsr RelocateRopeXadd
 
+    ldx #reloc_a_size - 1
+-
+    lda reloc_a_src,x
+    sta RELOC_A_BASE,x
+    dex
+    bpl -
+
+    ldx #reloc_b_size - 1
+-
+    lda reloc_b_src,x
+    sta RELOC_B_BASE,x
+    dex
+    bpl -
+
+    ldx #reloc_c_size - 1
+-
+    lda reloc_c_src,x
+    sta RELOC_C_BASE,x
+    dex
+    bpl -
+
     ldx #boot_page_size - 1     ; edge_tbl, x24rowtab, jumptab at $140+
 -
     lda boot_page_pack,x
@@ -53,7 +74,7 @@ RelocateDrawPlayerTables
     bpl -
     rts
 
-; Copy rope_xadd to cassette buffer $35C (clobbered by KERNAL LOAD).
+; Copy rope_xadd to cassette buffer $35C (survives KERNAL disk LOAD).
 RelocateRopeXadd
     ldx #boot_rope_xadd_size - 1
 -
