@@ -17,7 +17,8 @@ TILE_ITEM = 6                   ; map-only marker for pickup cell (not in author
 
 TILE_CHR_BASE = 16
 ITEM_CHR = 15
-MEN_CHR = 7                     ; HUD icon; UDG RAM = player_bmp+$c0 (dual-use, do not overwrite)
+MEN_CHR = 13                    ; HUD men icon @ $1C68 (hud_udg_base)
+HUD_ITEM_CHR = 14               ; HUD items icon @ $1C70
 GUARDIAN_CHR = 22
 PLAY_CHR = 58
 

@@ -42,7 +42,7 @@ GUARDIAN_RECORD_BYTES = 9
 MAX_GUARDIANS = 6
 TAIL_BYTES = 104
 META_SIZE = 15 + ITEM_DRAW_BYTES
-IMAGE_LOAD = 0x1A24
+IMAGE_LOAD = 0x1A14
 CONVEYOR_PREFIX_BYTES = 19
 DO_BELT_SLOT_BYTES = 33
 GUARDIAN_PREFIX_BYTES = CONVEYOR_PREFIX_BYTES + DO_BELT_SLOT_BYTES
@@ -50,8 +50,9 @@ SCREEN_BASE = 0x1E00
 MAP_BASE = 0x9400
 COLOR_BASE = 0x9600
 MAX_ITEMS = 1
-ROOM_IMAGE_SIZE = 0x5DC           # 1500 bytes ($1A24-$1FFF)
-# Pad pins screen at $1E00: IMAGE_LOAD + prefix + sprites + player + udg + pad == SCREEN_BASE
+ROOM_IMAGE_SIZE = 0x5EC           # 1516 bytes ($1A14-$1FFF); +16 for HUD UDG chr 13-14
+HUD_UDG_BYTES = 16
+# Pad pins screen at $1E00: IMAGE_LOAD + prefix + sprites + player + hud + udg + pad == SCREEN_BASE
 RUNTIME_UDG_PAD = 0x150           # 336 bytes ($1CB0-$1DFF)
 TILE_CHR_BASE = 16
 TILE_EMPTY = 0
@@ -77,10 +78,13 @@ TILE_CHAR_MAP = {
     ">": TILE_CONVEYOR,
 }
 ITEM_CHR = 15
-MEN_CHR = 3
+MEN_CHR = 13
+HUD_ITEM_CHR = 14
 HUD_TITLE_COLS = 18
 DEFAULT_TILE_COLORS = [0, 1, 3, 2, 5, 4]
 DEFAULT_ITEM_UDG = bytes([48, 72, 136, 144, 104, 4, 10, 4])
+DEFAULT_MEN_UDG = bytes([60, 60, 126, 52, 62, 60, 24, 60])
+DEFAULT_HUD_ITEM_UDG = bytes([4, 4, 174, 174, 162, 66, 66, 238])
 
 VIC_COLOR = {
     "BLK": 0,
@@ -467,15 +471,15 @@ def stamp_hud_title(tiles: bytearray, room: dict) -> None:
 
 
 def stamp_hud_men(tiles: bytearray) -> None:
-    """HUD row 16 col 18 — Willy head (chr 7 = player_bmp+$c0); count at col 19 runtime."""
+    """HUD row 16 col 18 — Willy head (chr 13); count at col 19 runtime."""
     base = (SCREEN_ROWS - 1) * WIDTH + 18
     tiles[base] = MEN_CHR
 
 
 def stamp_hud_item(tiles: bytearray) -> None:
-    """HUD row 16 col 21 — item icon (chr 15); count drawn at cols 22-23 at runtime."""
+    """HUD row 16 col 21 — items icon (chr 14); count drawn at cols 22-23 at runtime."""
     base = (SCREEN_ROWS - 1) * WIDTH + 21
-    tiles[base] = ITEM_CHR
+    tiles[base] = HUD_ITEM_CHR
 
 
 def belt_byte(speed: int) -> int:
@@ -732,6 +736,11 @@ def build_guardian_data(room: dict) -> bytes:
     return bytes(out)
 
 
+def build_hud_udg() -> bytes:
+    """Fixed HUD icons: chr 13 men, chr 14 items (see DEFAULT_*_UDG)."""
+    return DEFAULT_MEN_UDG + DEFAULT_HUD_ITEM_UDG
+
+
 def build_udg(room: dict) -> bytes:
     out = bytearray()
     out.extend(room["tileudg"][6])   # item → chr 15
@@ -814,7 +823,7 @@ def player_bmp_for_room(room: dict) -> bytes:
 
 
 def build_room_image(room: dict, scan_key_row: int) -> bytes:
-    """RAM image loaded at $1A24 (1500 bytes)."""
+    """RAM image loaded at $1A14 (1516 bytes)."""
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap", room))
     stamp_hud_title(tiles, room)
     stamp_hud_men(tiles)
@@ -823,6 +832,7 @@ def build_room_image(room: dict, scan_key_row: int) -> bytes:
     raw = room["guardiansprites"] or bytes(GUARDIAN_SPRITES_BYTES)
     sprites = bytes(deinterleave_guardian_sprites(raw))
     player = player_bmp_for_room(room)
+    hud_udg = build_hud_udg()
     udg = build_udg(room)
     tail = build_tail(room)
     prefix = build_prefix(room, scan_key_row)
@@ -831,6 +841,7 @@ def build_room_image(room: dict, scan_key_row: int) -> bytes:
         prefix
         + sprites
         + player
+        + hud_udg
         + udg
         + bytes(RUNTIME_UDG_PAD)
         + tiles

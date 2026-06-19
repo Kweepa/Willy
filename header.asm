@@ -1,13 +1,14 @@
 ; unexpanded JSW layout
 
-image_base = $1a24                    ; +1 vs $1A23: DoBelt slot 33 B; pad pins screen -> $1E00
+image_base = $1a14                    ; -16 vs $1A24: HUD UDG chr 13-14; pad pins screen -> $1E00
 conveyor_prefix_bytes = 19
 do_belt_prefix_bytes = 33
 AnimateConveyors = image_base
 DoBelt = image_base + conveyor_prefix_bytes
 guardian_sprites_base = image_base + conveyor_prefix_bytes + do_belt_prefix_bytes
 guardian_prefix_bytes = guardian_sprites_base - image_base
-player_bmp = guardian_sprites_base + 288    ; HUD chr 7 UDG = bmp+$c0 -> $1C38
+player_bmp = guardian_sprites_base + 288
+hud_udg_base = player_bmp + 256         ; chr 13-14 @ $1C68-$1C77
 runtime_udg_pad = $150                  ; 336 B ($1CB0-$1DFF); pins screen_base after load
 
 ; Relocated resident code (copied from boot zone at WarmStart)
@@ -24,7 +25,7 @@ RELOC_D_LIMIT = $100d
 ROPE_SEGMENT_Y = $33c            ; 32 B segment Y table ($33C-$35B)
 ROPE_XADD = $35c                 ; 54 B horiz shift table ($35C-$391); copied at WarmStart
 rope_xadd = ROPE_XADD
-room_image_size = $5dc           ; 1500 bytes ($1A24-$1FFF); was $5DD before DoBelt -1 B
+room_image_size = $5ec           ; 1516 bytes ($1A14-$1FFF); +16 HUD UDG chr 13-14
 tail_size = $68                  ; 104 bytes at end of room image
 meta_content_src = image_base + room_image_size - tail_size
 

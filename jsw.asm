@@ -1,5 +1,5 @@
 ; Jet Set Willy - unexpanded VIC-20
-; PRG from $1000; room image loads to image_base ($1A24)
+; PRG from $1000; room image loads to image_base ($1A14)
 
 !source "zp.asm"
 !source "defines.asm"

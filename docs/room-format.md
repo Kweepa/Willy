@@ -54,23 +54,25 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@tileudg` | block | Seven lines: `N: bb bb bb bb bb bb bb bb` (hex bytes; 0–5 tiles, 6 item) |
 | `@guardianbmp` | block | Optional; hex bytes, 128 per guardian in order |
 
+HUD UDGs (chr **13** men icon, chr **14** items icon) are **not** per-room — `mkroom.py` bakes fixed patterns from `DEFAULT_MEN_UDG` / `DEFAULT_HUD_ITEM_UDG` into every room PRG.
+
 Lines starting with `#` or `;` are comments; `#` may also appear mid-line. Blank lines outside `@tilemap` are ignored.
 
 ## Binary layout (output of `mkroom.py`)
 
-PRG loads at **`$1A78`** (1416 bytes):
+PRG loads at **`$1A14`** (1516 bytes, ends `$1FFF`):
 
 | Offset | Address | Size | Content |
 |--------|---------|------|---------|
-| 0 | `$1A78` | 256 | Guardian sprites (column-major from `@guardiansprites`) |
-| 256 | `$1B78` | 256 | `player_bmp` |
-| 512 | `$1C78` | 56 | Tile UDG bytes (chr 15=item, chr 16–21=tiles 0–5) |
-| 568 | `$1CB0` | 336 | Runtime UDG pad (zeros) |
-| 904 | `$1E00` | 408 | 24×17 screen (row 16 = HUD + title; item not baked in) |
-| 1312 | `$1F98` | 26 | Meta (15-byte header + 11-byte item draw code at `$1FA7`) |
-| 1337 | `$1FB1` | 6 | Tile colours (types 0–5 only) |
-| 1343 | `$1FB7` | 54 | Guardian live data (SoA, 9×6 bytes; no stored frame) |
-| 1397 | `$1FED` | 19 | Reserved |
+| 0 | `$1A14` | 19 | `AnimateConveyors` (baked prefix) |
+| 19 | `$1A27` | 33 | `DoBelt` (baked prefix) |
+| 52 | `$1A48` | 288 | Guardian sprites (column-major from `@guardiansprites`) |
+| 340 | `$1B68` | 256 | `player_bmp` |
+| 596 | `$1C68` | 16 | HUD UDG bytes (chr 13=men, chr 14=items) |
+| 612 | `$1C78` | 56 | Tile UDG bytes (chr 15=item, chr 16–21=tiles 0–5) |
+| 668 | `$1CB0` | 336 | Runtime UDG pad (zeros) |
+| 1004 | `$1E00` | 408 | 24×17 screen (row 16 = HUD + title; item not baked in) |
+| 1412 | `$1F98` | 104 | Tail: meta, tile colours, guardian AoS |
 
 Item draw code (11 bytes at meta+15): `lda #15` / `sta screen` / `lda #color` / `sta color_ram` / `rts`. `DrawItem` does `jsr $1FA7` when `items_left` > 0.
 
