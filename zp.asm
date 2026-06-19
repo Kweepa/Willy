@@ -121,6 +121,8 @@ draw_player_offsets = $37
 draw_player_chrs    = $3d
 
 jumpIsPressed   = $0f          ; was $3C — freed $37-$42 for draw tables
+leftIsPressed   = $12
+rightIsPressed  = $2d
 
 guard_udg_off   = $48
 guard_udg_index = $49

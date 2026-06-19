@@ -37,23 +37,15 @@ rope_input_climb
     lda rope_swing_side
     beq rope_climb_left_swing
 rope_climb_right_swing
-    ldx #$ef
-    ldy #$02
-    jsr ScanKeyRow
+    lda leftIsPressed
     beq rope_climb_down_seg
-    ldx #$f7
-    ldy #$04
-    jsr ScanKeyRow
+    lda rightIsPressed
     beq rope_climb_up_seg
     rts
 rope_climb_left_swing
-    ldx #$f7
-    ldy #$04
-    jsr ScanKeyRow
+    lda rightIsPressed
     beq rope_climb_down_seg
-    ldx #$ef
-    ldy #$02
-    jsr ScanKeyRow
+    lda leftIsPressed
     beq rope_climb_up_seg
     rts
 

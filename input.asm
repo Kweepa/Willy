@@ -18,6 +18,8 @@
 ; 7f -> 2,4,6,8,0,=,
 ;
 
+!zone input_implementation
+
 ScanKeyRow
     lda #$ff    ; restore DDR for VIA2
     sta $9122
@@ -34,35 +36,40 @@ ScanKeyRow
 GetPlayerInput
     lda #0
     sta jumpIsPressed
+    sta leftIsPressed
+    sta rightIsPressed
     lda rope_willy_is_holding
     beq +
     ;jmp RopePlayerInput
 +
     lda on_ground
-    beq player_input_done
+    beq .player_input_done
     lda belt_active
-    bne player_input_try_jump
-    ldx #$ef
-    ldy #$02
+    bne .player_input_try_jump
+.player_input_left
+    ldx #$bf ; Q/E/T etc
+    ldy #$ff ; any
     jsr ScanKeyRow
-    beq player_input_right
+    beq .player_input_right
     lda #-1
     sta lastxmove
     sta xadd
-player_input_right
-    ldx #$f7
-    ldy #$04
+    sta leftIsPressed
+.player_input_right
+    ldx #$fd ; W/R/Y etc
+    ldy #$ff ; any
     jsr ScanKeyRow
-    beq player_input_try_jump
+    beq .player_input_try_jump
     lda #1
     sta lastxmove
     sta xadd
-player_input_try_jump
+    sta rightIsPressed
+.player_input_try_jump
     ldx #$ef
-    ldy #$01
+    ldy #$ff
     jsr ScanKeyRow
-    beq player_input_done
+    beq .player_input_done
     lda #1
     sta jumpIsPressed
-player_input_done
+.player_input_done
     rts
