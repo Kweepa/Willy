@@ -215,10 +215,7 @@ look_below_2
 +
     ldy #72
     jsr try_touch_below
-	bne check_jump
-    lda px
-    and #$03
-    beq move_up_down
+    bne check_jump
     iny
     jsr try_touch_below
     beq move_up_down
