@@ -9,8 +9,8 @@ DoBelt
     ; @belt -1 pushes left: oppose key is right (belt_opp_right / index 0)
     lda belt_active
     bne +
-    ldy #belt_opp_right_mask
     ldx #belt_opp_right_row
+    ldy #$ff
     jsr SCANKEYROW
     beq ++
     lda #belt_opp_right_xadd
@@ -31,8 +31,8 @@ DoBelt
     ; @belt 1 pushes right: oppose key is left (belt_opp_left / index 3)
     lda belt_active
     bne +
-    ldy #belt_opp_left_mask
     ldx #belt_opp_left_row
+    ldy #$ff
     jsr SCANKEYROW
     beq ++
     lda #belt_opp_left_xadd
