@@ -1,3 +1,5 @@
+!zone guardians_implementation
+
 CopyDownGuardianData
     jsr CalcGuardianRecPtr
     ldy #8

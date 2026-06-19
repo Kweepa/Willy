@@ -4,6 +4,8 @@
 ; so in this case, we'd detect a collision, then use the rope_segment_y table to match willy's y with a segment
 ; then if holding the rope, move willy to the coordinates of that segment
 
+!zone rope_implementation
+
 ; ===========================================================================
 
 rope_clear_pre_player_draw
@@ -112,8 +114,6 @@ rope_draw
     clc
     adc #31
     sta rope_index
-
-!zone rope_draw_loop {
 
 rope_loop_top
     lda #0
@@ -247,8 +247,6 @@ rope_loop_top
     dec rope_index
     jmp rope_loop_top
 .rope_loop_done
-
-}
 
 ROPE_SNIP_SNAP = 0
 
