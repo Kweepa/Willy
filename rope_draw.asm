@@ -47,7 +47,7 @@ rope_draw
     ldx rope_frame
     inx
     lda rope_swing_dir
-    bne +
+    bpl +
     dex
     dex
 +
