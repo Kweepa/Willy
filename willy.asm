@@ -1,3 +1,5 @@
+!zone willy_implementation
+
 try_touch
     jsr GetCollision
     cmp #TILE_SOLID
@@ -200,9 +202,6 @@ collide_down
     ldy #96
     jsr try_touch_below
     bne hit_below
-    lda px
-    and #$03
-    beq move_up_down
     iny
     jsr try_touch_below
     bne hit_below
