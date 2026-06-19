@@ -1,5 +1,5 @@
 @room 22
-@title To the Kitchens   
+@title To the Kitchens
 @conn 28 21 0 23
 @spawn 44 104
 @border GRN
