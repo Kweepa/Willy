@@ -98,12 +98,6 @@ clr_done
     rts
 
 Collide
-    lda rope_willy_is_holding
-    beq +
-    lda room_has_rope
-    beq +
-    ;jmp CollideOnRope
-+
     lda py
     sta last_py
     lda xadd
@@ -111,9 +105,6 @@ Collide
     lda on_ground
     bne +
     sta belt_active
-+
-	lda #0
-	sta $900c
 +
     lda on_ground
     sta was_on_ground
@@ -422,6 +413,7 @@ coll_check
 	dex
 	txa
 	and #7
+    cmp #7
 	bne -
 	lda tmp
 	beq +
@@ -433,42 +425,53 @@ coll_check
     +BorderDebugColor (WHITE + 8)
     rts
 
+check_for_pickup
+
 ; HandleOverlapChar - A = screen chr under a Willy cell (player_overlap).
 ; Items: pickup. Hazards/guardians: kill. Solids: pass through.
 ; coll_check only calls us when player_touch is non-zero.
+; this function should preserve x and y
 HandleOverlapChar
     cmp #ITEM_CHR
-    bne +
+    bne ++
+
     ; pickup item at overlap cell (inlined PickupItemAtOverlap)
+    txa
+    pha
     ldx map
     lda pickup_got,x
-    bne dont_kill_player
+    bne +
     inc pickup_got,x
     inc items_collected
-    tya
-    pha
-    lda draw_player_offsets,y
-    tay
-    lda #TILE_CHR_BASE
-    sta (scr_ptr),y
-    lda #TILE_EMPTY
-    sta (map_ptr),y
-    tax
-    lda tile_color_src,x
-    sta (col_ptr),y
-    lda #180
-    sta $900c
-    pla
-    tay
-    jmp dont_kill_player
+    jsr item_erase
 +
+    pla
+    tax
+    rts
+
+++
     cmp #TILE_HAZARD + TILE_CHR_BASE
     beq kill_player
     cmp #TILE_SOLID + TILE_CHR_BASE
     beq dont_kill_player
     cmp #GUARDIAN_CHR
-    bcs kill_player
+    bcs +
     rts
+
++
+
+ROPE_FUDGE = 0
+
+!if ROPE_FUDGE {
+    ; hit a guardian chr. check for rope before killing the player
+    pha
+    lda room_has_rope
+    beq kill_player
+    pla
+    cmp #ROPE_FIRST_UDG
+    bcc kill_player
+    jmp rope_attach ; tail call
+}
 
 kill_player
     lda #1

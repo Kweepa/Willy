@@ -38,10 +38,7 @@ GetPlayerInput
     sta jumpIsPressed
     sta leftIsPressed
     sta rightIsPressed
-    lda rope_willy_is_holding
-    beq +
-    ;jmp RopePlayerInput
-+
+
     lda on_ground
     beq .player_input_done
     lda belt_active

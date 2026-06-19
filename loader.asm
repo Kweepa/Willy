@@ -92,34 +92,25 @@ ParseRoomMeta
     sta $900f
     lda meta_content_src + meta_off_rope
     sta room_has_rope
-    beq parse_clear_rope_hold
-    lda #0
-    sta rope_frame
-    sta rope_swing_side
-    sta rope_willy_is_holding
-    sta rope_grab_cooldown
-    sta rope_udg
-    sta rope_loop_count
-    lda #1
-    sta rope_swing_dir
-    ldx #31
--
-    lda #0
-    sta rope_old_screen_pos,x
-    sta ROPE_SEGMENT_Y,x
-    dex
-    bpl -
-    jmp parse_room_spawn
-parse_clear_rope_hold
-    lda #0
-    sta rope_willy_is_holding
-parse_room_spawn
+
+    ; minimal rope clear
+    ldx #0
+    stx rope_willy_is_holding
+    stx rope_udg
+    stx rope_frame
+    stx rope_swing_side ; this needs to be 0 or 1
+    inx
+    stx rope_swing_dir ; this needs to be -1 or 1
+
+    ; spawn at position set in the room meta data?
+    ; otherwise px and py are already set up (from room transition)
     lda use_room_spawn
     beq skip_room_spawn
     lda meta_content_src + meta_off_spawn_px
     sta px
     lda meta_content_src + meta_off_spawn_py
     sta py
+
 skip_room_spawn
     lda #27
     sta inairtime

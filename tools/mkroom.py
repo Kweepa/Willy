@@ -22,13 +22,14 @@ TILE_BYTES = WIDTH * SCREEN_ROWS
 UDG_BYTES = 56
 TILE_COLOR_BYTES = 6
 ITEM_DRAW_BYTES = 16
+ITEM_ERASE_BYTES = 11
 BAKE_DIR = Path(__file__).resolve().parent.parent / "bake"
 ACME = Path(r"\app\acme\acme.exe")
 JSW_LBL = Path(__file__).resolve().parent.parent / "jsw.lbl"
 GUARDIAN_SPRITES_BYTES = 288  # 9 frames x 32 bytes
-META_OFF_ROPE = 31
-TAIL_OFF_TILECOLORS = 32
-TAIL_OFF_GUARDIAN_DATA = 38
+META_OFF_ROPE = 15 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
+TAIL_OFF_TILECOLORS = META_OFF_ROPE + 1
+TAIL_OFF_GUARDIAN_DATA = TAIL_OFF_TILECOLORS + TILE_COLOR_BYTES
 PLAYER_BMP_BYTES = 256
 NIGHTMARE_ROOM_ID = 29
 DEFAULT_PLAYER_BMP_PATH = (
@@ -41,7 +42,7 @@ GUARDIAN_DATA_BYTES = 54          # AoS: 9 bytes x 6 guardians
 GUARDIAN_RECORD_BYTES = 9
 MAX_GUARDIANS = 6
 TAIL_BYTES = 104
-META_SIZE = 15 + ITEM_DRAW_BYTES
+META_SIZE = 15 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
 IMAGE_LOAD = 0x1A14
 CONVEYOR_PREFIX_BYTES = 19
 DO_BELT_SLOT_BYTES = 33
@@ -579,6 +580,25 @@ def build_item_draw(room: dict) -> bytes:
     )
 
 
+def build_item_erase(room: dict) -> bytes:
+    """11 bytes in meta tail — ACME bake/item_erase.asm."""
+    col, row = room["items"][0]
+    cell_off = row * WIDTH + col
+    scr_addr = SCREEN_BASE + cell_off
+    map_addr = scr_addr + (MAP_BASE - SCREEN_BASE)
+    col_addr = COLOR_BASE + cell_off
+    return assemble_room_code(
+        "item_erase.asm",
+        {
+            "COL_ADDR": col_addr,
+            "MAP_ADDR": map_addr,
+            "EMPTY_COLOR": room["tilecolors"][0] & 0xFF,
+            "TILE_EMPTY": TILE_EMPTY,
+        },
+        ITEM_ERASE_BYTES,
+    )
+
+
 # Feet py = surface - RAMP_FEET_OFFSET - toe[ramp_type]
 RAMP_FEET_OFFSET = 16
 RAMP_RY_TOE: dict[int, int] = {
@@ -715,6 +735,7 @@ def build_meta(room: dict) -> bytes:
     meta.append(a & 0xFF)
     meta.extend(room["conn"])
     meta.extend(build_item_draw(room))
+    meta.extend(build_item_erase(room))
     if len(meta) != META_SIZE:
         raise room_error(room, f"meta size {len(meta)} != {META_SIZE}")
     return bytes(meta)

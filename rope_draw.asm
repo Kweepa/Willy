@@ -16,12 +16,13 @@ rope_clear_pre_player_draw
     beq +
     asl
     tax
--
+
     lda #TILE_CHR_BASE ; empty tile
+-
     sta (rope_old_screen_pos,x) ; valid 6502, intended for tables of addresses in ZP
     dex
     dex
-    bne -
+    bpl -
 +
     rts
 
@@ -43,24 +44,26 @@ rope_draw
 ; then from 0 to 53, and back to 0 for a left swing (with rope_xadd interpreted as negative)
 ; rope_swing_dir determines this
 
-    lda rope_frame
-    clc
-    adc rope_swing_dir
-    sta rope_frame
-    cmp #0
+    ldx rope_frame
+    inx
+    lda rope_swing_dir
+    bne +
+    dex
+    dex
++
+    stx rope_frame
     beq .rope_flip_dir
-    cmp #53
+    cpx #53
     bne .rope_frame_done
     lda rope_swing_side
     eor #1
     sta rope_swing_side
 .rope_flip_dir
     lda rope_swing_dir
-    eor #$ff
-    clc
-    adc #1
+    eor #$fe // special case that flips -1 <> 1
     sta rope_swing_dir
 .rope_frame_done
+
 
 ; now step through the rope segments and draw them
 
@@ -103,10 +106,9 @@ rope_draw
     sta rope_seg_skip_above
     lda rope_willy_is_holding
     beq +
-    lda rope_willy_seg
-    clc
-    adc #1
-    sta rope_seg_skip_above
+    ldx rope_willy_seg
+    inx
+    stx rope_seg_skip_above
 +
 
     ; loop rope_frame..rope_frame+31 backwards; rope_loop_count = segment 0..31 (0=anchor, 31=tip)
@@ -258,8 +260,12 @@ ROPE_SNIP_SNAP = 0
     sta on_ground
     lda rope_segment_cur_x
     lsr
-    sta px
+    sec
+    sbc #2
+    stx px
     lda rope_segment_cur_y
+    sec
+    sbc #8
     bpl +
     lda #0
 +
