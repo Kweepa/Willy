@@ -95,10 +95,10 @@ rope_draw
     lda #>ROPE_FIRST_UDG_ADDRESS
     sta rope_udg_mem+1
 
-    ; anchor: col 12 = 96 VIC px; row 0 = py 8 (ROPE_ANCHOR_PY — top of willy 16px hitbox)
+    ; anchor: col 12 = 96 VIC px; row 0 = py 3 (where the first dot is drawn)
     lda #96
     sta rope_segment_cur_x
-    lda #ROPE_ANCHOR_PY
+    lda #3
     sta rope_segment_cur_y
 
     ; calculate loop count to stop storing segment x,y

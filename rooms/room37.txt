@@ -23,19 +23,19 @@
            /    F       
           /             
          /              
-        /     F  F      
-       /            F   
+        /        F      
+       /      F     F   
       /                 
 WW   /                  
     /                   
-   / W      F     FF<<<<
-  /  WFF      F     FFFF
+   / W     F        FF<<
+  /  WFF      F       FF
  /   W           F      
 /    W     F            
      W         F        
-WWWWWWWW      F         
+WWWWWWWW   FF         
 
-@tilecolors WHT GRN YEL YEL CYN YEL
+@tilecolors WHT GRN RED YEL CYN YEL
 @itemcolor YEL
 
 @guardians

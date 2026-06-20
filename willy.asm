@@ -300,6 +300,11 @@ ErasePlayer
     rts
 
 DrawPlayer
+    lda py
+    bpl +
+    lda #0
+    sta py
++
 	; clear overlaps/touches
 	ldx #(48+6-1)
 	lda #0
