@@ -6,5 +6,10 @@
 @border BLK
 @belt 0
 
-@tilecolors BLK WHT WHT WHT WHT WHT
+@emptycolor BLK
+@floorcolor WHT
+@wallcolor WHT
+@nastycolor WHT
+@rampcolor WHT
+@beltcolor WHT
 @itemcolor YEL

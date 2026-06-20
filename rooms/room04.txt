@@ -39,7 +39,11 @@ WWW
 WWWWW\                  
 WWWWWW\FFFFF+FWWFFFFFFFF
 
-@tilecolors WHT YEL CYN GRN CYN RED
+@floorcolor YEL
+@wallcolor CYN
+@nastycolor GRN
+@rampcolor CYN
+@beltcolor RED
 @itemcolor BLK
 
 @guardians
@@ -49,11 +53,8 @@ y=64 x=5(3..21) v=-1 f=0..7 YEL
 y=40 x=12(0..6) v=-1 f=0..7 CYN
 y=104 x=11(6..22) v=1 f=8..11 CYN
 
-@tileudg
-0: 0,0,0,0,0,0,0,0
-1: 170,85,170,255,255,85,170,85
-2: 112,7,119,119,0,59,11,125
-3: 20,42,20,9,106,156,8,8 ; invert
-4: 192,64,112,112,12,116,119,5
-5: 123,0,237,0,170,85,170,85 ; invert
-6: 0,0,0,0,0,0,0,0
+@floorudg 170,85,170,255,255,85,170,85
+@walludg 112,7,119,119,0,59,11,125
+@nastyudg 20,42,20,9,106,156,8,8 ; invert
+@rampudg 192,64,112,112,12,116,119,5
+@beltudg 123,0,237,0,170,85,170,85 ; invert

@@ -35,17 +35,19 @@ WWWWW*            WWWWWW
 WWWWW*WWF         WWWWWW
 WWWWWWWWWW>>+>>>>>WWWWWW
 
-@tilecolors WHT WHT YEL YEL WHT RED
+@floorcolor WHT
+@wallcolor YEL
+@nastycolor YEL
+@rampcolor WHT
+@beltcolor RED
 @itemcolor BLU
 
 @guardians
 y=104 x=18(10..18) v=1 f=0..7 CYN
 
-@tileudg
-0: 0,0,0,0,0,0,0,0 ; invert
-1: 128,192,224,208,88,156,222,205
-2: 17,248,7,8,240,15,208,63
-3: 85,153,221,204,85,153,221,204 ; invert
-4: 0,0,0,0,0,0,0,0
-5: 240,240,240,255,255,0,0,255
-6: 1,2,5,10,84,40,48,72
+@emptyudg 0,0,0,0,0,0,0,0 ; invert
+@floorudg 128,192,224,208,88,156,222,205
+@walludg 17,248,7,8,240,15,208,63
+@nastyudg 85,153,221,204,85,153,221,204 ; invert
+@beltudg 240,240,240,255,255,0,0,255
+@itemudg 1,2,5,10,84,40,48,72

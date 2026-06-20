@@ -35,17 +35,18 @@ WFFFFFFFFFFFF\
 WWWWWWWWWWWWWW\         
 WWWWWWWWWWWWWWWFFFFFFFFF
 
-@tilecolors WHT YEL PUR WHT YEL CYN
+@floorcolor YEL
+@wallcolor PUR
+@nastycolor WHT
+@rampcolor YEL
+@beltcolor CYN
 @itemcolor YEL
 
 @guardians
 x=10 y=88(88..88) v=0 f=0..1 WHT
 
-@tileudg
-0: 0,0,0,0,0,0,0,0	# Background
-1: 255,107,181,0,173,0,74,0	# Floor
-2: 0,81,251,81,0,170,191,170 ; invert
-3: 0,0,0,0,124,254,127,62 #	Nasty
-4: 192,64,176,0,172,0,83,0 #	Ramp
-5: 85,85,85,85,81,95,64,170
-6: 0,0,0,0,0,0,0,0 # item
+@floorudg 255,107,181,0,173,0,74,0	# Floor
+@walludg 0,81,251,81,0,170,191,170 ; invert
+@nastyudg 0,0,0,0,124,254,127,62 #	Nasty
+@rampudg 192,64,176,0,172,0,83,0 #	Ramp
+@beltudg 85,85,85,85,81,95,64,170

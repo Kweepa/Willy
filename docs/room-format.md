@@ -20,9 +20,9 @@ Human-editable room descriptions for the JSW VIC-20 port. Convert with [`tools/m
 | `\` | Ramp | Up-left slope |
 | `<` | Conveyor | Left belt; must match `@belt -1` |
 | `>` | Conveyor | Right belt; must match `@belt 1` |
-| `+` | Pickup | Marks the collectable position (exactly one per room); baked as empty, drawn at runtime |
+| `+` | Pickup | Optional collectable position (0 or 1 per room); baked as empty, drawn at runtime |
 
-Author ASCII chars in `@tilemap`; `mkroom` stores screen codes **16–21** (tile type + 16). Ramp direction is **inferred** from `/` (up-right) or `\` (up-left) tiles and baked into room meta. The pickup (screen chr **15**) is **not** baked into the screen — `mkroom` extracts its cell from `+` and emits draw code in meta. UDG bitmaps: index **6** = item (chr 15), indices **0–5** = tiles (chr 16–21) in `@tileudg`.
+Author ASCII chars in `@tilemap`; `mkroom` stores screen codes **16–21** (tile type + 16). Ramp direction is **inferred** from `/` (up-right) or `\` (up-left) tiles and baked into room meta. The pickup (screen chr **15**) is **not** baked into the screen — `mkroom` extracts its cell from `+` when present and emits draw code in meta. UDG bitmaps: `@itemudg` → chr 15; `@floorudg` … `@beltudg` → chr 16–21 (tile types 1–5); `@emptyudg` → type 0 (usually omitted — all zeros).
 
 Each `@tilemap` row must be exactly **24 characters** wide. Rows that are entirely spaces are valid (do not delete them).
 
@@ -48,11 +48,24 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@tilemap` | block | 16 lines × 24 characters (gameplay rows 0–15) |
 | `@playerbmp` | block | Optional 256-byte Willy sprite (defaults if omitted). Room **29** (Nightmare Room) uses repo-root `nightmareroomwilly.txt` at cook time (Skool interleaved format, deinterleaved like `@guardiansprites`). |
 | `@colors` | block | 18 lines × 24 digits |
-| `@tilecolors` | list | Six VIC colours for tile types 0–5 |
-| `@itemcolor` | colour | Item pickup cell colour (baked into draw code; default YEL) |
+| `@emptycolor` | colour | Empty/sky cells (type 0); optional, default **WHT** |
+| `@floorcolor` | colour | Floor/platform `F` (type 1) |
+| `@wallcolor` | colour | Wall `W` (type 2) |
+| `@nastycolor` | colour | Hazard `*` (type 3) |
+| `@rampcolor` | colour | Ramp `/` `\` (type 4) |
+| `@beltcolor` | colour | Conveyor `<` `>` (type 5) |
+| `@itemcolor` | colour | Item pickup cell colour (optional when no `+`; default YEL) |
+| `@emptyudg` | bytes | 8 comma-separated bytes for empty tile; optional, default **8×0** |
+| `@floorudg` | bytes | Floor UDG (`; invert` suffix optional) |
+| `@walludg` | bytes | Wall UDG |
+| `@nastyudg` | bytes | Hazard UDG |
+| `@rampudg` | bytes | Ramp UDG |
+| `@beltudg` | bytes | Conveyor UDG |
+| `@itemudg` | bytes | Item UDG (optional when no `+`) |
 | `@guardians` | list | Guardian DSL per line (see below). No stored animation frame — computed each tick. Vertical: `frame = fmin + (hguard_frame & mask)`. Horizontal: `frame = (hx & 3) + fmin`, or bidirectional `+ 4` by direction. |
-| `@tileudg` | block | Seven lines: `N: bb bb bb bb bb bb bb bb` (hex bytes; 0–5 tiles, 6 item) |
 | `@guardianbmp` | block | Optional; hex bytes, 128 per guardian in order |
+
+Omit `@*udg` tags for tile types not used in the room when the UDG would be all zeros. Any omitted UDG defaults to 8×0 at build time. Non-zero UDGs are kept even if the tile type is unused.
 
 HUD UDGs (chr **13** men icon, chr **14** items icon) are **not** per-room — `mkroom.py` bakes fixed patterns from `DEFAULT_MEN_UDG` / `DEFAULT_HUD_ITEM_UDG` into every room PRG.
 
@@ -131,19 +144,21 @@ W          FFFFF       W
                         
                         
 
-@tilecolors BLK WHT WHT RED CYN PUR GRN
-
+@floorcolor WHT
+@wallcolor WHT
+@nastycolor RED
+@rampcolor CYN
+@beltcolor PUR
 @itemcolor YEL
 
 @guardians
 
-@tileudg
-0: 00 00 00 00 00 00 00 00
-1: 00 00 00 00 ff ff ff ff
-2: ff ff ff ff ff ff ff ff
-3: 00 18 3c 7e ff 7e 3c 18
-4: 00 00 01 03 06 0c 18 30
-5: 00 aa 55 aa 55 aa 55 aa
+@floorudg 0,0,0,0,255,255,255,255
+@walludg 255,255,255,255,255,255,255,255
+@nastyudg 0,24,60,126,255,126,60,24
+@rampudg 0,0,1,3,6,12,24,48
+@beltudg 0,170,85,170,85,170,85,170
+@itemudg 48,72,136,144,104,4,10,4
 ```
 
 **Notes:** Row 13 hazard at column 12 (`*`). Floor rows 14–15 (cols 11–15, `F`). Open south on row 15. Pickup at (10, 13) marked with `+` on row 13.
@@ -187,19 +202,22 @@ W    +     FFFFF       W
                         
                         
 
-@tilecolors BLU WHT WHT RED CYN PUR GRN
-
+@emptycolor BLU
+@floorcolor WHT
+@wallcolor WHT
+@nastycolor RED
+@rampcolor CYN
+@beltcolor PUR
 @itemcolor YEL
 
 @guardians
 
-@tileudg
-0: 00 00 00 00 00 00 00 00
-1: 00 00 00 00 ff ff ff ff
-2: ff ff ff ff ff ff ff ff
-3: 00 18 3c 7e ff 7e 3c 18
-4: 00 00 01 03 06 0c 18 30
-5: aa 55 aa 55 aa 55 aa 55
+@floorudg 0,0,0,0,255,255,255,255
+@walludg 255,255,255,255,255,255,255,255
+@nastyudg 0,24,60,126,255,126,60,24
+@rampudg 0,0,1,3,6,12,24,48
+@beltudg 170,85,170,85,170,85,170,85
+@itemudg 48,72,136,144,104,4,10,4
 ```
 
 **Notes:** `@conn 1` = north to room 1. Spawn near top (`py=16`) for entry from north. Conveyor row 8 (cols 11–16, `>`). One pickup at (4, 14) marked with `+`.

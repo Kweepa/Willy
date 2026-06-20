@@ -25,14 +25,12 @@
                         
             +           
 
-@tilecolors WHT BLK BLK WHT BLK BLK
+@floorcolor BLK
+@wallcolor BLK
+@nastycolor WHT
+@rampcolor BLK
+@beltcolor BLK
 @itemcolor BLK
 
-@tileudg
-0: 0,0,0,0,0,0,0,0
-1: 0,0,0,0,0,0,0,0
-2: 0,0,0,0,0,0,0,16
-3: 0,0,0,0,0,0,0,0 ; invert
-4: 0,0,0,0,0,0,0,0
-5: 0,0,0,0,0,0,0,0
-6: 0,0,0,0,0,0,0,0
+@walludg 0,0,0,0,0,0,0,16
+@nastyudg 0,0,0,0,0,0,0,0 ; invert

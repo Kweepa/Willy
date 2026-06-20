@@ -35,18 +35,21 @@ FF   FFFF  W  FWW
       WWFF    FWF       
 <<<<<<<<<<<<<<<<<<<<<<<<
 
-@tilecolors PUR RED PUR PUR CYN YEL
+@emptycolor PUR
+@floorcolor RED
+@wallcolor PUR
+@nastycolor PUR
+@rampcolor CYN
+@beltcolor YEL
 @itemcolor WHT
 
 @guardians
 x=17 y=72(64..104) v=-2 f=0..3 RED
 x=9 y=96(56..96) v=-5 f=4..7 YEL
 
-@tileudg
-0: 0,0,0,0,0,0,0,0
-1: 254,85,42,170,85,170,170,255
-2: 17,68,34,136,17,68,34,136
-3: 1,4,34,8,17,68,34,136 ; invert
-4: 64,144,36,72,18,36,9,2
-5: 165,0,165,0,170,255,255,85
-6: 240,240,120,184,76,50,13,3
+@floorudg 254,85,42,170,85,170,170,255
+@walludg 17,68,34,136,17,68,34,136
+@nastyudg 1,4,34,8,17,68,34,136 ; invert
+@rampudg 64,144,36,72,18,36,9,2
+@beltudg 165,0,165,0,170,255,255,85
+@itemudg 240,240,120,184,76,50,13,3

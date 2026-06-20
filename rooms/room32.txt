@@ -30,17 +30,17 @@ WWF   WW
 WW    WW                
 WW   FWW    +           
 
-@tilecolors WHT CYN WHT WHT WHT WHT
+@floorcolor CYN
+@wallcolor WHT
+@nastycolor WHT
+@rampcolor WHT
+@beltcolor WHT
 @itemcolor BLK
 
 @guardians
 y=48 x=2(2..3) v=-1 f=0..3 YEL
 
-@tileudg
-0: 0,0,0,0,0,0,0,0
-1: 255,255,90,153,189,90,60,90
-2: 51,17,68,204,51,17,68,204
-3: 0,0,0,0,0,0,0,0 ; invert
-4: 128,192,224,112,184,28,78,199
-5: 0,0,0,0,0,0,0,0
-6: 0,0,0,0,0,0,0,0
+@floorudg 255,255,90,153,189,90,60,90
+@walludg 51,17,68,204,51,17,68,204
+@nastyudg 0,0,0,0,0,0,0,0 ; invert
+@rampudg 128,192,224,112,184,28,78,199

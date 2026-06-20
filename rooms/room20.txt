@@ -43,7 +43,11 @@ FFFFFFWW  WWWWWWWWWWWWWW
 WWWWWWWWWWWWWWWWWWWWWWWW
 WWWWWWWWWWWW+WWWWWWWWWWW
 
-@tilecolors WHT YEL WHT WHT WHT WHT
+@floorcolor YEL
+@wallcolor WHT
+@nastycolor WHT
+@rampcolor WHT
+@beltcolor WHT
 @itemcolor BLU
 
 @guardians
@@ -53,11 +57,9 @@ x=4 y=56(48..96) v=2 f=1..1 CYN
 x=7 y=75(72..96) v=1 f=2..5 YEL
 y=80 x=16(10..21) v=1 f=6..13 PUR
 
-@tileudg
-0: 0,0,0,0,0,0,0,0
-1: 170,85,34,68,34,68,34,68
-2: 68,68,255,17,17,255,85,170
-3: 0,0,0,0,0,0,0,0 ; invert
-4: 0,0,0,0,0,0,0,0 ; invert
-5: 0,0,0,0,0,0,0,0 ; invert
-6: 129,129,66,36,24,24,24,231
+@floorudg 170,85,34,68,34,68,34,68
+@walludg 68,68,255,17,17,255,85,170
+@nastyudg 0,0,0,0,0,0,0,0 ; invert
+@rampudg 0,0,0,0,0,0,0,0 ; invert
+@beltudg 0,0,0,0,0,0,0,0 ; invert
+@itemudg 129,129,66,36,24,24,24,231

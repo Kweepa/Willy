@@ -14,6 +14,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CACHE = Path(__file__).resolve().parent / "jswcache"
 ROOMS_DIR = ROOT / "rooms"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from mkroom import tile_types_in_tilemap  # noqa: E402
 
 SRC_W = 32
 SRC_H = 16
@@ -594,6 +596,23 @@ def needs_invert(attr: int) -> bool:
     return bool(attr & 0x40)
 
 
+def format_udg_tag(tag: str, bs: list[int], invert: bool) -> str:
+    parts = ",".join(str(b) for b in bs)
+    suffix = " ; invert" if invert else ""
+    return f"@{tag} {parts}{suffix}"
+
+
+def udg_parsed_bytes(bs: list[int], invert: bool) -> bytes:
+    raw = bytes(bs)
+    return bytes(b ^ 0xFF for b in raw) if invert else raw
+
+
+def should_emit_udg(idx: int, parsed: bytes, used: set[int]) -> bool:
+    if not any(parsed):
+        return False
+    return idx in used or any(b != 0 for b in parsed)
+
+
 def belt_value(conv_dir: int, conv_len: int) -> int:
     if not conv_len:
         return 0
@@ -634,21 +653,48 @@ def write_room(
     lines.extend(tilemap)
     lines.append("")
     tc = [ink_name(t[0]) for t in room["tiles"][:6]]
-    tc[0] = "WHT"
-    lines.append(f"@tilecolors {' '.join(tc)}")
+    if tc[0] != "WHT":
+        lines.append(f"@emptycolor {tc[0]}")
+    color_tags = (
+        "floorcolor",
+        "wallcolor",
+        "nastycolor",
+        "rampcolor",
+        "beltcolor",
+    )
+    for i, tag in enumerate(color_tags, start=1):
+        lines.append(f"@{tag} {tc[i]}")
     lines.append(f"@itemcolor {itemcolor}")
     lines.append("")
     if guardians:
         lines.append("@guardians")
         lines.extend(guardians)
         lines.append("")
-    lines.append("@tileudg")
+    used = tile_types_in_tilemap(tilemap)
+    udg_tags = (
+        "emptyudg",
+        "floorudg",
+        "walludg",
+        "nastyudg",
+        "rampudg",
+        "beltudg",
+        "itemudg",
+    )
     for i in range(7):
-        raw = room["item_udg"] if i == 6 else room["tiles"][i]
         if i == 6:
-            lines.append(tile_udg_line(6, raw + bytes(max(0, 8 - len(raw))), False))
+            if not has_item:
+                continue
+            raw = room["item_udg"] + bytes(max(0, 8 - len(room["item_udg"])))
+            bs = list(raw[:8])
+            invert = False
         else:
-            lines.append(tile_udg_line(i, raw, needs_invert(raw[0])))
+            raw = room["tiles"][i]
+            bs = list(raw[1:9])
+            invert = needs_invert(raw[0])
+        parsed = udg_parsed_bytes(bs, invert)
+        if not should_emit_udg(i, parsed, used):
+            continue
+        lines.append(format_udg_tag(udg_tags[i], bs, invert and i != 6))
     lines.append("")
 
     path = ROOMS_DIR / f"room{rid:02d}.txt"

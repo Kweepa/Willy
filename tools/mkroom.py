@@ -95,6 +95,24 @@ MEN_CHR = 13
 HUD_ITEM_CHR = 14
 HUD_TITLE_COLS = 18
 DEFAULT_TILE_COLORS = [0, 1, 3, 2, 5, 4]
+DEFAULT_EMPTY_COLOR = 1  # WHT
+TILE_COLOR_TAGS = {
+    "emptycolor": 0,
+    "floorcolor": 1,
+    "wallcolor": 2,
+    "nastycolor": 3,
+    "rampcolor": 4,
+    "beltcolor": 5,
+}
+TILE_UDG_TAGS = {
+    "emptyudg": 0,
+    "floorudg": 1,
+    "walludg": 2,
+    "nastyudg": 3,
+    "rampudg": 4,
+    "beltudg": 5,
+    "itemudg": 6,
+}
 DEFAULT_ITEM_UDG = bytes([48, 72, 136, 144, 104, 4, 10, 4])
 DEFAULT_MEN_UDG = bytes([60, 60, 126, 52, 62, 60, 24, 60])
 DEFAULT_HUD_ITEM_UDG = bytes([4, 4, 174, 174, 162, 66, 66, 238])
@@ -258,10 +276,41 @@ def parse_tile_char(ch: str, room: dict | None = None) -> int:
         raise room_error(room, f"unknown tilemap character {ch!r}")
 
 
-def extract_item_from_tilemap(
+def parse_udg_bytes(content: str) -> bytes:
+    """Parse UDG byte list with optional '; invert' suffix."""
+    content = content.split("#", 1)[0].strip()
+    invert = False
+    if ";" in content:
+        left, right = content.split(";", 1)
+        if "INVERT" in right.upper():
+            invert = True
+        content = left.strip()
+    bs = parse_byte_list(content)
+    if len(bs) != 8:
+        raise ValueError(f"UDG needs 8 bytes, got {len(bs)}")
+    if invert:
+        bs = [b ^ 0xFF for b in bs]
+    return bytes(bs)
+
+
+def tile_types_in_tilemap(tilemap: list) -> set[int]:
+    """Return tile type indices 0-5 present in gameplay rows; 6 if '+' found."""
+    found: set[int] = set()
+    for row, line in enumerate(tilemap):
+        if row >= TILEMAP_ROWS:
+            continue
+        for ch in line:
+            if ch == "+":
+                found.add(6)
+            elif ch in TILE_CHAR_MAP:
+                found.add(TILE_CHAR_MAP[ch])
+    return found
+
+
+def extract_items_from_tilemap(
     tilemap: list, room: dict | None = None
-) -> tuple[int, int]:
-    """Return (col, row) of the single '+' pickup marker."""
+) -> list[tuple[int, int]]:
+    """Return [(col, row), ...] for '+' pickup markers (0 or 1 allowed)."""
     found: list[tuple[int, int]] = []
     for row, line in enumerate(tilemap):
         if row >= TILEMAP_ROWS:
@@ -269,12 +318,12 @@ def extract_item_from_tilemap(
         for col, ch in enumerate(line):
             if ch == "+":
                 found.append((col, row))
-    if len(found) != MAX_ITEMS:
+    if len(found) > MAX_ITEMS:
         raise room_error(
             room,
-            f"tilemap must have exactly {MAX_ITEMS} '+' pickup marker(s), found {len(found)}",
+            f"tilemap must have at most {MAX_ITEMS} '+' pickup marker(s), found {len(found)}",
         )
-    return found[0]
+    return found
 
 
 def infer_ramp_from_tilemap(
@@ -332,11 +381,11 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         "belt": 0,
         "ramp": 0,
         "tilemap": [],
-        "tilecolors": list(DEFAULT_TILE_COLORS),
+        "tilecolors": [DEFAULT_EMPTY_COLOR] + list(DEFAULT_TILE_COLORS[1:]),
         "itemcolor": 7,
         "items": [],
         "guardians": [],
-        "tileudg": [bytes(8) for _ in range(6)] + [DEFAULT_ITEM_UDG],
+        "tileudg": [bytes(8) for _ in range(7)],
         "guardiansprites": b"",
         "playerbmp": b"",
         "rope": False,
@@ -355,18 +404,8 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
                 if not m:
                     continue
                 idx = int(m.group(1))
-                content = m.group(2).strip()
-                invert = False
-                if ";" in content:
-                    left, right = content.split(";", 1)
-                    if "INVERT" in right.upper():
-                        invert = True
-                    content = left.strip()
-                bs = parse_byte_list(content)
-                if idx < 7 and len(bs) == 8:
-                    if invert:
-                        bs = [b ^ 0xFF for b in bs]
-                    room["tileudg"][idx] = bytes(bs)
+                if idx < 7:
+                    room["tileudg"][idx] = parse_udg_bytes(m.group(2).strip())
         elif block == "guardiansprites":
             bs = []
             for line in block_lines:
@@ -424,6 +463,11 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
                         f"{loc(line_no)}@tilecolors needs {TILE_COLOR_BYTES} values (tile types 0-5)"
                     )
                 room["tilecolors"] = [parse_vic_color(x) for x in parts[1:7]]
+            elif tag in TILE_COLOR_TAGS:
+                room["tilecolors"][TILE_COLOR_TAGS[tag]] = parse_vic_color(parts[1])
+            elif tag in TILE_UDG_TAGS:
+                content = line.split(None, 1)[1] if len(parts) > 1 else ""
+                room["tileudg"][TILE_UDG_TAGS[tag]] = parse_udg_bytes(content)
             elif tag == "itemcolor":
                 room["itemcolor"] = parse_vic_color(parts[1])
             elif tag == "logo":
@@ -452,7 +496,7 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         room["items"] = [(0, 0)]
         room["ramp"] = RAMP_NONE
     else:
-        room["items"] = [extract_item_from_tilemap(room["tilemap"], room)]
+        room["items"] = extract_items_from_tilemap(room["tilemap"], room)
         room["ramp"] = infer_ramp_from_tilemap(room["tilemap"], room)
         validate_tilemap_belt(room["tilemap"], room["belt"], room)
     if source:
@@ -665,7 +709,7 @@ def build_logo_payload(path: Path) -> tuple[bytes, bytearray]:
 
 def build_item_draw(room: dict) -> bytes:
     """16 bytes in meta tail — ACME bake/item_draw.asm."""
-    if room.get("logo"):
+    if room.get("logo") or not room["items"]:
         return noop_stub(ITEM_DRAW_BYTES)
     col, row = room["items"][0]
     if not 0 <= col < WIDTH or not 0 <= row < TILEMAP_ROWS:
@@ -690,7 +734,7 @@ def build_item_draw(room: dict) -> bytes:
 
 def build_item_erase(room: dict) -> bytes:
     """11 bytes in meta tail — ACME bake/item_erase.asm."""
-    if room.get("logo"):
+    if room.get("logo") or not room["items"]:
         return noop_stub(ITEM_ERASE_BYTES)
     col, row = room["items"][0]
     cell_off = row * WIDTH + col

@@ -25,14 +25,16 @@ WWWWWWWWWWWW
 F                       
 WW\                     
 
-@tilecolors WHT WHT RED WHT WHT WHT
+@floorcolor WHT
+@wallcolor RED
+@nastycolor WHT
+@rampcolor WHT
+@beltcolor WHT
 @itemcolor CYN
 
-@tileudg
-0: 0,0,0,0,0,0,0,0
-1: 255,170,119,170,119,170,85,170 ; invert
-2: 32,16,14,193,48,9,198,32
-3: 0,0,0,0,0,0,0,0 ; invert
-4: 192,64,176,80,172,84,171,85
-5: 0,0,0,0,0,0,0,0 ; invert
-6: 12,28,28,30,27,63,120,255
+@floorudg 255,170,119,170,119,170,85,170 ; invert
+@walludg 32,16,14,193,48,9,198,32
+@nastyudg 0,0,0,0,0,0,0,0 ; invert
+@rampudg 192,64,176,80,172,84,171,85
+@beltudg 0,0,0,0,0,0,0,0 ; invert
+@itemudg 12,28,28,30,27,63,120,255

@@ -20,7 +20,7 @@
 @tilemap
              /          
             /       +   
-           /    F       
+           /      F       
           /             
          /              
         /        F      
@@ -35,18 +35,20 @@ WW   /
      W         F        
 WWWWWWWW   FF         
 
-@tilecolors WHT GRN RED YEL CYN YEL
+@floorcolor GRN
+@wallcolor RED
+@nastycolor YEL
+@rampcolor CYN
+@beltcolor YEL
 @itemcolor YEL
 
 @guardians
 x=15 y=32(0..96) v=4 f=0..3 CYN
 x=9 y=72(64..104) v=-2 f=4..7 RED
 
-@tileudg
-0: 0,0,0,0,0,0,0,0
-1: 165,74,36,2,4,0,2,0
-2: 21,85,85,36,37,85,73,34
-3: 130,65,62,106,183,25,37,68
-4: 1,2,4,0,16,32,64,128
-5: 198,170,168,42,89,36,0,0
-6: 2,20,46,85,42,69,42,20
+@floorudg 165,74,36,2,4,0,2,0
+@walludg 21,85,85,36,37,85,73,34
+@nastyudg 130,65,62,106,183,25,37,68
+@rampudg 1,2,4,0,16,32,64,128
+@beltudg 198,170,168,42,89,36,0,0
+@itemudg 2,20,46,85,42,69,42,20
