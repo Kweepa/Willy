@@ -1,18 +1,15 @@
 ;
 ; ScanKeyRow
 ;
-; call with the row in .X
-; and the column mask in .Y
-; the row is 1,2,4,8... ^ FF
-; returns keys pressed in .X
-; Z set = no key in mask, Z clear = key pressed
+; call with the row in .X ($fe,$fd,$fb,$f7,$ef,$df,$bf,$7f)
+; Z set = key pressed, Z clear = no key pressed
 ;
 ; left to right is LSB-MSB
 ; fe -> 1,3,5,7,9,-,DEL,
 ; fd ->  ,W,R,Y,I,P,],RET
 ; fb ->  ,A,D,G,J,L,',
 ; f7 -> LSH,X,V,N,<,/,
-; ef ->  ,Z,C,B,M,>,RSH,
+; ef -> SPC,Z,C,B,M,>,RSH,
 ; df -> CTL,S,F,H,K,;,
 ; bf -> Q,E,T,U,O,[,
 ; 7f -> 2,4,6,8,0,=,
@@ -28,8 +25,6 @@ ScanKeyRow
     stx $9120   ; request row
     lda $9121   ; read
     eor #$ff    ; $ff is no keys pressed
-    and #$ff    ; row mask - check all keys in the row
-    tax
     rts
 
 GetPlayerInput

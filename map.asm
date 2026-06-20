@@ -12,10 +12,14 @@ SHOW_TITLE = 1
     jsr SetColors
 
 title_wait
-    ldx #$ef ; space bar row
+    ldx #$ef                    ; space bar row
     jsr ScanKeyRow
     beq title_wait
 
+title_release_wait
+    ldx #$ef                    ; space bar row
+    jsr ScanKeyRow
+    bne title_release_wait
 }
 
     lda #ROOM_BATHROOM
