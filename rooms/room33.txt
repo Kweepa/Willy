@@ -40,23 +40,24 @@ W        /   W         W
 W       /    W         W
 W      /     W         W
 W     /      W         W
-W            W         W
+W    /       W         W
     FF            +    W
-  F    F        <<<    W
+                <<<    W
 FFFFFFFFFFFFFFFFFFFFFFFF
 
-@tilecolors WHT RED YEL YEL WHT CYN
+@floorcolor RED
+@wallcolor YEL
+@nastycolor YEL
+@rampcolor WHT
+@beltcolor CYN
 @itemcolor YEL
 
 @guardians
 y=24 x=12(0..21) v=-1 f=0..3 GRN # horizontal, because y is constant (measured in pixels) and x (measured in tiles) has a range. v starts negative here
 x=21 y=104(104..104) v=0 f=4..5 WHT
 
-@tileudg
-0: 0, 0, 0, 0, 0, 0, 0, 0
-1: 0,64,9,100,146,45,150,255 ; invert
-2: 31,170,0,85,248,85,0,170 ; invert
-3: 0,0,0,0,0,0,0,0
-4: 3,0,12,0,48,0,192,0
-5: 165,0,0,0,0,0,0,0 ; invert
-6: 31,4,10,119,135,177,170,10
+@floorudg 0,64,9,100,146,45,150,255 ; invert
+@walludg 31,170,0,85,248,85,0,170 ; invert
+@rampudg 3,0,12,0,48,0,192,0
+@beltudg 165,0,0,0,0,0,0,0 ; invert
+@itemudg 31,4,10,119,135,177,170,10
