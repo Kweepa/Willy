@@ -14,6 +14,7 @@
 !source "util.asm"
 !source "input.asm"
 !source "guardians.asm"
+!source "endgame.asm"
 
 !set ROPE_TEST = 0
 !source "rope_draw.asm"

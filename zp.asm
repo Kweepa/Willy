@@ -164,7 +164,7 @@ spawn_px        = $62          ; respawn position (before rope block; not in old
 spawn_py        = $63
 initial_room_load = $64        ; 1 = first DrawMap after ResetGame (use @spawn)
 room_has_rope   = $65
-menx            = $66          ; unused; kept off rope_old_screen_pos ($68+)
+willy_hidden    = $66          ; 1 = ending sequence; skip player erase/input/draw
 edge_cmp        = $67          ; CheckRoomEdge compare mode (must not use tmp+1 — that is arr)
 
 ramp_tmp        = $54

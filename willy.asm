@@ -98,6 +98,10 @@ clr_done
     rts
 
 Collide
+    lda willy_hidden
+    beq collide_active
+    rts
+collide_active
     lda room_has_rope
     beq collide_body
     lda rope_willy_is_holding
@@ -278,6 +282,8 @@ hit_below
     jmp move_up_down
 
 ErasePlayer
+    lda willy_hidden
+    bne erase_player_done
     ldx px
     ldy py
     jsr ConvertXYToScreenAddr
@@ -297,9 +303,14 @@ ErasePlayer
 ++
 	dex
 	bpl -
+erase_player_done
     rts
 
 DrawPlayer
+    lda willy_hidden
+    beq draw_player_body
+    rts
+draw_player_body
     lda py
     bpl +
     lda #0
@@ -435,6 +446,7 @@ coll_check
 	dey
 	bpl --
     +BorderDebugColor (WHITE + 8)
+draw_player_done
     rts
 
 check_for_pickup

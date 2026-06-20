@@ -40,6 +40,13 @@ RAMP_NONE = 0
 RAMP_UP_RIGHT = 1
 RAMP_UP_LEFT = $FF
 
+; Endgame: collect ITEMS_REQUIRED pickups, enter master bedroom (Maria vanishes),
+; walk to ENDING_TRIGGER_PX, then teleport to bathroom for the toilet ending.
+ITEMS_REQUIRED = 2
+ROOM_MASTER_BED = 35
+ROOM_BATHROOM = 33
+ENDING_TRIGGER_PX = 20
+
 ; px is quarter-char units; 24-col playfield (cols 0-23)
 EDGE_WEST_PX = 1
 EDGE_EAST_PX = 91              ; column 23 - east exit when px >= 91

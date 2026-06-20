@@ -34,6 +34,8 @@ ScanKeyRow
     rts
 
 GetPlayerInput
+    lda willy_hidden
+    bne .player_input_done
     lda #0
     sta jumpIsPressed
     sta leftIsPressed
