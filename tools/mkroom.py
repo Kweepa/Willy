@@ -8,6 +8,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
+
 WIDTH = 24
 
 
@@ -47,6 +52,13 @@ IMAGE_LOAD = 0x1A14
 CONVEYOR_PREFIX_BYTES = 19
 DO_BELT_SLOT_BYTES = 33
 GUARDIAN_PREFIX_BYTES = CONVEYOR_PREFIX_BYTES + DO_BELT_SLOT_BYTES
+LOGO_ROOM_ID = 62
+LOGO_ORIGIN_COL = 4
+LOGO_ORIGIN_ROW = 4
+LOGO_DEFAULT_PATH = BAKE_DIR / "jswlogo.png"
+LOGO_UDG_RAM = 0x1C00
+LOGO_UDG_OFF = LOGO_UDG_RAM - IMAGE_LOAD
+LOGO_UDG_MAX_BYTES = 0x1E00 - LOGO_UDG_RAM
 SCREEN_BASE = 0x1E00
 MAP_BASE = 0x9400
 COLOR_BASE = 0x9600
@@ -328,6 +340,7 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         "guardiansprites": b"",
         "playerbmp": b"",
         "rope": False,
+        "logo": None,
     }
     block = None
     block_lines = []
@@ -413,6 +426,8 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
                 room["tilecolors"] = [parse_vic_color(x) for x in parts[1:7]]
             elif tag == "itemcolor":
                 room["itemcolor"] = parse_vic_color(parts[1])
+            elif tag == "logo":
+                room["logo"] = parts[1] if len(parts) > 1 else LOGO_DEFAULT_PATH.name
             continue
         if block == "tilemap":
             if raw_content.lstrip().startswith(";"):
@@ -431,9 +446,15 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         elif block in ("tileudg", "guardiansprites", "playerbmp"):
             block_lines.append(line)
     flush_block()
-    room["items"] = [extract_item_from_tilemap(room["tilemap"], room)]
-    room["ramp"] = infer_ramp_from_tilemap(room["tilemap"], room)
-    validate_tilemap_belt(room["tilemap"], room["belt"], room)
+    if room.get("logo"):
+        room["tilemap"] = [normalize_tilemap_row("") for _ in range(TILEMAP_ROWS)]
+        room["guardians"] = []
+        room["items"] = [(0, 0)]
+        room["ramp"] = RAMP_NONE
+    else:
+        room["items"] = [extract_item_from_tilemap(room["tilemap"], room)]
+        room["ramp"] = infer_ramp_from_tilemap(room["tilemap"], room)
+        validate_tilemap_belt(room["tilemap"], room["belt"], room)
     if source:
         room["_source"] = str(source)
     return room
@@ -557,8 +578,76 @@ def build_prefix(room: dict, scan_key_row: int) -> bytes:
     return build_conveyor_animate(room) + build_do_belt(room, scan_key_row)
 
 
+def noop_stub(size: int) -> bytes:
+    """Single RTS padded to slot size (unused item draw/erase on logo room)."""
+    return bytes([0x60] + [0xEA] * (size - 1))
+
+
+def logo_png_path(room: dict) -> Path:
+    name = room["logo"]
+    path = Path(name)
+    if path.is_file():
+        return path
+    baked = BAKE_DIR / name
+    if baked.is_file():
+        return baked
+    raise room_error(room, f"logo image not found: {name}")
+
+
+def tile_to_udg_bytes(im: Image.Image, tx: int, ty: int) -> bytes:
+    px = im.load()
+    x0, y0 = tx * 8, ty * 8
+    out = bytearray(8)
+    for y in range(8):
+        byte = 0
+        for x in range(8):
+            if px[x0 + x, y0 + y] > 127:
+                byte |= 1 << (7 - x)
+        out[y] = byte
+    return bytes(out)
+
+
+def build_logo_payload(path: Path) -> tuple[bytes, bytearray]:
+    """Return (udg_bytes from $1C00, 408-byte screen)."""
+    if Image is None:
+        raise ValueError("Pillow required for @logo rooms (pip install pillow)")
+    im = Image.open(path).convert("L")
+    if im.width % 8 or im.height % 8:
+        raise ValueError(f"{path}: logo size must be a multiple of 8 pixels")
+    cols, rows = im.width // 8, im.height // 8
+    if LOGO_ORIGIN_COL + cols > WIDTH or LOGO_ORIGIN_ROW + rows > TILEMAP_ROWS:
+        raise ValueError(
+            f"{path}: logo {cols}x{rows} at ({LOGO_ORIGIN_COL},{LOGO_ORIGIN_ROW}) "
+            f"does not fit {WIDTH}x{TILEMAP_ROWS} playfield"
+        )
+
+    unique: list[bytes] = []
+    key: dict[bytes, int] = {}
+    screen = bytearray(TILE_BYTES)  # chr 0 = blank UDG (not 32 — that is UDG slot 32)
+
+    for ty in range(rows):
+        for tx in range(cols):
+            tile = tile_to_udg_bytes(im, tx, ty)
+            sc = LOGO_ORIGIN_COL + tx
+            sr = LOGO_ORIGIN_ROW + ty
+            off = sr * WIDTH + sc
+            if not any(tile):
+                continue
+            if tile not in key:
+                key[tile] = len(unique) + 1
+                unique.append(tile)
+            screen[off] = key[tile]
+
+    udg_bytes = bytearray(8)
+    for tile in unique:
+        udg_bytes.extend(tile)
+    return bytes(udg_bytes), screen
+
+
 def build_item_draw(room: dict) -> bytes:
     """16 bytes in meta tail — ACME bake/item_draw.asm."""
+    if room.get("logo"):
+        return noop_stub(ITEM_DRAW_BYTES)
     col, row = room["items"][0]
     if not 0 <= col < WIDTH or not 0 <= row < TILEMAP_ROWS:
         raise room_error(room, f"item cell out of range: col={col} row={row}")
@@ -582,6 +671,8 @@ def build_item_draw(room: dict) -> bytes:
 
 def build_item_erase(room: dict) -> bytes:
     """11 bytes in meta tail — ACME bake/item_erase.asm."""
+    if room.get("logo"):
+        return noop_stub(ITEM_ERASE_BYTES)
     col, row = room["items"][0]
     cell_off = row * WIDTH + col
     scr_addr = SCREEN_BASE + cell_off
@@ -843,8 +934,31 @@ def player_bmp_for_room(room: dict) -> bytes:
     return room["playerbmp"] or load_default_player_bmp()
 
 
+def build_logo_room_image(room: dict, scan_key_row: int) -> bytes:
+    """Title room: UDGs land at $1C00, screen at $1E00."""
+    udg_data, screen = build_logo_payload(logo_png_path(room))
+    if len(udg_data) > LOGO_UDG_MAX_BYTES:
+        raise room_error(
+            room,
+            f"logo needs {len(udg_data)} UDG bytes at $1C00; max {LOGO_UDG_MAX_BYTES}",
+        )
+
+    stamp_hud_title(screen, room)
+    tail = build_tail(room)
+    prefix = build_prefix(room, scan_key_row)
+
+    blob = bytearray(ROOM_IMAGE_SIZE)
+    blob[0 : len(prefix)] = prefix
+    blob[LOGO_UDG_OFF : LOGO_UDG_OFF + len(udg_data)] = udg_data
+    blob[SCREEN_BASE - IMAGE_LOAD : SCREEN_BASE - IMAGE_LOAD + TILE_BYTES] = screen
+    blob[-TAIL_BYTES:] = tail
+    return bytes(blob)
+
+
 def build_room_image(room: dict, scan_key_row: int) -> bytes:
     """RAM image loaded at $1A14 (1516 bytes)."""
+    if room.get("logo"):
+        return build_logo_room_image(room, scan_key_row)
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap", room))
     stamp_hud_title(tiles, room)
     stamp_hud_men(tiles)

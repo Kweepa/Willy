@@ -10,7 +10,6 @@ DoBelt
     lda belt_active
     bne +
     ldx #belt_opp_right_row
-    ldy #$ff
     jsr SCANKEYROW
     beq ++
     lda #belt_opp_right_xadd
@@ -32,7 +31,6 @@ DoBelt
     lda belt_active
     bne +
     ldx #belt_opp_left_row
-    ldy #$ff
     jsr SCANKEYROW
     beq ++
     lda #belt_opp_left_xadd

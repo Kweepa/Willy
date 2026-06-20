@@ -9,7 +9,7 @@
 ;   +$000 AnimateConveyors 19 @ $1A14
 ;   +$013 DoBelt 33 @ $1A27
 ;   +$034 guardian sprites 288 @ $1A48
-;   +$154 player_bmp 256 @ $1B68
+;   +$154 player_bmp 256 @ $1B68       (title room: logo UDGs span from $1C00)
 ;   +$254 HUD UDG 16 @ $1C68 (chr 13-14)
 ;   +$264 tile UDG 56 @ $1C78 (chr 15-21)
 ;   +$27C runtime pad 336 ($1CB0-$1DFF)
@@ -28,14 +28,8 @@ LoadRoom
     and #$0f
     sta $900f
 
-    ; clear colors
     lda #0
-    ldx #192
--
-    sta $95ff,x
-    sta $96bf,x
-    dex
-    bne -
+    jsr SetColors
 
     jsr FormatRoomName
 

@@ -1,0 +1,10 @@
+@room 62
+@title Press Space
+@logo
+@conn 255 255 255 255
+@spawn 44 104
+@border BLK
+@belt 0
+
+@tilecolors BLK WHT WHT WHT WHT WHT
+@itemcolor YEL

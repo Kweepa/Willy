@@ -26,10 +26,9 @@ ScanKeyRow
     lda #$00
     sta $9123   ; set data direction for $9121
     stx $9120   ; request row
-    sty ts
     lda $9121   ; read
     eor #$ff    ; $ff is no keys pressed
-    and ts
+    and #$ff    ; row mask - check all keys in the row
     tax
     rts
 
@@ -47,7 +46,6 @@ GetPlayerInput
     bne .player_input_try_jump
 .player_input_left
     ldx #$bf ; Q/E/T etc
-    ldy #$ff ; any
     jsr ScanKeyRow
     beq .player_input_right
     lda #-1
@@ -56,7 +54,6 @@ GetPlayerInput
     sta leftIsPressed
 .player_input_right
     ldx #$fd ; W/R/Y etc
-    ldy #$ff ; any
     jsr ScanKeyRow
     beq .player_input_try_jump
     lda #1
@@ -65,7 +62,6 @@ GetPlayerInput
     sta rightIsPressed
 .player_input_try_jump
     ldx #$ef
-    ldy #$ff
     jsr ScanKeyRow
     beq .player_input_done
     lda #1

@@ -45,6 +45,7 @@ RAMP_UP_LEFT = $FF
 ITEMS_REQUIRED = 2
 ROOM_MASTER_BED = 35
 ROOM_BATHROOM = 33
+ROOM_TITLE = 62
 ENDING_TRIGGER_PX = 20
 
 ; px is quarter-char units; 24-col playfield (cols 0-23)

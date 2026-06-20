@@ -138,12 +138,10 @@ ScanKeyRow
 WaitForSpaceStep
 -
     ldx #$ef
-    ldy #$01
     jsr ScanKeyRow
     beq -
 -
     ldx #$ef
-    ldy #$01
     jsr ScanKeyRow
     bne -
     rts

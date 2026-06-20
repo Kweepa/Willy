@@ -1,5 +1,24 @@
 ResetGame
-    lda #33
+
+SHOW_TITLE = 0
+
+!if SHOW_TITLE {
+
+    lda #ROOM_TITLE
+    sta map
+    jsr LoadRoom
+
+    lda #RED
+    jsr SetColors
+
+title_wait
+    ldx #$ef ; space bar row
+    jsr ScanKeyRow
+    beq title_wait
+
+}
+
+    lda #ROOM_BATHROOM
     sta map
     lda #8
     sta men

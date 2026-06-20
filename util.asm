@@ -35,3 +35,13 @@ UpdateMoveCounters
 	inc vguard_frame
 +
     rts
+
+    ; set colors to A
+SetColors
+    ldx #192
+-
+    sta $95ff,x
+    sta $96bf,x
+    dex
+    bne -
+    rts
