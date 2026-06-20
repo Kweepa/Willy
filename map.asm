@@ -21,7 +21,7 @@ title_release_wait
     bne title_release_wait
 }
 
-    lda #ROOM_BATHROOM
+    lda #ROOM_START
     sta map
     lda #8
     sta men
