@@ -57,6 +57,11 @@ lr_dir_ok
     ldy lr_touch_b,x
     jsr try_touch
     bne clr_done
+    ; lr_touch_c: lower side probe when py&7!=0 (misaligned feet).  On ramps
+    ; feet are always misaligned; UP_LEFT baked ry+2 lowers py so c hits W
+    ; under \ tiles and blocks climbing — skip c while already on the ramp.
+    lda is_on_ramp
+    bne lr_move
     lda py
     and #$07
     beq lr_move

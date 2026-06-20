@@ -27,7 +27,11 @@ calculate_ramp_y
     clc
     adc meta_ramp_ry
     sta ramp_y
-
+    cmp meta_ramp_ymin
+    bcs +
+    lda meta_ramp_ymin
+    sta ramp_y
++
     lda #1
     sta is_in_ramp_bounds
     rts

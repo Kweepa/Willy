@@ -32,7 +32,7 @@ BAKE_DIR = Path(__file__).resolve().parent.parent / "bake"
 ACME = Path(r"\app\acme\acme.exe")
 JSW_LBL = Path(__file__).resolve().parent.parent / "jsw.lbl"
 GUARDIAN_SPRITES_BYTES = 288  # 9 frames x 32 bytes
-META_OFF_ROPE = 15 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
+META_OFF_ROPE = 16 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
 TAIL_OFF_TILECOLORS = META_OFF_ROPE + 1
 TAIL_OFF_GUARDIAN_DATA = TAIL_OFF_TILECOLORS + TILE_COLOR_BYTES
 PLAYER_BMP_BYTES = 256
@@ -47,7 +47,7 @@ GUARDIAN_DATA_BYTES = 54          # AoS: 9 bytes x 6 guardians
 GUARDIAN_RECORD_BYTES = 9
 MAX_GUARDIANS = 6
 TAIL_BYTES = 104
-META_SIZE = 15 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
+META_SIZE = 16 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
 IMAGE_LOAD = 0x1A14
 CONVEYOR_PREFIX_BYTES = 19
 DO_BELT_SLOT_BYTES = 33
@@ -711,6 +711,11 @@ def build_item_erase(room: dict) -> bytes:
 
 # Feet py = surface - RAMP_FEET_OFFSET - toe[ramp_type]
 RAMP_FEET_OFFSET = 16
+RAMP_BOUNDS_EXTEND = 4
+# UP_LEFT only: lowers feet 2px on \ ramps for visual alignment and so the
+# right-exit snap is py-aligned (Collide clears xadd at look_below_2).  See
+# willy.asm CollideLeftRight — skip lr_touch_c while is_on_ramp (walls under \).
+RAMP_UP_LEFT_RY_ADJUST = 2
 RAMP_RY_TOE: dict[int, int] = {
     RAMP_UP_RIGHT: 0,
     RAMP_UP_LEFT: 6,
@@ -751,6 +756,23 @@ def ramp_baked_ry(
         - RAMP_FEET_OFFSET
         - toe
     )
+
+
+def ramp_upper_row(
+    col_start: int,
+    col_end: int,
+    row_start: int,
+    row_step: int,
+    ramp_type: int,
+) -> int:
+    """Tilemap row of the upper (smallest screen y) end of the ramp."""
+    upper_col = col_end if ramp_type == RAMP_UP_RIGHT else col_start
+    return row_start + (upper_col - col_start) * row_step
+
+
+def ramp_baked_ymin(upper_row: int) -> int:
+    """Minimum ramp_y: top of upper tile row minus player height (N*8 - 16)."""
+    return upper_row * 8 - RAMP_FEET_OFFSET
 
 
 def derive_ramp_bounds(
@@ -802,10 +824,10 @@ def derive_ramp_bounds(
 
 def derive_ramp_params(
     tilemap: list, ramp_type: int, room: dict | None = None
-) -> tuple[int, int, int, int, int]:
-    """Return baked (rx1, rx2, ry, E, A) px bounds and slope sign."""
+) -> tuple[int, int, int, int, int, int]:
+    """Return baked (rx1, rx2, ry, E, A, ymin) px bounds and slope sign."""
     if ramp_type == RAMP_NONE:
-        return (RAMP_BOUNDS_NONE, RAMP_BOUNDS_NONE, 0, 0, 0)
+        return (RAMP_BOUNDS_NONE, RAMP_BOUNDS_NONE, 0, 0, 0, 0)
 
     col_start, col_end, row_start, row_step_b = derive_ramp_bounds(
         tilemap, ramp_type, room
@@ -814,16 +836,31 @@ def derive_ramp_params(
 
     if ramp_type == RAMP_UP_RIGHT:
         rx1 = col_start * 4 - 4
-        rx2 = col_end * 4 + 1   # exclusive upper bound
+        rx2 = col_end * 4   # exclusive upper bound
         e, a = 0xFF, 1
     else:
         rx1 = col_start * 4
-        rx2 = col_end * 4 + 5   # exclusive upper bound
+        rx2 = col_end * 4 + 4   # exclusive upper bound
         e, a = 0, 0
+
+    ymin = max(
+        0,
+        ramp_baked_ymin(
+            ramp_upper_row(col_start, col_end, row_start, row_step, ramp_type)
+        ),
+    )
+
+    if ramp_type == RAMP_UP_RIGHT:
+        rx2 += RAMP_BOUNDS_EXTEND
+    else:
+        rx1 -= RAMP_BOUNDS_EXTEND
+
     ry = ramp_baked_ry(
         rx1, col_start, col_end, row_start, row_step, ramp_type
     )
-    return (rx1, rx2, ry, e, a)
+    if ramp_type == RAMP_UP_LEFT:
+        ry += RAMP_UP_LEFT_RY_ADJUST
+    return (rx1, rx2, ry, e, a, ymin)
 
 
 def build_meta(room: dict) -> bytes:
@@ -837,12 +874,15 @@ def build_meta(room: dict) -> bytes:
     meta.append(room["spawn"][1] & 0xFF)
     meta.append(belt_byte(room["belt"]))
     meta.append(room["ramp"] & 0xFF)
-    rx1, rx2, ry, e, a = derive_ramp_params(room["tilemap"], room["ramp"], room)
+    rx1, rx2, ry, e, a, ymin = derive_ramp_params(
+        room["tilemap"], room["ramp"], room
+    )
     meta.append(rx1 & 0xFF)
     meta.append(rx2 & 0xFF)
     meta.append(ry & 0xFF)
     meta.append(e & 0xFF)
     meta.append(a & 0xFF)
+    meta.append(ymin & 0xFF)
     meta.extend(room["conn"])
     meta.extend(build_item_draw(room))
     meta.extend(build_item_erase(room))
