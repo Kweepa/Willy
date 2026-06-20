@@ -5,6 +5,7 @@ ResetGame
     sta men
     lda #0
     sta items_collected
+    sta willy_hidden
     ldx #pickup_got_last - pickup_got
 -
     sta pickup_got,x
