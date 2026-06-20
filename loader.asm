@@ -23,6 +23,11 @@ room_name
     !text "R00"
 
 LoadRoom
+    ; set background colour
+    lda $900f
+    and #$0f
+    sta $900f
+
     ; clear colors
     lda #0
     ldx #192
