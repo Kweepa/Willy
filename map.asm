@@ -17,7 +17,6 @@ title_wait
     beq title_wait
 
 title_release_wait
-    ldx #$ef                    ; space bar row
     jsr ScanKeyRow
     bne title_release_wait
 }
