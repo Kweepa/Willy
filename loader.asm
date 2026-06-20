@@ -59,10 +59,17 @@ LoadRoom
     lda #0                       ; LOAD to RAM (not VERIFY)
     jsr $ffd5                    ; LOAD — uses SETNAM/SETLFS; loads file to RAM
     sei                          ; KERNAL LOAD leaves IRQs enabled
+
     jsr ParseRoomMeta
+
+    lda map
+    cmp #ROOM_TITLE
+    bne +
+    rts
++
     jsr PaintColors
     jsr DrawItem
-    ; jsr DrawHud
+
     jmp DrawPlayer             ; tail call — was jsr/rts
 
 PaintColors

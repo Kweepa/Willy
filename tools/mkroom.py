@@ -594,14 +594,30 @@ def logo_png_path(room: dict) -> Path:
     raise room_error(room, f"logo image not found: {name}")
 
 
-def tile_to_udg_bytes(im: Image.Image, tx: int, ty: int) -> bytes:
+def logo_white_index(im: Image.Image) -> int:
+    """Palette index of the brightest colour (near-white ink in jswlogo.png)."""
+    palette = im.getpalette()
+    if not palette:
+        raise ValueError("logo image has no palette")
+    best_index = 0
+    best_score = -1
+    for i in range(len(palette) // 3):
+        r, g, b = palette[i * 3 : i * 3 + 3]
+        score = r + g + b
+        if score > best_score:
+            best_score = score
+            best_index = i
+    return best_index
+
+
+def tile_to_udg_bytes(im: Image.Image, tx: int, ty: int, white_idx: int) -> bytes:
     px = im.load()
     x0, y0 = tx * 8, ty * 8
     out = bytearray(8)
     for y in range(8):
         byte = 0
         for x in range(8):
-            if px[x0 + x, y0 + y] > 127:
+            if px[x0 + x, y0 + y] == white_idx:
                 byte |= 1 << (7 - x)
         out[y] = byte
     return bytes(out)
@@ -611,7 +627,10 @@ def build_logo_payload(path: Path) -> tuple[bytes, bytearray]:
     """Return (udg_bytes from $1C00, 408-byte screen)."""
     if Image is None:
         raise ValueError("Pillow required for @logo rooms (pip install pillow)")
-    im = Image.open(path).convert("L")
+    im = Image.open(path)
+    if im.mode != "P":
+        raise ValueError(f"{path}: logo must be a palette PNG (P mode)")
+    white_idx = logo_white_index(im)
     if im.width % 8 or im.height % 8:
         raise ValueError(f"{path}: logo size must be a multiple of 8 pixels")
     cols, rows = im.width // 8, im.height // 8
@@ -627,7 +646,7 @@ def build_logo_payload(path: Path) -> tuple[bytes, bytearray]:
 
     for ty in range(rows):
         for tx in range(cols):
-            tile = tile_to_udg_bytes(im, tx, ty)
+            tile = tile_to_udg_bytes(im, tx, ty, white_idx)
             sc = LOGO_ORIGIN_COL + tx
             sr = LOGO_ORIGIN_ROW + ty
             off = sr * WIDTH + sc

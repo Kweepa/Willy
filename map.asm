@@ -1,6 +1,6 @@
 ResetGame
 
-SHOW_TITLE = 0
+SHOW_TITLE = 1
 
 !if SHOW_TITLE {
 
