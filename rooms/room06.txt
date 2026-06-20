@@ -1,8 +1,8 @@
 @room 6
 @title Entrance to Hades
-@conn 0 5 0 14
-@spawn 44 104
-@border RED
+@conn 255 255 255 255
+@spawn 4 4
+@border YEL
 @belt 0
 
 @guardiansprites
@@ -15,36 +15,36 @@
 253,191,255,251,172,215,170,209,42,84,130,68,66,1,8,4,74,16,34,130,8,168,20,4,10,144,1,64,0,0,0,0
 
 @tilemap
-WW                      
-WW                      
-WW       FFF F FFFF     
-WW       F   F F  *     
-WW       F   F FFF      
-WW       F   F F        
-WW       FFF F FFFF     
-WW        *  *  *       
-WW                      
-WW   F  F F FF  FFF  F  
-WW   F FFF FF F  F FFF  
-WW   FF FF FFF   F FFF  
-WW   F* FF FF F  F FFF  
-WW   F  F F F F  F FFFFF
-WW   *  * * * *  * ** * 
-WW          +           
+W                      
+W                
+W      
+W        FF  F          
+W        F F    F     +   
+W        F F F F F      
+W        F F F FF       
+W        FF* F  FF      
+W        *   *  *       
+W                      
+W               F     F
+W   F F   FF FF FF F  F
+W  F F F F F F  F*  F F
+W  F * F F F F  F  FF F
+W  F   F FF* F   F FF *F
+W      *     *      *  
 
 @tilecolors WHT PUR PUR RED WHT WHT
 @itemcolor BLK
 
 @guardians
-x=2 y=48(0..88) v=1 f=0..0 GRN
-x=4 y=48(0..88) v=1 f=1..1 GRN
-x=3 y=64(16..104) v=1 f=2..3 GRN
+x=1 y=56(40..40) v=0 f=0..0 GRN
+x=3 y=56(40..40) v=0 f=1..1 GRN
+x=2 y=72(56..56) v=0 f=2..3 GRN
 
 @tileudg
 0: 0,0,0,0,0,0,0,0
-1: 160,20,130,80,10,65,40,5
-2: 187,187,56,187,187,187,131,187 ; invert
+1: 160,20,130,80,10,65,40,5 ; invert
+2: 187,187,56,187,187,187,131,187
 3: 191,92,88,48,40,88,72,48
 4: 64,64,16,16,4,4,1,1
-5: 0,0,0,0,0,0,0,0 ; invert
+5: 0,0,0,0,0,0,0,0
 6: 0,0,0,0,0,0,0,0
