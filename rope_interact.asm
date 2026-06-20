@@ -1,8 +1,8 @@
 ; Rope player input, grab/attach, release. Callers gate on room_has_rope.
 
-rope_jump_xadd  !byte $ff, $01                      ; swing_side 0=left->-1, 1=right->+1
-rope_near_key   !byte leftIsPressed, rightIsPressed ; descend key, indexed by swing_side
-rope_far_key    !byte rightIsPressed, leftIsPressed ; climb key,   indexed by swing_side
+rope_near_key   !byte rightIsPressed, leftIsPressed  ; descend toward rope side (swing_side 0=right, 1=left)
+rope_far_key    !byte leftIsPressed, rightIsPressed  ; climb
+rope_jump_flip  !byte $fe, $00                      ; side 0 right: invert ±1; side 1 left: no-op
 
 rope_release
     lda #0
@@ -75,8 +75,9 @@ rope_jump
     jsr rope_release
     lda #0
     sta inairtime
-    ldx rope_swing_side
-    lda rope_jump_xadd,x
+    lda rope_swing_dir
+    ldy rope_swing_side
+    eor rope_jump_flip,y            ; flip sign on right swing only
     sta xadd
     sta lastxmove
     rts
