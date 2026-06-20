@@ -33,23 +33,23 @@ WW                     W
 WW                     W
                        W
                        W
-FFFFFFFFFFF  /WFFFFFFFFW
-W           / W        W
-W          /  W        W
-W         /   W        W
-W        /    W        W
-W       /     W        W
-W      /      W        W
-W     /       W        W
+FFFFFFFFFF  /WFFFFFFFFFW
+W          / W         W
+W         /  W         W
+W        /   W         W
+W       /    W         W
+W      /     W         W
+W     /      W         W
+W            W         W
     FF            +    W
-                <<<    W
+  F    F        <<<    W
 FFFFFFFFFFFFFFFFFFFFFFFF
 
 @tilecolors WHT RED YEL YEL WHT CYN
 @itemcolor YEL
 
 @guardians
-y=24 x=12(0..19) v=-1 f=0..3 GRN # horizontal, because y is constant (measured in pixels) and x (measured in tiles) has a range. v starts negative here
+y=24 x=12(0..21) v=-1 f=0..3 GRN # horizontal, because y is constant (measured in pixels) and x (measured in tiles) has a range. v starts negative here
 x=21 y=104(104..104) v=0 f=4..5 WHT
 
 @tileudg
@@ -58,5 +58,5 @@ x=21 y=104(104..104) v=0 f=4..5 WHT
 2: 31,170,0,85,248,85,0,170 ; invert
 3: 0,0,0,0,0,0,0,0
 4: 3,0,12,0,48,0,192,0
-5: 165,0,0,0,0,0,0,255 ; invert
+5: 165,0,0,0,0,0,0,0 ; invert
 6: 31,4,10,119,135,177,170,10
