@@ -33,6 +33,22 @@ LoadRoom
     bne -
 
     jsr FormatRoomName
+
+    ; Clear KERNAL serial scratch before the IEC LOAD (matters under True Drive
+    ; Emulation). rope_udg_mem ($94/$95) overlaps C3PO/BSOUR: each rope frame
+    ; leaves a charset pointer in $94, and on the swing phases where the rope is
+    ; long enough that pointer has bit 7 set. C3PO ($94) is the KERNAL "serial
+    ; output char buffered" flag tested by TALK; with bit 7 set the LOAD sends a
+    ; stray byte, desyncs the IEC bus, the drive times out (ST=$80) and the room
+    ; never loads — leaving stale rope chars that PaintColors paints as
+    ; multicolour corruption. Only bites when a death/room-change lands on a
+    ; bit-7 swing phase, hence the "specific spot" symptom. Under fs-trap
+    ; (virtual device) the serial code never runs, so this only shows with TDE.
+    ; Harmless to clear: rope state at $94-$9F is re-initialised by ParseRoomMeta.
+    lda #0
+    sta $94                      ; C3PO  (serial output char buffered)
+    sta $95                      ; BSOUR (buffered serial byte)
+
     lda #3
     ldx #<room_name
     ldy #>room_name
@@ -98,6 +114,8 @@ ParseRoomMeta
     stx rope_willy_is_holding
     stx rope_udg
     stx rope_frame
+    stx rope_anim_ctr
+    stx rope_grab_cooldown ; allow immediate grab on entering a rope room
     stx rope_swing_side ; this needs to be 0 or 1
     inx
     stx rope_swing_dir ; this needs to be -1 or 1

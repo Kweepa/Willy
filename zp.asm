@@ -5,10 +5,11 @@
 ;   $02-$61   game scalars (px/py, pointers, guardian scratch hx..guard_axis $20-$28, etc.)
 ;   $62-$66   spawn_px/py, initial_room_load, room_has_rope, menx (unused)
 ;   $67       edge_cmp — CheckRoomEdge scratch (do not use tmp+1; $03 is arr)
-;   $6A-$75   rope draw temps
-;   $76-$95   rope_old_screen_pos (32 B ZP address table)
-;   $96-$9C   rope state scalars
-;   $9D/$9F   left_right_ctr / up_down_ctr (guardian anim)
+;   $46/$47   left_right_ctr / up_down_ctr (guardian anim; moved off $9D/$9F)
+;   $68-$87   rope_old_screen_pos (32 B ZP address table; sits below KERNAL $90-$93)
+;   $88-$8F   rope draw scalars/pointers
+;   $90-$93   KERNAL disk-I/O reserve — DO NOT place game ZP here (see below)
+;   $94-$9F   rope draw temps + rope state scalars
 ;   $A0-$A5   player_overlap (6 B)
 ;   $A6-$D5   player_touch (48 B) — DrawPlayer clears $A0-$D5 each frame
 ;   $D6-$DB   (gap)
@@ -41,6 +42,25 @@
 ;   $C1-$C2 STAL  I/O start address low/high (LOAD) — not $AE/$AF
 ;   $C3-$C4       KERNAL setup pointer (LOAD)
 ; Reserve for KERNAL during disk I/O: $90-$93, $AE-$AF, $B7-$C4.
+; CRITICAL: never place game ZP that is written during play in $90-$93.
+; $90 (ST) is read by LOAD; a stray value there (bit6/bit7 set) makes LOAD
+; think the transfer hit EOF/error and abort early, so the room never loads —
+; the screen keeps the stale chars from before the load, and PaintColors then
+; reads those as colour-table indices -> garbage / multicolour corruption.
+; rope_old_screen_pos used to span $76-$95 and clobbered $90-$93; it now lives
+; at $68-$87 (16 slots, ends $87, 4 slots clear of $90).
+; CRITICAL (TRUE DRIVE EMULATION): under TDE the KERNAL LOAD performs a real IEC
+; serial transfer that uses extra zero page beyond $90-$93:
+;   $94 C3PO  — flag: serial output char buffered (tested by TALK/LISTEN; bit 7
+;               set => a stray byte is sent first, desyncing the bus -> ST=$80)
+;   $95 BSOUR — the buffered serial byte
+;   $A3-$A5   — serial bit/EOI counters (KERNAL re-inits these per byte)
+; rope_udg_mem lives at $94/$95, so each rope frame leaves a charset pointer
+; there. LoadRoom now zeroes $94/$95 immediately before SETNAM so the rope can
+; never poison the IEC transfer. Anything written during play that lands in
+; $94/$95 (or that must survive a load) is therefore still unsafe long-term;
+; prefer keeping serial-critical bytes ($90-$95, $A3-$A5) clear or clearing
+; them in LoadRoom as done here.
 ; IEC LOAD also calls STOP scan each byte → writes $F5/$F6 (keyboard ptr).
 ; $AC-$AD tape/scroll pointers — no persistent game state there.
 ;
@@ -71,7 +91,7 @@
 ; Copied const tables (WarmStart; see runtime_const.asm boot pack):
 ;   $D6-$EF  belt..draw_vguard (26 B); $37-$42 draw_player tables (12 B)
 ;   must avoid $A0-$D5 (DrawPlayer overlap clear)
-; Rope: $6A-$75 draw temps; $76-$95 old_screen_pos (ZP ptr table); $96-$9C state
+; Rope: $68-$87 old_screen_pos (ZP ptr table); $88-$8F draw temps; $94-$9F state
 
 tmp             = $02
 arr             = $03
@@ -144,7 +164,7 @@ spawn_px        = $62          ; respawn position (before rope block; not in old
 spawn_py        = $63
 initial_room_load = $64        ; 1 = first DrawMap after ResetGame (use @spawn)
 room_has_rope   = $65
-menx            = $66          ; unused; kept off rope_old_screen_pos ($76+)
+menx            = $66          ; unused; kept off rope_old_screen_pos ($68+)
 edge_cmp        = $67          ; CheckRoomEdge compare mode (must not use tmp+1 — that is arr)
 
 ramp_tmp        = $54
@@ -156,24 +176,30 @@ ts              = $50
 
 guardian_index  = $61
 
-rope_udg            = $6a
-rope_frame          = $6b
-rope_swing_side     = $6c
-rope_swing_dir      = $6d
-rope_scr            = $6e     ; current rope screen addr (lo/hi) during rope_draw
-rope_bit            = $70
-rope_y              = $71
-rope_udg_mem        = $72
-rope_index          = $74
-rope_udg_advance    = $75
-rope_old_screen_pos = $76     ; 32 byte address table (16 slots) for (ptr,x) clears
-rope_willy_is_holding = $96
-rope_willy_seg      = $97
-rope_segment_cur_x  = $98
-rope_segment_cur_y  = $99
-rope_seg_skip_above = $9a
-rope_loop_count     = $9b
-rope_grab_cooldown  = $9c
+; Rope block $68-$9F. The 32-byte (ptr,x) clear table goes FIRST (lowest) so it
+; ends at $87 — four slots clear of the KERNAL disk-I/O reserve at $90-$93.
+; NOTHING rope (or any other game ZP written during play) may land in $90-$93;
+; see the KERNAL clobber map above for why ($90 = ST aborts LOAD).
+rope_old_screen_pos = $68     ; 32 byte address table (16 slots) for (ptr,x) clears -> $68-$87
+rope_udg            = $88
+rope_frame          = $89
+rope_swing_side     = $8a
+rope_swing_dir      = $8b
+rope_scr            = $8c     ; current rope screen addr (lo/hi) during rope_draw
+rope_bit            = $8e
+rope_y              = $8f
+; --- $90-$93 KERNAL disk-I/O reserve: leave empty ---
+rope_udg_mem        = $94
+rope_index          = $96
+rope_udg_advance    = $97
+rope_willy_is_holding = $98
+rope_willy_seg      = $99
+rope_segment_cur_x  = $9a
+rope_segment_cur_y  = $9b
+rope_seg_skip_above = $9c
+rope_loop_count     = $9d
+rope_grab_cooldown  = $9e
+rope_anim_ctr       = $9f
 
 cell_off_2x3        = $dc
 lr_edge_px          = $e2
@@ -182,8 +208,8 @@ lr_touch_b          = $e6
 lr_touch_c          = $e8
 draw_vguard_chrs    = $ea
 
-left_right_ctr  = $9d
-up_down_ctr     = $9f
+left_right_ctr  = $46          ; moved off $9D so rope_old_screen_pos clears $90-$93
+up_down_ctr     = $47
 
 player_overlap  = $a0
 player_touch    = $a6

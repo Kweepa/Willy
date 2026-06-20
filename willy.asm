@@ -98,6 +98,16 @@ clr_done
     rts
 
 Collide
+    lda room_has_rope
+    beq collide_body
+    lda rope_willy_is_holding
+    beq collide_body
+    jsr RopePlayerInput          ; climb / descend / jump / fall-off
+    lda rope_willy_is_holding
+    beq collide_body             ; released this frame -> normal physics applies jump/fall
+    jsr rope_draw_maybe          ; gated draw; snaps willy to the held segment
+    jmp DrawPlayer               ; skip gravity while carried
+collide_body
     lda py
     sta last_py
     lda xadd
@@ -239,10 +249,7 @@ collide_dont_move_y
 +
     lda room_has_rope
     beq collide_draw_player
-    jsr rope_draw
-    lda rope_willy_is_holding
-    bne collide_draw_player
-    ;jsr RopeTryGrab
+    jsr rope_draw_maybe          ; animate rope + attach detection via DrawPlayer/coll_check
 collide_draw_player
     jmp DrawPlayer             ; tail call — was jsr/rts
 hit_above
@@ -460,18 +467,14 @@ HandleOverlapChar
 
 +
 
-ROPE_FUDGE = 0
-
-!if ROPE_FUDGE {
-    ; hit a guardian chr. check for rope before killing the player
-    pha
-    lda room_has_rope
-    beq kill_player
-    pla
+    ; hit a guardian (22-33) or rope UDG (34+). Guardians kill directly;
+    ; rope UDGs attach only when room_has_rope (no pha — kill_player must
+    ; not return with an extra byte on the stack).
     cmp #ROPE_FIRST_UDG
     bcc kill_player
+    lda room_has_rope
+    beq kill_player
     jmp rope_attach ; tail call
-}
 
 kill_player
     lda #1

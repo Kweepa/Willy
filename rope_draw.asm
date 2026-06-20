@@ -250,19 +250,14 @@ rope_loop_top
     jmp rope_loop_top
 .rope_loop_done
 
-ROPE_SNIP_SNAP = 0
-
-!if ROPE_SNIP_SNAP {
     ; snap willy to attach point
     lda rope_willy_is_holding
     beq ++
-    lda #1
-    sta on_ground
     lda rope_segment_cur_x
     lsr
     sec
     sbc #2
-    stx px
+    sta px
     lda rope_segment_cur_y
     sec
     sbc #8
@@ -271,6 +266,5 @@ ROPE_SNIP_SNAP = 0
 +
     sta py
 ++
-}
 
     rts

@@ -17,7 +17,7 @@
 
 !set ROPE_TEST = 0
 !source "rope_draw.asm"
-;!source "rope_interact.asm"
+!source "rope_interact.asm"
 
 prg_end = *
 

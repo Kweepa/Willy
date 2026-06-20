@@ -2,7 +2,7 @@
 
 !source "../defines.asm"
 
-left_right_ctr  = $9d
+left_right_ctr  = $46          ; keep in sync with zp.asm (moved off $9D)
 belt_active     = $4f
 xadd            = $0e
 lastxmove       = $27
