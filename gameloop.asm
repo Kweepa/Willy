@@ -6,12 +6,12 @@ start_map
     jsr DrawMap
 main_loop
     jsr ErasePlayer
+    jsr EraseGuardians
+    jsr UpdateMoveCounters
     lda room_has_rope
     beq +
     jsr rope_pre_draw
 +
-    jsr EraseGuardians
-    jsr UpdateMoveCounters
     jsr MoveGuardians
     jsr GetPlayerInput
     jsr Collide

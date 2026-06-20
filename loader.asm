@@ -119,7 +119,6 @@ ParseRoomMeta
     stx rope_willy_is_holding
     stx rope_udg
     stx rope_frame
-    stx rope_anim_ctr
     stx rope_grab_cooldown ; allow immediate grab on entering a rope room
     stx rope_swing_side ; this needs to be 0 or 1
     inx

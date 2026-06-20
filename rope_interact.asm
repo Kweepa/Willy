@@ -11,25 +11,18 @@ rope_release
     sta rope_grab_cooldown
     rts
 
-; tick frame counter (0..5) then clear rope only on draw (even) frames
+; clear rope only on draw frames (left_right_ctr even: every other frame)
 rope_pre_draw
-    ldx rope_anim_ctr
-    inx
-    cpx #6
-    bcc +
-    ldx #0
-+
-    stx rope_anim_ctr
-    txa
+    lda left_right_ctr
     lsr
     bcs +                           ; odd -> skip clear (keep rope on screen)
     jmp rope_clear_pre_player_draw  ; tail call
 +
     rts
 
-; draw rope only on even frames (every other frame)
+; draw rope only on even left_right_ctr frames (every other frame)
 rope_draw_maybe
-    lda rope_anim_ctr
+    lda left_right_ctr
     lsr
     bcs +
     jmp rope_draw                   ; tail call (also snaps willy via ROPE_SNIP_SNAP)
@@ -40,11 +33,8 @@ rope_draw_maybe
 RopePlayerInput
     lda jumpIsPressed
     bne rope_jump
-    lda rope_anim_ctr               ; climb/descend every third frame (ctr 0 or 3)
-    beq +
-    cmp #3
+    lda left_right_ctr              ; climb/descend every fourth frame
     bne rope_input_done
-+
     ldy rope_swing_side             ; data-driven near/far key select
     ldx rope_near_key,y
     lda $00,x                       ; zp,x reads leftIsPressed/rightIsPressed flag

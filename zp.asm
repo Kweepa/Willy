@@ -199,7 +199,6 @@ rope_segment_cur_y  = $9b
 rope_seg_skip_above = $9c
 rope_loop_count     = $9d
 rope_grab_cooldown  = $9e
-rope_anim_ctr       = $9f
 
 cell_off_2x3        = $dc
 lr_edge_px          = $e2
