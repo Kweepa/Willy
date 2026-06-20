@@ -67,12 +67,8 @@ LoadRoom
     bne +
     rts
 +
-    jsr PaintColors
-    jsr DrawItem
 
-    jmp DrawPlayer             ; tail call — was jsr/rts
-
-PaintColors
+.paint_colours
     ldy #0
 -
     lda screen_base,y
@@ -96,15 +92,16 @@ PaintColors
     sta color_base + 383,y
     dey
     bne -
-    rts
 
-DrawItem
+.draw_item
     ldx map
     lda pickup_got,x
-    bne draw_item_done
+    bne +
     jsr item_draw
-draw_item_done
-    rts
++
+
+    jmp DrawPlayer             ; tail call — was jsr/rts
+
 
 ;
 ; Layout: guardians, border, spawn x2, belt, ramp, rx1, rx2, ry, E, A, conn x4, item draw;
@@ -115,8 +112,9 @@ ParseRoomMeta
     lda meta_content_src + meta_off_rope
     sta room_has_rope
 
-    ; minimal rope clear
+    ; minimal rope/conveyor clear
     ldx #0
+    stx belt_active
     stx rope_willy_is_holding
     stx rope_udg
     stx rope_frame

@@ -36,11 +36,11 @@ FFFF      WWFFF        *
           WW           *
          FWWF          *
 
-@tilecolors WHT GRN YEL RED GRN WHT
+@tilecolors WHT GRN RED RED GRN WHT
 @itemcolor BLK
 
 @guardians
-y=16 x=1(0..8) v=-1 f=0..7 YEL
+y=16 x=1(0..9) v=-1 f=0..7 YEL
 x=5 y=48(40..80) v=2 f=8..8 PUR
 
 @tileudg
