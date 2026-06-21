@@ -45,7 +45,7 @@ SKIP_OVERLAP = {
     "hd",
     "g_frame",
     "ht",
-    "hfmax",
+    "g_fctl",
     "hc",
     "guard_axis",  # $21-$28 via hx,y base at $20
     "lr_touch_b",

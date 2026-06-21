@@ -2,7 +2,7 @@
 ;
 ; Layout map ($02-$FF game state; migration: hot pack was $62-$87, now $D6-$FB):
 ;
-;   $02-$61   game scalars (px/py, pointers, guardian scratch hx..guard_axis $20-$29, etc.)
+;   $02-$61   game scalars (px/py, pointers, guardian scratch hx..guard_axis $20-$29, g_fctl=$27, etc.)
 ;   $62-$66   spawn_px/py, initial_room_load, room_has_rope, willy_hidden
 ;   $67       rope_grab_cooldown
 ;   $5c       edge_skip_draw — 1 after edge LoadRoom (DrawPlayerEntry skip)
@@ -119,7 +119,7 @@ hr              = $23
 hd              = $24
 g_frame         = $25
 ht              = $26
-hfmax           = $27
+g_fctl          = $27   ; horizontal: bidirectional (0/1); vertical: g_frame wrap mask (0/1/3)
 hc              = $28
 guard_axis      = $29
 

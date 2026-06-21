@@ -62,7 +62,7 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@rampudg` | bytes | Ramp UDG |
 | `@beltudg` | bytes | Conveyor UDG |
 | `@itemudg` | bytes | Item UDG (optional when no `+`) |
-| `@guardians` | list | Guardian DSL per line (see below). Horizontal: `frame = (hx & 3) + fmin`, or bidirectional `+ 4` by direction. Vertical: stored frame index (byte 5) increments and wraps each move tick; sprite `frame = fmin + index`. |
+| `@guardians` | list | Guardian DSL per line (see below). Horizontal: **4 or 8** sprite frames (`f=0..3` uni, `f=0..7` bi); byte 7 stores bidirectional flag. Vertical: **1, 2, or 4** frames; byte 7 stores wrap mask. |
 | `@guardianbmp` | block | Optional; hex bytes, 128 per guardian in order |
 
 Omit `@*udg` tags for tile types not used in the room when the UDG would be all zeros. Any omitted UDG defaults to 8×0 at build time. Non-zero UDGs are kept even if the tile type is unused.
@@ -240,7 +240,7 @@ Set `BORDER_DEBUG = 0` in `defines.asm` to disable raster timing border probes (
 
 ### Guardian data layout
 
-Room tail stores **60 bytes** of guardian state as **AoS**: six records of ten bytes each (`x`, `y`, `min`, `max`, `vel`, `frame`, `fmin`, `fmax`, `color`, `axis`) at `guardian_data_base` (tail offset **44**). Tile colours live in the prefix at `tile_color_src` (`$1A42`), not in the tail.
+Room tail stores **60 bytes** of guardian state as **AoS**: six records of ten bytes each (`x`, `y`, `min`, `max`, `vel`, `frame`, `fmin`, `fctl`, `color`, `axis`) at `guardian_data_base` (tail offset **44**). Byte **`fctl`**: horizontal bidirectional flag (0/1); vertical `g_frame` wrap mask (0/1/3). Tile colours live in the prefix at `tile_color_src` (`$1A42`), not in the tail.
 
 Each frame, `CopyDownGuardianData` / `CopyUpGuardianData` copy one record between room RAM and ZP scratch via tight `(arr),y` loops indexed from `hx`.
 

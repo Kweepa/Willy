@@ -151,7 +151,7 @@ G_OFF_MAX = 3
 G_OFF_VEL = 4
 G_OFF_FRAME = 5
 G_OFF_FMIN = 6
-G_OFF_FMAX = 7
+G_OFF_FCTL = 7
 G_OFF_COLOR = 8
 G_OFF_AXIS = 9
 
@@ -243,15 +243,19 @@ def parse_guardian_line(
     if not 0 <= fmin_i <= 8 or not 0 <= fmax_i <= 8 or fmin_i > fmax_i:
         raise ValueError(f"{loc}frame range out of range 0-8: {fmin}..{fmax}")
 
+    frame_count = fmax_i - fmin_i + 1
     if axis == 1:
-        frame_count = fmax_i - fmin_i + 1
         if frame_count not in (1, 2, 4):
             raise ValueError(
                 f"{loc}vertical guardian frame count must be 1, 2, or 4: {fmin}..{fmax}"
             )
-        fmax_store = frame_count - 1  # mask: 0, 1, or 3
+        fctl_store = frame_count - 1  # wrap mask: 0, 1, or 3
     else:
-        fmax_store = fmax_i
+        if frame_count not in (4, 8):
+            raise ValueError(
+                f"{loc}horizontal guardian frame count must be 4 or 8: {fmin}..{fmax}"
+            )
+        fctl_store = 1 if frame_count == 8 else 0  # bidirectional flag
 
     return {
         "x": gx & 0xFF,
@@ -260,7 +264,7 @@ def parse_guardian_line(
         "max": gmax & 0xFF,
         "vel": parse_velocity(vel),
         "fmin": fmin_i,
-        "fmax": fmax_store,
+        "fctl": fctl_store,
         "color": parse_vic_color(colour),
         "axis": axis,
     }
@@ -962,7 +966,7 @@ def build_guardian_data(room: dict) -> bytes:
         out[base + G_OFF_VEL] = g["vel"]
         out[base + G_OFF_FRAME] = 0
         out[base + G_OFF_FMIN] = g["fmin"]
-        out[base + G_OFF_FMAX] = g["fmax"]
+        out[base + G_OFF_FCTL] = g["fctl"]
         out[base + G_OFF_COLOR] = g["color"]
         out[base + G_OFF_AXIS] = g["axis"]
     return bytes(out)

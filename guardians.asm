@@ -47,26 +47,17 @@ erase_guardians_done
 GetHorizontalGuardianFrame
     lda hx
     and #$03
-    sta tmp
-    lda hfmax
-    sec
-    sbc ht
-    cmp #4
-    bcc +
-    lda hd
-    bmi +
-    lda tmp
-    clc
-    adc #4
-    jmp GetSpriteFrameAddr   ; tail call — rts resumes at caller after jsr GetHorizontalGuardianFrame
+    ldx g_fctl ; check bidirectional
+    beq +
+    ldx hd ; if going left, want to use the first four frames
+    bmi ++
+    eor #4 ; otherwise use the next four
 +
-    lda tmp
-    clc
-    adc ht
-    jmp GetSpriteFrameAddr   ; tail call — rts resumes at caller after jsr GetHorizontalGuardianFrame
+    bpl ++
 
 GetVerticalGuardianBmpAddr
     lda g_frame
+++
     clc
     adc ht
     jmp GetSpriteFrameAddr   ; tail call — rts resumes at caller after jsr GetVerticalGuardianBmpAddr
@@ -98,7 +89,7 @@ MoveGuardian
 +++
     inc g_frame
     lda g_frame
-    and hfmax
+    and g_fctl
     sta g_frame
     rts
 
