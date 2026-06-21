@@ -176,6 +176,18 @@ collide_body
     bne +
     jmp move_up_down
 +
+    lda py
+    cmp #8
+    bcs jump_above_check
+    lda meta_content_src + meta_off_conn   ; north @conn; allow exit without tile probe
+    cmp #$ff
+    bne move_up_down
+    lda #27
+    sta inairtime
+    lda #0
+    sta newy
+    beq move_up_down
+jump_above_check
     ldy #0
     jsr try_touch
     bcc +
@@ -186,7 +198,7 @@ collide_body
     bcc +
     jmp hit_above
 +
-    jmp move_up_down
+    bcc move_up_down
 +
 collide_down
     lda on_ground
@@ -199,7 +211,7 @@ collide_down
 +
     lda is_on_ramp
     beq +
-    jmp check_jump
+    bne check_jump
 +
     lda py
     and #$07
@@ -238,7 +250,7 @@ check_jump
     lda #0
     sta inairtime
     sta is_on_ramp
-    jmp collide_end
+    beq collide_end
 move_up_down
     lda #1
     sta mov
