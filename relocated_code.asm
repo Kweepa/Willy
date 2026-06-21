@@ -120,8 +120,8 @@ CalcGuardianRecPtr
     lda guardian_index
     asl
     asl
-    asl
     adc guardian_index
+    asl
     adc #<guardian_data_base
     sta arr
     lda #>guardian_data_base
