@@ -39,7 +39,7 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@room` | id | Room number (1–63) |
 | `@title` | text | Room name (HUD row 16, max 18 characters) |
 | `@conn` | N E S W | Neighbours: room number or `FF` (hex ok: `$FF`) |
-| `@spawn` | px py | Willy start (quarter-char X, 2-pixel Y) |
+| `@spawn` | px py | Willy start (quarter-char X, single-pixel head Y) |
 | `@border` | colour | Border colour (BLK WHT RED CYN PUR GRN BLU YEL). `mkroom` stores `border \| 8` in meta — full VIC `$900F` byte (white background + border). |
 | `@belt` | speed | Conveyor speed: `-1`, `0`, or `1` |
 | `@guardiansprites` | block | 256 bytes: 8 frames × 32 bytes. Author in Skool interleaved format (left, right byte pairs per scanline). `mkroom` converts to column-major (16-byte left column, 16-byte right column) in the PRG. |

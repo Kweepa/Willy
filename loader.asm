@@ -100,7 +100,7 @@ LoadRoom
     jsr item_draw
 +
 
-    jmp DrawPlayer             ; tail call — was jsr/rts
+    jmp DrawPlayerBody
 
 
 ;

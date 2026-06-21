@@ -45,15 +45,16 @@ RAMP_UP_LEFT = $FF
 ITEMS_REQUIRED = 2
 ROOM_MASTER_BED = 35
 ROOM_BATHROOM = 33
-ROOM_START = 42
+ROOM_START = 33
 ROOM_TITLE = 62
 ENDING_TRIGGER_PX = 20
 
 ; px is quarter-char units; 24-col playfield (cols 0-23)
-EDGE_WEST_PX = 1
-EDGE_EAST_PX = 91              ; column 23 - east exit when px >= 91
-EDGE_EAST_ENTRY_PX = 4         ; west spawn when entering from the east
-EDGE_WEST_ENTRY_PX = 88        ; east spawn when entering from the west (col 22, below east trigger)
+; Room transitions use hysteresis: exit threshold vs entry px differ by 1.
+EDGE_WEST_PX = 0               ; west exit when px <= 0; lr stop at px == 0
+EDGE_EAST_PX = 92              ; east exit when px >= 92; lr stop at px == 92
+EDGE_EAST_ENTRY_PX = 1         ; entering from the east (spawn west side)
+EDGE_WEST_ENTRY_PX = 90        ; entering from the west (spawn east side)
 
 ; 1 = emit border colour writes for raster timing bars; 0 = no code/size cost
 BORDER_DEBUG = 0

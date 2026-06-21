@@ -14,7 +14,7 @@ ApplyEndgameRoomLoad
 apply_endgame_done
     rts
 
-; Called from main loop after CheckRoomEdge (px updated).
+; Called from main loop after Collide (edge check runs in DrawPlayerEntry).
 CheckEndingTeleport
     lda willy_hidden
     bne check_ending_done

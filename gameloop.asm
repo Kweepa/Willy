@@ -16,7 +16,6 @@ main_loop
     jsr GetPlayerInput
     jsr Collide
     jsr DrawHud
-    jsr CheckRoomEdge
     jsr CheckEndingTeleport
     jsr AnimateConveyors        ; baked per room at image_base
     jsr WaitForRaster

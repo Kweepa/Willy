@@ -753,7 +753,7 @@ def build_item_erase(room: dict) -> bytes:
     )
 
 
-# Feet py = surface - RAMP_FEET_OFFSET - toe[ramp_type]
+# py is head Y (single pixels); ramp_y runtime is feet Y (head + 16 on surface).
 RAMP_FEET_OFFSET = 16
 RAMP_BOUNDS_EXTEND = 4
 # UP_LEFT only: lowers feet 2px on \ ramps for visual alignment and so the
@@ -793,11 +793,10 @@ def ramp_baked_ry(
     row_step: int,
     ramp_type: int,
 ) -> int:
-    """Baked meta ry: feet py at ramp entry px rx1."""
+    """Baked meta ry: feet Y at ramp entry px rx1."""
     toe = RAMP_RY_TOE.get(ramp_type, 0)
     return (
         ramp_surface_abs(rx1, col_start, col_end, row_start, row_step, ramp_type)
-        - RAMP_FEET_OFFSET
         - toe
     )
 
@@ -814,9 +813,25 @@ def ramp_upper_row(
     return row_start + (upper_col - col_start) * row_step
 
 
-def ramp_baked_ymin(upper_row: int) -> int:
-    """Minimum ramp_y: top of upper tile row minus player height (N*8 - 16)."""
-    return upper_row * 8 - RAMP_FEET_OFFSET
+def ramp_baked_ymin(
+    col_start: int,
+    col_end: int,
+    row_start: int,
+    row_step: int,
+    ramp_type: int,
+) -> int:
+    """Minimum feet ramp_y at the upper (smallest Y) end of the ramp."""
+    toe = RAMP_RY_TOE.get(ramp_type, 0)
+    if ramp_type == RAMP_UP_RIGHT:
+        upper_px = col_end * 4
+    else:
+        upper_px = col_start * 4
+    return (
+        ramp_surface_abs(
+            upper_px, col_start, col_end, row_start, row_step, ramp_type
+        )
+        - toe
+    )
 
 
 def derive_ramp_bounds(
@@ -887,11 +902,8 @@ def derive_ramp_params(
         rx2 = col_end * 4 + 4   # exclusive upper bound
         e, a = 0, 0
 
-    ymin = max(
-        0,
-        ramp_baked_ymin(
-            ramp_upper_row(col_start, col_end, row_start, row_step, ramp_type)
-        ),
+    ymin = ramp_baked_ymin(
+        col_start, col_end, row_start, row_step, ramp_type
     )
 
     if ramp_type == RAMP_UP_RIGHT:

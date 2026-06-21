@@ -1,5 +1,6 @@
 ; ===========================================================================
 ; call this once per frame, irrespective of movement
+; ramp_y = feet Y on ramp surface; py is head (feet = py + 16).
 
 calculate_ramp_y
     lda #0
@@ -38,8 +39,8 @@ calculate_ramp_y
 
 ; ===========================================================================
 ; Call when moving horizontally on the ground or on a ramp — snaps py to
-; ramp_y when within +/-2. Caller (CollideLeftRight) must gate on
-; (was_on_ground OR is_on_ramp) and xadd != 0.
+; ramp_y - 16 when feet within +/-2 of ramp surface. Caller (CollideLeftRight)
+; must gate on (was_on_ground OR is_on_ramp) and xadd != 0.
 
 do_walking_ramp_check
     lda #0
@@ -49,6 +50,8 @@ do_walking_ramp_check
     rts
 +
     lda py
+    clc
+    adc #16
     sec
     sbc ramp_y
     bcc wr_below
@@ -60,11 +63,14 @@ wr_below:
     lda ramp_y
     sec
     sbc py
+    sbc #16
     cmp #3
     bcs wr_out
 
 wr_snap:
     lda ramp_y
+    sec
+    sbc #16
     sta py
     lda #1
     sta is_on_ramp
@@ -86,17 +92,24 @@ do_falling_ramp_check
     rts
 +
     lda last_py
+    clc
+    adc #16
     cmp ramp_y
     bcc +
     rts
 +
     lda newy
+    ; clc - we know carry is clear (see bcc above)
+    adc #16
     cmp ramp_y
     bcs +
     rts
 +
     lda ramp_y
+    ; sec - we know carry is set (see bcs above)
+    sbc #16
     sta py
     lda #1
     sta is_on_ramp
     rts
+

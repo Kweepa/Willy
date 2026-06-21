@@ -115,7 +115,7 @@ collide_active
     lda rope_willy_is_holding
     beq collide_body             ; released this frame -> normal physics applies jump/fall
     jsr rope_draw_maybe          ; gated draw; snaps willy to the held segment
-    jmp DrawPlayer               ; skip gravity while carried
+    jmp DrawPlayerEntry          ; skip gravity while carried
 collide_body
     lda py
     sta last_py
@@ -260,7 +260,7 @@ collide_dont_move_y
     beq collide_draw_player
     jsr rope_draw_maybe          ; animate rope + attach detection via DrawPlayer/coll_check
 collide_draw_player
-    jmp DrawPlayer             ; tail call — was jsr/rts
+    jmp DrawPlayerEntry        ; tail call — was jsr/rts
 hit_above
     lda #27
     sta inairtime
@@ -311,15 +311,15 @@ ErasePlayer
 erase_player_done
     rts
 
-DrawPlayer
-    lda willy_hidden
-    beq draw_player_body
+DrawPlayerEntry
+    jsr CheckRoomEdge
+    lda edge_cmp
+    beq DrawPlayerBody
     rts
-draw_player_body
-    lda py
-    bpl +
-    lda #0
-    sta py
+DrawPlayerBody
+    lda willy_hidden
+    beq +
+    rts
 +
 	; clear overlaps/touches
 	ldx #(48+6-1)

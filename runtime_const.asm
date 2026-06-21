@@ -18,8 +18,8 @@ boot_page_pack
     ; edge_tbl_boot / map.asm
     !byte 0, 1, EDGE_EAST_PX, 1, EDGE_EAST_ENTRY_PX, $ff  ; east
     !byte 0, 0, EDGE_WEST_PX + 1, 3, EDGE_WEST_ENTRY_PX, $ff ; west
-    !byte 1, 0, 3, 0, $ff, 103                            ; up
-    !byte 1, 1, 107, 2, $ff, 4                            ; down
+    !byte 1, 1, 128, 0, $ff, 104                          ; up (py >= $80: signed py < 0)
+    !byte 1, 1, 111, 2, $ff, 0                            ; down
     ; x24rowtab_boot
     !word screen_base - 24
     !word screen_base + 0

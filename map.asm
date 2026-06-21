@@ -48,7 +48,7 @@ DrawMap
     sta py
     lda #0
     sta use_room_spawn
-    jmp LoadRoom               ; tail call — was jsr/rts
+    jmp LoadRoom               ; tail call — LoadRoom draws via DrawPlayerBody
 drawmap_first_room
     lda #1
     sta use_room_spawn          ; new game - @spawn from room meta
@@ -86,13 +86,19 @@ edge_hit
     ldy edge_tbl+3,x
     lda meta_content_src + meta_off_conn,y   ; conn byte (inlined GetConnByte)
     cmp #$ff
-    beq edge_next
+    beq edge_no_conn
     sta map
     lda edge_tbl+4,x
     sta entry_px
     lda edge_tbl+5,x
     sta entry_py
     jmp do_room_change
+edge_no_conn
+    bne edge_next               ; Y = conn index; 0 = north (py>=$80), skip south
+edge_clear_cmp
+    lda #0
+    sta edge_cmp
+    beq edge_done
 edge_next
     txa
     clc
@@ -100,7 +106,7 @@ edge_next
     tax
     cpx #EDGE_ROW_SIZE*4
     bcc -
-    jmp edge_done
+    jmp edge_clear_cmp
 do_room_change
     lda entry_px
     cmp #$ff
@@ -118,6 +124,8 @@ do_room_change
     jsr SaveSpawn
     lda #51
     sta inairtime
+    lda #1
+    sta edge_cmp                ; LoadRoom drew via DrawPlayerBody
 edge_done
     lda py
     sta last_py
