@@ -20,13 +20,12 @@ main_loop
     jsr AnimateConveyors        ; baked per room at image_base
     jsr WaitForRaster
     +BorderDebugColor 8
+
     lda dead
     beq main_loop
+
 	lda #(RED + 8)
 	sta $900f
     dec men
-    beq ++
     bne start_map
-
-++
-	jmp start_game
+    beq start_game
