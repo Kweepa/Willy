@@ -173,11 +173,6 @@ collide_body
     bcc +
     jmp hit_above
 +
-    lda px
-    and #$03
-    bne +
-    jmp move_up_down
-+
     ldy #1
     jsr try_touch
     bcc +
