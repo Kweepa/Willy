@@ -4,13 +4,13 @@
 ;
 ;   $02-$61   game scalars (px/py, pointers, guardian scratch hx..guard_axis $20-$29, etc.)
 ;   $62-$66   spawn_px/py, initial_room_load, room_has_rope, willy_hidden
-;   $67       (gap)
+;   $67       rope_grab_cooldown
 ;   $5c       edge_skip_draw — 1 after edge LoadRoom (DrawPlayerEntry skip)
 ;   $46/$47   left_right_ctr / up_down_ctr (guardian anim; moved off $9D/$9F)
 ;   $68-$87   rope_old_screen_pos (32 B ZP address table; sits below KERNAL $90-$93)
 ;   $88-$8F   rope draw scalars/pointers
-;   $90-$93   KERNAL disk-I/O reserve — DO NOT place game ZP here (see below)
-;   $94-$9F   rope draw temps + rope state scalars
+;   $90-$95   KERNAL serial/IEC reserve — DO NOT place game ZP here (see below)
+;   $96-$9F   rope draw temps + rope state scalars
 ;   $A0-$A5   player_overlap (6 B)
 ;   $A6-$D5   player_touch (48 B) — DrawPlayer clears $A0-$D5 each frame
 ;   $D6-$DB   (gap)
@@ -54,12 +54,8 @@
 ;               set => a stray byte is sent first, desyncing the bus -> ST=$80)
 ;   $95 BSOUR — the buffered serial byte
 ;   $A3-$A5   — serial bit/EOI counters (KERNAL re-inits these per byte)
-; rope_udg_mem lives at $94/$95, so each rope frame leaves a charset pointer
-; there. LoadRoom now zeroes $94/$95 immediately before SETNAM so the rope can
-; never poison the IEC transfer. Anything written during play that lands in
-; $94/$95 (or that must survive a load) is therefore still unsafe long-term;
-; prefer keeping serial-critical bytes ($90-$95, $A3-$A5) clear or clearing
-; them in LoadRoom as done here.
+; rope_udg_mem is at $96/$97 (above $95); nothing rope-related writes $90-$95.
+; Prefer keeping serial-critical bytes ($90-$95, $A3-$A5) clear of game writes.
 ; IEC LOAD also calls STOP scan each byte → writes $F5/$F6 (keyboard ptr).
 ; $AC-$AD tape/scroll pointers — no persistent game state there.
 ;
@@ -93,7 +89,7 @@
 ; Copied const tables (WarmStart; see runtime_const.asm boot pack):
 ;   $D6-$EF  belt..draw_vguard (26 B); $37-$42 draw_player tables (12 B)
 ;   must avoid $A0-$D5 (DrawPlayer overlap clear)
-; Rope: $68-$87 old_screen_pos (ZP ptr table); $88-$8F draw temps; $94-$9F state
+; Rope: $68-$87 old_screen_pos; $88-$8F draw temps; $96-$9F state; $67 grab_cooldown
 
 tmp             = $02
 arr             = $03
@@ -169,6 +165,7 @@ spawn_py        = $63
 initial_room_load = $64        ; 1 = first DrawMap after ResetGame (use @spawn)
 room_has_rope   = $65
 willy_hidden    = $66          ; 1 = ending sequence; skip player erase/input/draw
+rope_grab_cooldown  = $67
 
 ramp_tmp        = $54
 ramp_y          = $55
@@ -179,9 +176,9 @@ ts              = $50
 
 guardian_index  = $61
 
-; Rope block $68-$9F. The 32-byte (ptr,x) clear table goes FIRST (lowest) so it
-; ends at $87 — four slots clear of the KERNAL disk-I/O reserve at $90-$93.
-; NOTHING rope (or any other game ZP written during play) may land in $90-$93;
+; Rope block $68-$9F + $67 grab_cooldown. The 32-byte (ptr,x) clear table goes FIRST
+; (lowest) so it ends at $87 — clear of the KERNAL reserve at $90-$95.
+; NOTHING rope (or any other game ZP written during play) may land in $90-$95;
 ; see the KERNAL clobber map above for why ($90 = ST aborts LOAD).
 rope_old_screen_pos = $68     ; 32 byte address table (16 slots) for (ptr,x) clears -> $68-$87
 rope_udg            = $88
@@ -191,17 +188,16 @@ rope_swing_dir      = $8b
 rope_scr            = $8c     ; current rope screen addr (lo/hi) during rope_draw
 rope_bit            = $8e
 rope_y              = $8f
-; --- $90-$93 KERNAL disk-I/O reserve: leave empty ---
-rope_udg_mem        = $94
-rope_index          = $96
-rope_udg_advance    = $97
-rope_willy_is_holding = $98
-rope_willy_seg      = $99
-rope_segment_cur_x  = $9a
-rope_segment_cur_y  = $9b
-rope_seg_skip_above = $9c
-rope_loop_count     = $9d
-rope_grab_cooldown  = $9e
+; --- $90-$95 KERNAL serial/IEC reserve: leave empty ---
+rope_udg_mem        = $96
+rope_index          = $98
+rope_udg_advance    = $99
+rope_willy_is_holding = $9a
+rope_willy_seg      = $9b
+rope_segment_cur_x  = $9c
+rope_segment_cur_y  = $9d
+rope_seg_skip_above = $9e
+rope_loop_count     = $9f
 
 cell_off_2x3        = $dc
 lr_touch_a          = $e2
