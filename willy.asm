@@ -313,8 +313,10 @@ erase_player_done
 
 DrawPlayerEntry
     jsr CheckRoomEdge
-    lda edge_cmp
+    lda edge_skip_draw
     beq DrawPlayerBody
+    lda #0
+    sta edge_skip_draw
     rts
 DrawPlayerBody
     lda willy_hidden

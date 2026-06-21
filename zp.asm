@@ -4,7 +4,7 @@
 ;
 ;   $02-$61   game scalars (px/py, pointers, guardian scratch hx..guard_axis $20-$29, etc.)
 ;   $62-$66   spawn_px/py, initial_room_load, room_has_rope, menx (unused)
-;   $67       edge_cmp — CheckRoomEdge scratch (do not use tmp+1; $03 is arr)
+;   $5c       edge_skip_draw — 1 after edge LoadRoom (DrawPlayerEntry skip)
 ;   $46/$47   left_right_ctr / up_down_ctr (guardian anim; moved off $9D/$9F)
 ;   $68-$87   rope_old_screen_pos (32 B ZP address table; sits below KERNAL $90-$93)
 ;   $88-$8F   rope draw scalars/pointers
@@ -157,6 +157,7 @@ tmp_xadd        = $30
 align_tmp       = $58
 entry_px        = $59
 entry_py        = $5a
+edge_skip_draw  = $5c          ; 1 = CheckRoomEdge just LoadRoom'd; skip DrawPlayerBody
 map             = $5b
 use_room_spawn  = $5f          ; 1 = ParseRoomMeta sets px/py from @spawn
 
@@ -165,7 +166,6 @@ spawn_py        = $63
 initial_room_load = $64        ; 1 = first DrawMap after ResetGame (use @spawn)
 room_has_rope   = $65
 willy_hidden    = $66          ; 1 = ending sequence; skip player erase/input/draw
-edge_cmp        = $67          ; CheckRoomEdge compare mode (must not use tmp+1 — that is arr)
 
 ramp_tmp        = $54
 ramp_y          = $55

@@ -28,6 +28,8 @@ title_release_wait
     lda #0
     sta items_collected
     sta willy_hidden
+    sta xadd
+    sta edge_skip_draw
     ldx #pickup_got_last - pickup_got
 -
     sta pickup_got,x
@@ -66,8 +68,6 @@ EDGE_ROW_SIZE = 6
 CheckRoomEdge
     ldx #0
 -
-    lda edge_tbl+1,x
-    sta edge_cmp
     lda edge_tbl,x
     bne +
     lda px
@@ -76,7 +76,7 @@ CheckRoomEdge
     lda py
 ++
     cmp edge_tbl+2,x
-    ldy edge_cmp
+    lda edge_tbl+1,x
     beq +
     bcc edge_next
     bne edge_hit
@@ -84,6 +84,12 @@ CheckRoomEdge
     bcs edge_next
 edge_hit
     ldy edge_tbl+3,x
+    cpy #3                      ; west conn — exit only at px <= EDGE_WEST_PX
+    bne +
+    lda px
+    cmp #EDGE_WEST_PX + 1
+    bcs edge_next
++
     lda meta_content_src + meta_off_conn,y   ; conn byte (inlined GetConnByte)
     cmp #$ff
     beq edge_no_conn
@@ -95,9 +101,6 @@ edge_hit
     jmp do_room_change
 edge_no_conn
     bne edge_next               ; Y = conn index; 0 = north (py>=$80), skip south
-edge_clear_cmp
-    lda #0
-    sta edge_cmp
     beq edge_done
 edge_next
     txa
@@ -106,7 +109,7 @@ edge_next
     tax
     cpx #EDGE_ROW_SIZE*4
     bcc -
-    jmp edge_clear_cmp
+    jmp edge_done
 do_room_change
     lda entry_px
     cmp #$ff
@@ -125,7 +128,7 @@ do_room_change
     lda #51
     sta inairtime
     lda #1
-    sta edge_cmp                ; LoadRoom drew via DrawPlayerBody
+    sta edge_skip_draw          ; LoadRoom drew via DrawPlayerBody
 edge_done
     lda py
     sta last_py
