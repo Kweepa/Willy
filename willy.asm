@@ -4,33 +4,31 @@ try_touch
     jsr GetCollision
     cmp #TILE_SOLID
     beq do_block
-    lda #0
+    clc
     rts
 do_block
-    lda #1
+    sec
     rts
 
 try_touch_below
     jsr GetCollision
     cmp #TILE_EMPTY
-    beq ++
+    beq no_hit
     cmp #TILE_ITEM
-    beq ++
+    beq no_hit
     cmp #TILE_CONVEYOR
-    bne +
-    jmp DoBelt                 ; tail call — was jsr/rts
-+
+    bne check_floor
+    jmp DoBelt                 ; tail call — must exit with C=1
+check_floor
     cmp #TILE_PLATFORM
-    beq do_block_below
+    beq hit
     cmp #TILE_SOLID
-    beq do_block_below
-    lda #0
+    beq hit
+no_hit
+    clc
     rts
-do_block_below
-    lda #1
-    rts
-++
-    lda #0
+hit
+    sec
     rts
 
 CollideLeftRight
@@ -53,10 +51,10 @@ lr_dir_ok
     bne lr_move
     ldy lr_touch_a,x
     jsr try_touch
-    bne clr_done
+    bcs clr_done
     ldy lr_touch_b,x
     jsr try_touch
-    bne clr_done
+    bcs clr_done
     ; lr_touch_c: lower side probe when py&7!=0 (misaligned feet).  On ramps
     ; feet are always misaligned; UP_LEFT baked ry+2 lowers py so c hits W
     ; under \ tiles and blocks climbing — skip c while already on the ramp.
@@ -67,7 +65,7 @@ lr_dir_ok
     beq lr_move
     ldy lr_touch_c,x
     jsr try_touch
-    bne clr_done
+    bcs clr_done
 lr_move
     ldx tmp
     beq lr_dec_px
@@ -172,7 +170,7 @@ collide_body
 +
     ldy #0
     jsr try_touch
-    beq +
+    bcc +
     jmp hit_above
 +
     lda px
@@ -182,10 +180,9 @@ collide_body
 +
     ldy #1
     jsr try_touch
-    beq +
+    bcc +
     jmp hit_above
 +
-    bne +
     jmp move_up_down
 +
 collide_down
@@ -211,11 +208,11 @@ collide_down
 +
     ldy #96
     jsr try_touch_below
-    bne hit_below
+    bcs hit_below
     iny
     jsr try_touch_below
-    bne hit_below
-    beq move_up_down
+    bcs hit_below
+    bcc move_up_down
 look_below_2
     lda was_on_ground
     beq +
@@ -224,10 +221,10 @@ look_below_2
 +
     ldy #72
     jsr try_touch_below
-    bne check_jump
+    bcs check_jump
     iny
     jsr try_touch_below
-    beq move_up_down
+    bcc move_up_down
 check_jump
     lda #1
     sta on_ground

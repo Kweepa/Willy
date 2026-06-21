@@ -1,5 +1,5 @@
 ; Per-room conveyor collision — fixed prefix slot after AnimateConveyors.
-; CLI: -DBELT=... -DSCANKEYROW=$.... -DSLOT_BYTES=31
+; CLI: -DBELT=... -DSCANKEYROW=$.... -DSLOT_BYTES=29
 
 !source "equates.asm"
 
@@ -14,7 +14,7 @@ DoBelt
     beq ++
     lda #belt_opp_right_xadd
     sta xadd
-    lda #1
+    sec
     rts
 ++
     lda #1
@@ -23,7 +23,7 @@ DoBelt
     lda #belt_push_left
     sta xadd
     sta lastxmove
-    lda #1
+    sec
     rts
 }
 !if BELT = 1 {
@@ -35,7 +35,7 @@ DoBelt
     beq ++
     lda #belt_opp_left_xadd
     sta xadd
-    lda #1
+    sec
     rts
 ++
     lda #1
@@ -44,13 +44,13 @@ DoBelt
     lda #belt_push_right
     sta xadd
     sta lastxmove
-    lda #1
+    sec
     rts
 }
 !if BELT = 0 {
     lda #0
     sta xadd
-    lda #1
+    sec
     rts
 }
 

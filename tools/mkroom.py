@@ -47,9 +47,9 @@ GUARDIAN_RECORD_BYTES = 10
 MAX_GUARDIANS = 6
 TAIL_BYTES = 104
 META_SIZE = 16 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
-IMAGE_LOAD = 0x1A10
+IMAGE_LOAD = 0x1A12
 CONVEYOR_PREFIX_BYTES = 19
-DO_BELT_SLOT_BYTES = 31
+DO_BELT_SLOT_BYTES = 29
 GUARDIAN_PREFIX_BYTES = CONVEYOR_PREFIX_BYTES + DO_BELT_SLOT_BYTES + TILE_COLOR_BYTES
 LOGO_ROOM_ID = 62
 LOGO_ORIGIN_COL = 4
@@ -62,7 +62,7 @@ SCREEN_BASE = 0x1E00
 MAP_BASE = 0x9400
 COLOR_BASE = 0x9600
 MAX_ITEMS = 1
-ROOM_IMAGE_SIZE = 0x5F0           # 1520 bytes ($1A10-$1FFF); +4 for 10-byte guardian records
+ROOM_IMAGE_SIZE = 0x5EE           # 1518 bytes ($1A12-$1FFF); DoBelt slot 29 B
 HUD_UDG_BYTES = 16
 # Pad pins screen at $1E00: IMAGE_LOAD + prefix + sprites + player + hud + udg + pad == SCREEN_BASE
 RUNTIME_UDG_PAD = 0x150           # 336 bytes ($1CB0-$1DFF)
@@ -1073,7 +1073,7 @@ def build_logo_room_image(room: dict, scan_key_row: int) -> bytes:
 
 
 def build_room_image(room: dict, scan_key_row: int) -> bytes:
-    """RAM image loaded at $1A10 (1520 bytes)."""
+    """RAM image loaded at $1A12 (1518 bytes)."""
     if room.get("logo"):
         return build_logo_room_image(room, scan_key_row)
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap", room))

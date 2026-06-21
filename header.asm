@@ -1,8 +1,8 @@
 ; unexpanded JSW layout
 
-image_base = $1a10                    ; −4 vs $1A14: tile colours in prefix; pad pins screen -> $1E00
+image_base = $1a12                    ; +2 vs $1A10: DoBelt slot 29 B; pad pins screen -> $1E00
 conveyor_prefix_bytes = 19
-do_belt_prefix_bytes = 31
+do_belt_prefix_bytes = 29
 AnimateConveyors = image_base
 DoBelt = image_base + conveyor_prefix_bytes
 tile_color_bytes = 6
@@ -27,7 +27,7 @@ RELOC_D_LIMIT = $100d
 ROPE_SEGMENT_Y = $33c            ; 32 B segment Y table ($33C-$35B)
 ROPE_XADD = $35c                 ; 54 B horiz shift table ($35C-$391); copied at WarmStart
 rope_xadd = ROPE_XADD
-room_image_size = $5f0           ; 1520 bytes ($1A10-$1FFF); +4 for 10-byte guardian records
+room_image_size = $5ee           ; 1518 bytes ($1A12-$1FFF); DoBelt slot 29 B
 tail_size = $68                  ; 104 bytes at end of room image
 meta_content_src = image_base + room_image_size - tail_size
 

@@ -21,8 +21,8 @@ MODULES = [
 RAM = [
     ("ROPE_SEGMENT_Y", 0x33C, 32, "rope segment Y (cassette buffer)"),
     ("rope_xadd", 0x35C, 54, "copied at WarmStart (cassette buffer)"),
-    ("AnimateConveyors", 0x1A10, 19, "baked per room; jsr AnimateConveyors"),
-    ("DoBelt", 0x1A23, 31, "baked per room; jsr DoBelt"),
+    ("AnimateConveyors", 0x1A12, 19, "baked per room; jsr AnimateConveyors"),
+    ("DoBelt", 0x1A25, 29, "baked per room; jsr DoBelt"),
     ("tile_color_src", 0x1A42, 6, "tile type colours 0-5"),
     ("guardian_sprites_base", 0x1A48, 288, "from room PRG (9 frames)"),
     ("player_bmp", 0x1B68, 256, "from room PRG"),
@@ -53,8 +53,8 @@ def main():
     bounds.sort()
     prg_end = labels.get("prg_end", max(labels.values()))
     load_base = 0x1000
-    room_base = 0x1A10
-    room_size = 0x5F0
+    room_base = 0x1A12
+    room_size = 0x5EE
 
     total = prg_end - load_base
     overlap = prg_end - room_base
