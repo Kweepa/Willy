@@ -3,7 +3,8 @@
 ; Layout map ($02-$FF game state; migration: hot pack was $62-$87, now $D6-$FB):
 ;
 ;   $02-$61   game scalars (px/py, pointers, guardian scratch hx..guard_axis $20-$29, etc.)
-;   $62-$66   spawn_px/py, initial_room_load, room_has_rope, menx (unused)
+;   $62-$66   spawn_px/py, initial_room_load, room_has_rope, willy_hidden
+;   $67       (gap)
 ;   $5c       edge_skip_draw — 1 after edge LoadRoom (DrawPlayerEntry skip)
 ;   $46/$47   left_right_ctr / up_down_ctr (guardian anim; moved off $9D/$9F)
 ;   $68-$87   rope_old_screen_pos (32 B ZP address table; sits below KERNAL $90-$93)
@@ -79,12 +80,15 @@
 ;   $0334-$33B  reloc block C (GetCollision)
 ;   $0392-$3FB  reloc block B (ConvertXYToScreenAddr, GetSpriteFrameAddr, CalcGuardian*)
 ;   $1000-$100C  reloc block D (ResetMap; overwrites BASIC stub after WarmStart entry)
+;   $01B6-$01BE  reloc block E (dummy_irq; WarmStart patches $0314/$0315)
 ;
-; Page $0100 copied tables (WarmStart; stack must stay above $01B4):
+; Page $0100 copied tables (WarmStart; stack must stay above $01C0):
 ;   $100-$13D  pickup_got
 ;   $140-$157  edge_tbl (24 B)
 ;   $158-$177  x24rowtab (32 B)
 ;   $17C-$1B5  jumptab (58 B)
+;   $01BF       guard byte before stack
+;   $01C0-$01FF stack
 ;
 ; Copied const tables (WarmStart; see runtime_const.asm boot pack):
 ;   $D6-$EF  belt..draw_vguard (26 B); $37-$42 draw_player tables (12 B)
@@ -211,7 +215,7 @@ up_down_ctr     = $47
 player_overlap  = $a0
 player_touch    = $a6
 
-; Page $0100 copied tables (WarmStart; stack must stay above $01B4)
+; Page $0100 copied tables (WarmStart; stack must stay above $01C0)
 edge_tbl        = $140
 x24rowtab       = $158
 jumptab         = $17c

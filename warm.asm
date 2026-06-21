@@ -3,8 +3,7 @@
 ; Must not RTS here: txs clears the SYS return address on the stack.
 
 WarmStart
-    sei
-
+ 
     lda #$7f
     sta $911d                   ; VIA #2 IER - disable all enables
     sta $911e                   ; T2CL - preset timer 2 low
@@ -14,6 +13,12 @@ WarmStart
     txs
 
     jsr $fdf9                   ; IOINIT
+    sei
+
+    lda #<dummy_irq
+    sta $0314
+    lda #>dummy_irq
+    sta $0315
 
     ldx #5                      ; initialize vic registers
 -
@@ -57,6 +62,13 @@ WarmStart
 -
     lda reloc_d_src,x
     sta RELOC_D_BASE,x
+    dex
+    bpl -
+
+    ldx #reloc_e_size - 1
+-
+    lda reloc_e_src,x
+    sta RELOC_E_BASE,x
     dex
     bpl -
 

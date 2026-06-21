@@ -172,3 +172,24 @@ reloc_d_size = * - reloc_d_src
 !if RELOC_D_BASE + reloc_d_size > RELOC_D_LIMIT {
 !error "reloc block D overflow"
 }
+
+reloc_e_src
+!pseudopc RELOC_E_BASE {
+dummy_irq
+    ; 1. Acknowledge the hardware interrupt
+    bit $9124                   ; Clear VIA 2 Timer 1 interrupt flag
+
+    ; 2. Restore the registers the KERNAL pushed
+    pla
+    tay
+    pla
+    tax
+    pla
+
+    ; 3. Safely exit
+    rti
+}
+reloc_e_size = * - reloc_e_src
+!if RELOC_E_BASE + reloc_e_size > RELOC_E_LIMIT {
+!error "reloc block E overflow"
+}
