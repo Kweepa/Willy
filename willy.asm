@@ -35,14 +35,13 @@ CollideLeftRight
     lda left_right_ctr
     bne lr_out
 
-    ; x=0 moving left, x=1 moving right (from sign of xadd)
+    ; x=0 moving left, x=1 moving right (from sign of xadd: $FF / $01)
     ldx xadd
     beq lr_out
     inx
     txa
     lsr
     tax
-    stx tmp
 
     ; Side probes: lr_touch is 2 cols (move left / move right) x 3 rows
     ; (a/b/c).  x picks the col; rows are map offsets at $E2-$E7.
@@ -51,13 +50,12 @@ CollideLeftRight
     ; 26/50/74 so we look past the sprite, not inside it.  px&3==1,2: no
     ; probe either direction (sub-pixel steps between check points).
     ; Gate: (left & px&3==0) or (right & px&3==3); cmp #1 / rol maps dir 0->0, 1->3.
-    lda px
-    and #$03
-    sta num
-    lda tmp
     cmp #1
     rol
-    cmp num
+    sta tmp
+    lda px
+    and #$03
+    cmp tmp
     bne lr_move
 
 lr_do_touch
@@ -79,19 +77,17 @@ lr_do_touch
     jsr try_touch
     bcs lr_out
 lr_move
-    ldx tmp
-    beq lr_dec_px
-    inc px
-    bne lr_stepped
-lr_dec_px
-    dec px
-lr_stepped
-    ldx px
+    ; px += xadd (xadd is +1 / -1 as $01 / $FF)
+    lda px
+    clc
+    adc xadd
+    sta px
+    tax
     ldy py
     jsr ConvertXYToScreenAddr
     jsr calculate_ramp_y
-    lda xadd
-    beq +
+    ; xadd is guaranteed nonzero here (early return above), so just gate the
+    ; walking-ramp snap on was_on_ground OR is_on_ramp.
     lda was_on_ground
     bne ++
     lda is_on_ramp
