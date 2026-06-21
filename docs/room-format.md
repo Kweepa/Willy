@@ -62,7 +62,7 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@rampudg` | bytes | Ramp UDG |
 | `@beltudg` | bytes | Conveyor UDG |
 | `@itemudg` | bytes | Item UDG (optional when no `+`) |
-| `@guardians` | list | Guardian DSL per line (see below). No stored animation frame — computed each tick. Vertical: `frame = fmin + (hguard_frame & mask)`. Horizontal: `frame = (hx & 3) + fmin`, or bidirectional `+ 4` by direction. |
+| `@guardians` | list | Guardian DSL per line (see below). Horizontal: `frame = (hx & 3) + fmin`, or bidirectional `+ 4` by direction. Vertical: stored frame index (byte 5) increments and wraps each move tick; sprite `frame = fmin + index`. |
 | `@guardianbmp` | block | Optional; hex bytes, 128 per guardian in order |
 
 Omit `@*udg` tags for tile types not used in the room when the UDG would be all zeros. Any omitted UDG defaults to 8×0 at build time. Non-zero UDGs are kept even if the tile type is unused.
@@ -73,19 +73,20 @@ Lines starting with `#` or `;` are comments; `#` may also appear mid-line. Blank
 
 ## Binary layout (output of `mkroom.py`)
 
-PRG loads at **`$1A14`** (1516 bytes, ends `$1FFF`):
+PRG loads at **`$1A10`** (1520 bytes, ends `$1FFF`):
 
 | Offset | Address | Size | Content |
 |--------|---------|------|---------|
-| 0 | `$1A14` | 19 | `AnimateConveyors` (baked prefix) |
-| 19 | `$1A27` | 33 | `DoBelt` (baked prefix) |
-| 52 | `$1A48` | 288 | Guardian sprites (column-major from `@guardiansprites`) |
-| 340 | `$1B68` | 256 | `player_bmp` |
-| 596 | `$1C68` | 16 | HUD UDG bytes (chr 13=men, chr 14=items) |
-| 612 | `$1C78` | 56 | Tile UDG bytes (chr 15=item, chr 16–21=tiles 0–5) |
-| 668 | `$1CB0` | 336 | Runtime UDG pad (zeros) |
-| 1004 | `$1E00` | 408 | 24×17 screen (row 16 = HUD + title; item not baked in) |
-| 1412 | `$1F98` | 104 | Tail: meta, tile colours, guardian AoS |
+| 0 | `$1A10` | 19 | `AnimateConveyors` (baked prefix) |
+| 19 | `$1A23` | 31 | `DoBelt` (baked prefix) |
+| 50 | `$1A42` | 6 | Tile colours (types 0–5) |
+| 56 | `$1A48` | 288 | Guardian sprites (column-major from `@guardiansprites`) |
+| 344 | `$1B68` | 256 | `player_bmp` |
+| 600 | `$1C68` | 16 | HUD UDG bytes (chr 13=men, chr 14=items) |
+| 616 | `$1C78` | 56 | Tile UDG bytes (chr 15=item, chr 16–21=tiles 0–5) |
+| 672 | `$1CB0` | 336 | Runtime UDG pad (zeros; guardian + player UDG workspace) |
+| 1008 | `$1E00` | 408 | 24×17 screen (row 16 = HUD + title; item not baked in) |
+| 1416 | `$1F98` | 104 | Tail: meta, rope flag, guardian AoS (10 bytes × 6) |
 
 Item draw code (11 bytes at meta+15): `lda #15` / `sta screen` / `lda #color` / `sta color_ram` / `rts`. `DrawItem` does `jsr $1FA7` when `items_left` > 0.
 
@@ -228,18 +229,20 @@ W    +     FFFFF       W
 
 Vertical guardians follow the same pattern as horizontal ones and as Manic Miner (`Miner-main/guardians.asm`):
 
-- **`CopyGuardianFrame`** runs only when `ShouldMove*GuardianThisFrame` passes (guardian moves this tick). This recomposites the sprite into that guardian’s 6-char UDG slot at `guardian_udgs`.
+- **`CopyGuardianFrame`** runs when a guardian gets its round-robin tick (`ShouldMove*GuardianThisFrame` passes), even if position does not change (`v=0`). `MoveGuardian` advances the stored frame index (`g_frame`, byte 5) on every such tick; vertical sprite lookup uses `g_frame + ht`, horizontal still uses `hx & 3`.
+
+`CopyDownGuardianData` / `CopyUpGuardianData` copy the full 10-byte record into ZP scratch (`hx`–`guard_axis` at `$20`–`$29`, with `g_frame` at `$25`). `CopyUp` writes back the mutable prefix through byte 5 (position, velocity, frame).
 - **`DrawGuardian`** runs every tick — it only plasters existing UDG codes to the screen.
 
-`CopyGuardianFrame` is expensive (column copy, top/bottom clears, self-modifying source pointers). Rooms with many vertical guardians (e.g. room 29) were slow when the copy ran every frame for every guardian.
+`CopyGuardianFrame` is expensive (column copy, top/bottom clears, self-modifying source pointers). Rooms with many vertical guardians (e.g. room 29) were slow when the copy ran every frame for every guardian; round-robin limits copies to one guardian per axis group per movement phase.
 
 Set `BORDER_DEBUG = 0` in `defines.asm` to disable raster timing border probes (`debug.asm` macros).
 
 ### Guardian data layout
 
-Room tail stores **54 bytes** of guardian state as **AoS**: six records of nine bytes each (`x`, `y`, `min`, `max`, `vel`, `fmin`, `fmax`, `color`, `axis`) at `guardian_data_base` (meta offset 38).
+Room tail stores **60 bytes** of guardian state as **AoS**: six records of ten bytes each (`x`, `y`, `min`, `max`, `vel`, `frame`, `fmin`, `fmax`, `color`, `axis`) at `guardian_data_base` (tail offset **44**). Tile colours live in the prefix at `tile_color_src` (`$1A42`), not in the tail.
 
-Each frame, `CopyDownGuardianData` / `CopyUpGuardianData` copy one record between room RAM and the ZP scratch block `hx`–`guard_axis` (`$20`–`$28`) via tight `(arr),y` loops. Only mutable fields (offsets 0–4) are written back on `CopyUp`.
+Each frame, `CopyDownGuardianData` / `CopyUpGuardianData` copy one record between room RAM and ZP scratch via tight `(arr),y` loops indexed from `hx`.
 
 ---
 

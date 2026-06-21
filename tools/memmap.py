@@ -21,8 +21,9 @@ MODULES = [
 RAM = [
     ("ROPE_SEGMENT_Y", 0x33C, 32, "rope segment Y (cassette buffer)"),
     ("rope_xadd", 0x35C, 54, "copied at WarmStart (cassette buffer)"),
-    ("AnimateConveyors", 0x1A14, 19, "baked per room; jsr AnimateConveyors"),
-    ("DoBelt", 0x1A27, 33, "baked per room; jsr DoBelt"),
+    ("AnimateConveyors", 0x1A10, 19, "baked per room; jsr AnimateConveyors"),
+    ("DoBelt", 0x1A23, 31, "baked per room; jsr DoBelt"),
+    ("tile_color_src", 0x1A42, 6, "tile type colours 0-5"),
     ("guardian_sprites_base", 0x1A48, 288, "from room PRG (9 frames)"),
     ("player_bmp", 0x1B68, 256, "from room PRG"),
     ("HUD UDGs chr 13-14", 0x1C68, 16, "men + items icons"),
@@ -30,7 +31,7 @@ RAM = [
     ("guardian_udgs chr 22+", 0x1CB0, 288, "runtime UDG workspace"),
     ("player_udg chr 58+", 0x1DD0, 48, "runtime (6 chars)"),
     ("screen_base", 0x1E00, 408, "24x17 tilemap from room PRG"),
-    ("tail meta/colors/gdata", 0x1F98, 104, "meta_content_src @ $1F98"),
+    ("tail meta/gdata", 0x1F98, 104, "meta_content_src @ $1F98"),
 ]
 
 
@@ -52,8 +53,8 @@ def main():
     bounds.sort()
     prg_end = labels.get("prg_end", max(labels.values()))
     load_base = 0x1000
-    room_base = 0x1A14
-    room_size = 0x5EC
+    room_base = 0x1A10
+    room_size = 0x5F0
 
     total = prg_end - load_base
     overlap = prg_end - room_base

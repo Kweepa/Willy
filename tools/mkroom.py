@@ -33,8 +33,7 @@ ACME = Path(r"\app\acme\acme.exe")
 JSW_LBL = Path(__file__).resolve().parent.parent / "jsw.lbl"
 GUARDIAN_SPRITES_BYTES = 288  # 9 frames x 32 bytes
 META_OFF_ROPE = 16 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
-TAIL_OFF_TILECOLORS = META_OFF_ROPE + 1
-TAIL_OFF_GUARDIAN_DATA = TAIL_OFF_TILECOLORS + TILE_COLOR_BYTES
+TAIL_OFF_GUARDIAN_DATA = META_OFF_ROPE + 1
 PLAYER_BMP_BYTES = 256
 NIGHTMARE_ROOM_ID = 29
 DEFAULT_PLAYER_BMP_PATH = (
@@ -43,15 +42,15 @@ DEFAULT_PLAYER_BMP_PATH = (
 NIGHTMARE_PLAYER_BMP_PATH = (
     Path(__file__).resolve().parent.parent / "nightmareroomwilly.txt"
 )
-GUARDIAN_DATA_BYTES = 54          # AoS: 9 bytes x 6 guardians
-GUARDIAN_RECORD_BYTES = 9
+GUARDIAN_DATA_BYTES = 60          # AoS: 10 bytes x 6 guardians
+GUARDIAN_RECORD_BYTES = 10
 MAX_GUARDIANS = 6
 TAIL_BYTES = 104
 META_SIZE = 16 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
-IMAGE_LOAD = 0x1A14
+IMAGE_LOAD = 0x1A10
 CONVEYOR_PREFIX_BYTES = 19
-DO_BELT_SLOT_BYTES = 33
-GUARDIAN_PREFIX_BYTES = CONVEYOR_PREFIX_BYTES + DO_BELT_SLOT_BYTES
+DO_BELT_SLOT_BYTES = 31
+GUARDIAN_PREFIX_BYTES = CONVEYOR_PREFIX_BYTES + DO_BELT_SLOT_BYTES + TILE_COLOR_BYTES
 LOGO_ROOM_ID = 62
 LOGO_ORIGIN_COL = 4
 LOGO_ORIGIN_ROW = 4
@@ -63,7 +62,7 @@ SCREEN_BASE = 0x1E00
 MAP_BASE = 0x9400
 COLOR_BASE = 0x9600
 MAX_ITEMS = 1
-ROOM_IMAGE_SIZE = 0x5EC           # 1516 bytes ($1A14-$1FFF); +16 for HUD UDG chr 13-14
+ROOM_IMAGE_SIZE = 0x5F0           # 1520 bytes ($1A10-$1FFF); +4 for 10-byte guardian records
 HUD_UDG_BYTES = 16
 # Pad pins screen at $1E00: IMAGE_LOAD + prefix + sprites + player + hud + udg + pad == SCREEN_BASE
 RUNTIME_UDG_PAD = 0x150           # 336 bytes ($1CB0-$1DFF)
@@ -150,10 +149,11 @@ G_OFF_Y = 1
 G_OFF_MIN = 2
 G_OFF_MAX = 3
 G_OFF_VEL = 4
-G_OFF_FMIN = 5
-G_OFF_FMAX = 6
-G_OFF_COLOR = 7
-G_OFF_AXIS = 8
+G_OFF_FRAME = 5
+G_OFF_FMIN = 6
+G_OFF_FMAX = 7
+G_OFF_COLOR = 8
+G_OFF_AXIS = 9
 
 
 def parse_byte(s: str) -> int:
@@ -619,7 +619,11 @@ def build_do_belt(room: dict, scan_key_row: int) -> bytes:
 
 
 def build_prefix(room: dict, scan_key_row: int) -> bytes:
-    return build_conveyor_animate(room) + build_do_belt(room, scan_key_row)
+    return (
+        build_conveyor_animate(room)
+        + build_do_belt(room, scan_key_row)
+        + build_tile_colors(room)
+    )
 
 
 def noop_stub(size: int) -> bytes:
@@ -956,6 +960,7 @@ def build_guardian_data(room: dict) -> bytes:
         out[base + G_OFF_MIN] = g["min"]
         out[base + G_OFF_MAX] = g["max"]
         out[base + G_OFF_VEL] = g["vel"]
+        out[base + G_OFF_FRAME] = 0
         out[base + G_OFF_FMIN] = g["fmin"]
         out[base + G_OFF_FMAX] = g["fmax"]
         out[base + G_OFF_COLOR] = g["color"]
@@ -1007,13 +1012,10 @@ def deinterleave_guardian_sprites(
 def build_tail(room: dict) -> bytes:
     tail = bytearray(TAIL_BYTES)
     meta = build_meta(room)
-    colors = build_tile_colors(room)
     gdata = build_guardian_data(room)
     tail[0:META_SIZE] = meta
     tail[META_OFF_ROPE] = 1 if room.get("rope") else 0
-    off = TAIL_OFF_TILECOLORS
-    tail[off : off + TILE_COLOR_BYTES] = colors
-    off += TILE_COLOR_BYTES
+    off = TAIL_OFF_GUARDIAN_DATA
     tail[off : off + GUARDIAN_DATA_BYTES] = gdata
     return bytes(tail)
 
@@ -1071,7 +1073,7 @@ def build_logo_room_image(room: dict, scan_key_row: int) -> bytes:
 
 
 def build_room_image(room: dict, scan_key_row: int) -> bytes:
-    """RAM image loaded at $1A14 (1516 bytes)."""
+    """RAM image loaded at $1A10 (1520 bytes)."""
     if room.get("logo"):
         return build_logo_room_image(room, scan_key_row)
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap", room))

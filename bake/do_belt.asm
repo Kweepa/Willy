@@ -1,5 +1,5 @@
 ; Per-room conveyor collision — fixed prefix slot after AnimateConveyors.
-; CLI: -DBELT=... -DSCANKEYROW=$.... -DSLOT_BYTES=33
+; CLI: -DBELT=... -DSCANKEYROW=$.... -DSLOT_BYTES=31
 
 !source "equates.asm"
 

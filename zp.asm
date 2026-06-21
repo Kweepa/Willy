@@ -2,7 +2,7 @@
 ;
 ; Layout map ($02-$FF game state; migration: hot pack was $62-$87, now $D6-$FB):
 ;
-;   $02-$61   game scalars (px/py, pointers, guardian scratch hx..guard_axis $20-$28, etc.)
+;   $02-$61   game scalars (px/py, pointers, guardian scratch hx..guard_axis $20-$29, etc.)
 ;   $62-$66   spawn_px/py, initial_room_load, room_has_rope, menx (unused)
 ;   $67       edge_cmp — CheckRoomEdge scratch (do not use tmp+1; $03 is arr)
 ;   $46/$47   left_right_ctr / up_down_ctr (guardian anim; moved off $9D/$9F)
@@ -19,7 +19,6 @@
 ;   $EA-$EF   draw_vguard_chrs (boot)
 ;   $37-$3C   draw_player_offsets (boot) — off $F5 KERNAL keyboard ptr during LOAD
 ;   $3D-$42   draw_player_chrs (boot) — off $F6 KERNAL keyboard ptr during LOAD
-;   $FC-$FD   vguard_frame / hguard_frame (dynamic)
 ;
 ; KERNAL clobber map — VIC-20 KERNAL (this build; not C64-only AAY labels):
 ;
@@ -119,12 +118,13 @@ hy              = $21
 hl              = $22
 hr              = $23
 hd              = $24
-ht              = $25
-hfmax           = $26
-hc              = $27
-guard_axis      = $28
+g_frame         = $25
+ht              = $26
+hfmax           = $27
+hc              = $28
+guard_axis      = $29
 
-lastxmove       = $29
+lastxmove       = $4c
 was_on_ground   = $2a
 inairtime       = $2b
 men             = $2c
@@ -212,9 +212,6 @@ up_down_ctr     = $47
 
 player_overlap  = $a0
 player_touch    = $a6
-
-vguard_frame    = $fc
-hguard_frame    = $fd
 
 ; Page $0100 copied tables (WarmStart; stack must stay above $01B4)
 edge_tbl        = $140

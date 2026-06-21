@@ -1,20 +1,21 @@
 ;
-; LoadRoom - KERNAL LOAD R00 PRG to image_base ($1A14), then:
+; LoadRoom - KERNAL LOAD R00 PRG to image_base ($1A10), then:
 ;   paint color RAM from tile_color_src lookup (tile types 0-5)
 ;   paint map_base ($9400): store tile type 0-5 (low nybble of screen chr 16-21);
 ;     map_base is VIC colour RAM — only low nybble valid; read with AND #$0f
 ;   draw item chr 15 separately (DrawItem) — not in tilemap
 ;
-; PRG image layout (1516 bytes at $1A14, ends $1FFF):
-;   +$000 AnimateConveyors 19 @ $1A14
-;   +$013 DoBelt 33 @ $1A27
-;   +$034 guardian sprites 288 @ $1A48
-;   +$154 player_bmp 256 @ $1B68       (title room: logo UDGs span from $1C00)
-;   +$254 HUD UDG 16 @ $1C68 (chr 13-14)
-;   +$264 tile UDG 56 @ $1C78 (chr 15-21)
-;   +$27C runtime pad 336 ($1CB0-$1DFF)
-;   +$3EC screen 408 @ $1E00 (24x17)
-;   +$584 tail 104 @ $1F98 (meta, colors, guardian AoS)
+; PRG image layout (1520 bytes at $1A10, ends $1FFF):
+;   +$000 AnimateConveyors 19 @ $1A10
+;   +$013 DoBelt 31 @ $1A23
+;   +$032 tile colours 6 @ $1A42
+;   +$038 guardian sprites 288 @ $1A48
+;   +$158 player_bmp 256 @ $1B68       (title room: logo UDGs span from $1C00)
+;   +$258 HUD UDG 16 @ $1C68 (chr 13-14)
+;   +$268 tile UDG 56 @ $1C78 (chr 15-21)
+;   +$280 runtime pad 336 ($1CB0-$1DFF)
+;   +$3F0 screen 408 @ $1E00 (24x17)
+;   +$588 tail 104 @ $1F98 (meta, guardian AoS)
 ;
 
 room_lfn = 15
@@ -105,7 +106,7 @@ LoadRoom
 
 ;
 ; Layout: guardians, border, spawn x2, belt, ramp, rx1, rx2, ry, E, A, conn x4, item draw;
-;         meta_off_rope, tilecolors, guardian AoS
+;         meta_off_rope, guardian AoS
 ParseRoomMeta
     lda meta_content_src + meta_off_border
     sta $900f

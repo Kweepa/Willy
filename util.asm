@@ -26,13 +26,11 @@ UpdateMoveCounters
     bpl +
     lda #3
     sta left_right_ctr
-	inc hguard_frame
 +
 	dec up_down_ctr
 	bpl +
 	lda #2
 	sta up_down_ctr
-	inc vguard_frame
 +
     rts
 

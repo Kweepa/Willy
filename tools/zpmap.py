@@ -21,7 +21,7 @@ SIZE_OVERRIDES: dict[str, int] = {
     "map_ptr": 2,
     "udg_ptr": 2,
     "play_udg": 2,
-    "hx": 9,  # hx..guard_axis guardian scratch ($20-$28)
+    "hx": 10,  # hx..guard_axis guardian scratch ($20-$29)
     "rope_scr": 2,
     "rope_udg_mem": 2,
     "rope_old_screen_pos": 32,
@@ -44,6 +44,7 @@ SKIP_OVERLAP = {
     "hl",
     "hr",
     "hd",
+    "g_frame",
     "ht",
     "hfmax",
     "hc",
@@ -217,12 +218,9 @@ def check_boot_boundary(regions: list[Region]) -> list[str]:
         if r.virtual or r.name == "boot_zp_room_pack":
             continue
         if r.start <= BOOT_PACK_END and r.end > BOOT_PACK_END and r.start >= 0xDC:
-            if r.name not in ("vguard_frame", "hguard_frame"):
-                errors.append(
-                    f"boot-pack spill: {r.name} ends at {fmt_addr(r.end)} (room pack ends {fmt_addr(BOOT_PACK_END)})"
-                )
-        if r.name in ("vguard_frame", "hguard_frame") and r.start <= BOOT_PACK_END:
-            errors.append(f"frame counter {r.name} at {fmt_addr(r.start)} inside room boot pack")
+            errors.append(
+                f"boot-pack spill: {r.name} ends at {fmt_addr(r.end)} (room pack ends {fmt_addr(BOOT_PACK_END)})"
+            )
     return errors
 
 

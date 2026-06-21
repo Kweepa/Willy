@@ -2,7 +2,7 @@
 
 CopyDownGuardianData
     jsr CalcGuardianRecPtr
-    ldy #8
+    ldy #g_off_axis
 -
     lda (arr),y
     sta hx,y
@@ -12,7 +12,7 @@ CopyDownGuardianData
 
 CopyUpGuardianData
     jsr CalcGuardianRecPtr
-    ldy #4
+    ldy #g_off_frame
 -
     lda hx,y
     sta (arr),y
@@ -81,8 +81,7 @@ GetHorizontalGuardianFrame
     jmp GetSpriteFrameAddr   ; tail call — rts resumes at caller after jsr GetHorizontalGuardianFrame
 
 GetVerticalGuardianBmpAddr
-    lda hguard_frame
-    and hfmax
+    lda g_frame
     clc
     adc ht
     jmp GetSpriteFrameAddr   ; tail call — rts resumes at caller after jsr GetVerticalGuardianBmpAddr
@@ -112,6 +111,10 @@ MoveGuardian
     adc #1
     sta hd
 +++
+    inc g_frame
+    lda g_frame
+    and hfmax
+    sta g_frame
     rts
 
 DrawGuardian
@@ -238,28 +241,28 @@ MoveGuardians
     jsr CopyDownGuardianData
     lda guard_axis
     cmp #GUARDIAN_VERTICAL
-    bcs MoveNormalVerticalGuardian
-
-MoveBidirectionalHorizontalGuardian
+    bcs +
     jsr ShouldMoveHorizontalGuardianThisFrame
     bne draw_guardian
+    jmp move_guardian
++
+    jsr ShouldMoveVerticalGuardianThisFrame
+    bne draw_guardian
+move_guardian
     jsr MoveGuardian
+    lda guard_axis
+    cmp #GUARDIAN_VERTICAL
+    bcs +
     jsr GetHorizontalGuardianFrame
+    jmp got_sprite_frame
++
+    jsr GetVerticalGuardianBmpAddr
+got_sprite_frame
     jsr CalcGuardianUDGAddr
     jsr CopyGuardianFrame
 draw_guardian
     jsr DrawGuardian
     jmp EndGuardianLoop
-
-MoveNormalVerticalGuardian
-    jsr ShouldMoveVerticalGuardianThisFrame
-    bne +
-    jsr MoveGuardian
-+
-    jsr GetVerticalGuardianBmpAddr
-    jsr CalcGuardianUDGAddr
-    jsr CopyGuardianFrame
-    jsr DrawGuardian
 
 EndGuardianLoop
     jsr CopyUpGuardianData

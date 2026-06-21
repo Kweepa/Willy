@@ -5,7 +5,7 @@
 left_right_ctr  = $46          ; keep in sync with zp.asm (moved off $9D)
 belt_active     = $4f
 xadd            = $0e
-lastxmove       = $27
+lastxmove       = $4c
 
 conveyor_udg_lo = $1ca8
 conveyor_udg_hi = $1caa
