@@ -24,16 +24,6 @@ room_name
     !text "R00"
 
 LoadRoom
-    ; set background colour
-    lda $900f
-    and #$0f
-    sta $900f
-
-    lda #0
-    jsr SetColors
-
-    jsr FormatRoomName
-
     ; Clear KERNAL serial scratch before the IEC LOAD (matters under True Drive
     ; Emulation). rope_udg_mem ($94/$95) overlaps C3PO/BSOUR: each rope frame
     ; leaves a charset pointer in $94, and on the swing phases where the rope is
@@ -44,10 +34,15 @@ LoadRoom
     ; multicolour corruption. Only bites when a death/room-change lands on a
     ; bit-7 swing phase, hence the "specific spot" symptom. Under fs-trap
     ; (virtual device) the serial code never runs, so this only shows with TDE.
-    ; Harmless to clear: rope state at $94-$9F is re-initialised by ParseRoomMeta.
+    ; $90 ST error bits also abort LOAD early if left dirty. Harmless to clear:
+    ; $90-$93 unused by game; rope state at $94-$9F re-inited by ParseRoomMeta.
     lda #0
-    sta $94                      ; C3PO  (serial output char buffered)
-    sta $95                      ; BSOUR (buffered serial byte)
+    sta $90
+    sta $94
+    sta $95
+    jsr SetColors
+
+    jsr FormatRoomName
 
     lda #3
     ldx #<room_name

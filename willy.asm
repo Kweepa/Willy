@@ -312,12 +312,16 @@ erase_player_done
     rts
 
 DrawPlayerEntry
+    lda dead
+    bne +
     jsr CheckRoomEdge
     lda edge_skip_draw
     beq DrawPlayerBody
++
     lda #0
     sta edge_skip_draw
     rts
+
 DrawPlayerBody
     lda willy_hidden
     beq +
