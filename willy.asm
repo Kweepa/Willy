@@ -33,9 +33,9 @@ hit
 
 CollideLeftRight
     lda left_right_ctr
-    bne clr_done
+    bne lr_out
     lda xadd
-    beq clr_done
+    beq lr_out
     bmi lr_dir_left
     ldx #1
     bne lr_dir_ok
@@ -45,27 +45,42 @@ lr_dir_ok
     stx tmp
     lda px
     cmp lr_edge_px,x
-    beq clr_done
+    beq lr_out
+    ; Side probes: lr_touch is 2 cols (move left / move right) x 3 rows
+    ; (a/b/c).  x picks the col; rows are map offsets at $E4-$E9.
+    ; Left: probe only at px&3==0 (char boundary).  Right: only at
+    ; px&3==3 (last px before next boundary) — right col uses far offsets
+    ; 26/50/74 so we look past the sprite, not inside it.  px&3==1,2: no
+    ; probe either direction (sub-pixel steps between check points).
+    lda tmp
+    bne +
     lda px
     and #$03
+    beq lr_do_touch
     bne lr_move
++
+    lda px
+    and #$03
+    cmp #3
+    bne lr_move
+lr_do_touch
     ldy lr_touch_a,x
     jsr try_touch
-    bcs clr_done
+    bcs lr_out
     ldy lr_touch_b,x
     jsr try_touch
-    bcs clr_done
-    ; lr_touch_c: lower side probe when py&7!=0 (misaligned feet).  On ramps
-    ; feet are always misaligned; UP_LEFT baked ry+2 lowers py so c hits W
-    ; under \ tiles and blocks climbing — skip c while already on the ramp.
+    bcs lr_out
+    ldy lr_touch_c,x
+    ; lower side probe when py&7!=0 (misaligned feet).  On ramps feet are
+    ; always misaligned; UP_LEFT baked ry+2 lowers py so c hits W under \
+    ; tiles and blocks climbing — skip c while already on the ramp.
     lda is_on_ramp
     bne lr_move
     lda py
     and #$07
     beq lr_move
-    ldy lr_touch_c,x
     jsr try_touch
-    bcs clr_done
+    bcs lr_out
 lr_move
     ldx tmp
     beq lr_dec_px
@@ -97,7 +112,7 @@ lr_stepped
     lda #27
     sta inairtime
 +
-clr_done
+lr_out
     rts
 
 Collide

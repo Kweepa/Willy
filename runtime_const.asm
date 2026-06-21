@@ -4,7 +4,7 @@
 boot_zp_pack
     !byte 24, 25, 48, 49, 72, 73                    ; cell_off_2x3_boot / util.asm, guardians.asm
     !byte EDGE_WEST_PX, EDGE_EAST_PX                ; lr_edge_px_boot / willy.asm CollideLeftRight
-    !byte 23, 25, 47, 49, 71, 73                    ; lr_touch_a_boot / willy.asm CollideLeftRight
+    !byte 23, 26, 47, 50, 71, 74                    ; lr_touch_a_boot / willy.asm CollideLeftRight
     !byte 0, 3, 1, 4, 2, 5                            ; draw_vguard_chrs_boot / guardians.asm
 boot_draw_player_offsets
     !byte 24, 48, 72, 25, 49, 73                    ; willy.asm DrawPlayer

@@ -52,7 +52,7 @@ ENDING_TRIGGER_PX = 20
 ; px is quarter-char units; 24-col playfield (cols 0-23)
 ; Room transitions use hysteresis: exit threshold vs entry px differ by 1.
 EDGE_WEST_PX = 0               ; west exit when px <= 0; lr stop at px == 0
-EDGE_EAST_PX = 92              ; east exit when px >= 92; lr stop at px == 92
+EDGE_EAST_PX = 91              ; east exit when px >= 91; lr stop at px == 91
 EDGE_EAST_ENTRY_PX = 1         ; entering from the east (spawn west side)
 EDGE_WEST_ENTRY_PX = 90        ; entering from the west (spawn east side)
 
