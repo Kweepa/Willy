@@ -16,11 +16,6 @@ apply_endgame_done
 
 ; Called from main loop after Collide (edge check runs in DrawPlayerEntry).
 CheckEndingTeleport
-    lda willy_hidden
-    bne check_ending_done
-    lda items_collected
-    cmp #ITEMS_REQUIRED
-    bcc check_ending_done
     lda map
     cmp #ROOM_MASTER_BED
     bne check_ending_done
