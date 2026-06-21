@@ -10,26 +10,6 @@ CopyDownGuardianData
     bpl -
     rts
 
-CopyUpGuardianData
-    jsr CalcGuardianRecPtr
-    ldy #g_off_frame
--
-    lda hx,y
-    sta (arr),y
-    dey
-    bpl -
-    rts
-
-EraseBlock
-    ldy cell_off_2x3,x
-    lda #TILE_CHR_BASE
-    sta (scr_ptr),y
-    lda #WHITE
-    sta (col_ptr),y
-    dex
-    bpl EraseBlock
-    rts
-
 EraseGuardians
     lda meta_content_src + meta_off_guardians
     beq erase_guardians_done
@@ -40,17 +20,22 @@ erase_guardian_loop
     ldx hx
     ldy hy
     jsr ConvertXYToScreenAddr
-    lda guard_axis
-    cmp #GUARDIAN_VERTICAL
     ldx #3
-    bcc +
     lda hy
     and #7
     beq +
     inx
     inx
 +
-    jsr EraseBlock
+    ; erase_block
+-
+    ldy cell_off_2x3,x
+    lda #TILE_CHR_BASE
+    sta (scr_ptr),y
+    lda #WHITE
+    sta (col_ptr),y
+    dex
+    bpl -
 
     inc guardian_index
     lda guardian_index
@@ -105,7 +90,7 @@ MoveGuardian
     cmp hl
     bne +++
 ++
-    lda hd
+    lda hd     ; flip direction
     eor #$ff
     clc
     adc #1
@@ -227,7 +212,7 @@ MoveGuardians
     sta guardian_index
     sta hguard_count
     sta vguard_count
--
+--
     ; UDG slot from guardian_index (inlined CalcGuardianUDGIndex)
     lda guardian_index
     asl
@@ -265,11 +250,20 @@ draw_guardian
     jmp EndGuardianLoop
 
 EndGuardianLoop
-    jsr CopyUpGuardianData
+
+    ; CopyUpGuardianData
+    jsr CalcGuardianRecPtr
+    ldy #g_off_frame
+-
+    lda hx,y
+    sta (arr),y
+    dey
+    bpl -
+
     +BorderDebugGuardianIndex
     inc guardian_index
     lda guardian_index
     cmp meta_content_src + meta_off_guardians
-    bne -
+    bne --
 move_guardians_done
     rts
