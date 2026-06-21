@@ -34,35 +34,32 @@ hit
 CollideLeftRight
     lda left_right_ctr
     bne lr_out
-    lda xadd
+
+    ; x=0 moving left, x=1 moving right (from sign of xadd)
+    ldx xadd
     beq lr_out
-    bmi lr_dir_left
-    ldx #1
-    bne lr_dir_ok
-lr_dir_left
-    ldx #0
-lr_dir_ok
+    inx
+    txa
+    lsr
+    tax
     stx tmp
-    lda px
-    cmp lr_edge_px,x
-    beq lr_out
+
     ; Side probes: lr_touch is 2 cols (move left / move right) x 3 rows
-    ; (a/b/c).  x picks the col; rows are map offsets at $E4-$E9.
+    ; (a/b/c).  x picks the col; rows are map offsets at $E2-$E7.
     ; Left: probe only at px&3==0 (char boundary).  Right: only at
     ; px&3==3 (last px before next boundary) — right col uses far offsets
     ; 26/50/74 so we look past the sprite, not inside it.  px&3==1,2: no
     ; probe either direction (sub-pixel steps between check points).
+    ; Gate: (left & px&3==0) or (right & px&3==3); cmp #1 / rol maps dir 0->0, 1->3.
+    lda px
+    and #$03
+    sta num
     lda tmp
-    bne +
-    lda px
-    and #$03
-    beq lr_do_touch
+    cmp #1
+    rol
+    cmp num
     bne lr_move
-+
-    lda px
-    and #$03
-    cmp #3
-    bne lr_move
+
 lr_do_touch
     ldy lr_touch_a,x
     jsr try_touch

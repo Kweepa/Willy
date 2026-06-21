@@ -14,9 +14,8 @@
 ;   $A6-$D5   player_touch (48 B) — DrawPlayer clears $A0-$D5 each frame
 ;   $D6-$DB   (gap)
 ;   $DC-$E1   cell_off_2x3 (boot)
-;   $E2-$E3   lr_edge_px (boot)
-;   $E4-$E9   lr_touch_a/b/c (boot)
-;   $EA-$EF   draw_vguard_chrs (boot)
+;   $E2-$E7   lr_touch_a/b/c (boot)
+;   $E8-$ED   draw_vguard_chrs (boot)
 ;   $37-$3C   draw_player_offsets (boot) — off $F5 KERNAL keyboard ptr during LOAD
 ;   $3D-$42   draw_player_chrs (boot) — off $F6 KERNAL keyboard ptr during LOAD
 ;
@@ -201,11 +200,10 @@ rope_loop_count     = $9d
 rope_grab_cooldown  = $9e
 
 cell_off_2x3        = $dc
-lr_edge_px          = $e2
-lr_touch_a          = $e4
-lr_touch_b          = $e6
-lr_touch_c          = $e8
-draw_vguard_chrs    = $ea
+lr_touch_a          = $e2
+lr_touch_b          = $e4
+lr_touch_c          = $e6
+draw_vguard_chrs    = $e8
 
 left_right_ctr  = $46          ; moved off $9D so rope_old_screen_pos clears $90-$93
 up_down_ctr     = $47

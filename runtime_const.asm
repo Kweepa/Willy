@@ -3,7 +3,6 @@
 
 boot_zp_pack
     !byte 24, 25, 48, 49, 72, 73                    ; cell_off_2x3_boot / util.asm, guardians.asm
-    !byte EDGE_WEST_PX, EDGE_EAST_PX                ; lr_edge_px_boot / willy.asm CollideLeftRight
     !byte 23, 26, 47, 50, 71, 74                    ; lr_touch_a_boot / willy.asm CollideLeftRight
     !byte 0, 3, 1, 4, 2, 5                            ; draw_vguard_chrs_boot / guardians.asm
 boot_draw_player_offsets
@@ -47,11 +46,11 @@ boot_page_pack_end = *
 !source "rope_xadd_boot.asm"
 
 boot_zp_size = boot_zp_pack_end - boot_zp_pack
-!if boot_zp_size <> 32 {
-!error "boot_zp_size must be 32"
+!if boot_zp_size <> 30 {
+!error "boot_zp_size must be 30"
 }
-!if boot_zp_room_size <> 20 {
-!error "boot_zp_room_size must be 20"
+!if boot_zp_room_size <> 18 {
+!error "boot_zp_room_size must be 18"
 }
 
 boot_page_size = boot_page_pack_end - boot_page_pack

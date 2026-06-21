@@ -28,7 +28,6 @@ SIZE_OVERRIDES: dict[str, int] = {
     "player_overlap": 6,
     "player_touch": 48,
     "cell_off_2x3": 6,
-    "lr_edge_px": 2,
     "lr_touch_a": 6,
     "lr_touch_b": 6,
     "lr_touch_c": 6,
@@ -52,7 +51,6 @@ SKIP_OVERLAP = {
     "lr_touch_b",
     "lr_touch_c",
     "cell_off_2x3",
-    "lr_edge_px",
     "lr_touch_a",
     "draw_vguard_chrs",
     "player_overlap",
@@ -62,7 +60,7 @@ SKIP_OVERLAP = {
 # Intentional multi-byte writes (symbol, extent bytes, reason)
 INTENTIONAL_WRITES: dict[str, tuple[int, str]] = {
     "player_overlap": (54, "DrawPlayer clears overlap+touch via player_overlap,x"),
-    "cell_off_2x3": (20, "WarmStart copies boot_zp_pack room tables to $DC-$EF"),
+    "cell_off_2x3": (18, "WarmStart copies boot_zp_pack room tables to $DC-$ED"),
     "draw_player_offsets": (6, "WarmStart RelocateDrawPlayerTables"),
     "draw_player_chrs": (6, "WarmStart RelocateDrawPlayerTables"),
 }
@@ -72,7 +70,7 @@ PAGE100_SYMBOLS = {"edge_tbl", "x24rowtab", "jumptab", "pickup_got", "pickup_got
 
 VIRTUAL_REGIONS: list[tuple[str, int, int]] = [
     ("DrawPlayer_clear", 0xA0, 54),
-    ("boot_zp_room_pack", 0xDC, 20),
+    ("boot_zp_room_pack", 0xDC, 18),
 ]
 
 KERNAL_RESERVE = [
