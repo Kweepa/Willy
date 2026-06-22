@@ -15,9 +15,10 @@ WarmStart
     jsr $fdf9                   ; IOINIT
     sei
 
-    lda #<dummy_irq
+    ; $eb15 is minimal no-op interrupt handler
+    lda #$15
     sta $0314
-    lda #>dummy_irq
+    lda #$eb
     sta $0315
 
     ldx #5                      ; initialize vic registers

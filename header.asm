@@ -23,8 +23,7 @@ RELOC_C_LIMIT = $033c
 RELOC_D_BASE = $1000
 RELOC_D_LIMIT = $100d
 RELOC_E_BASE = $01b6
-RELOC_E_LIMIT = $01bf            ; 9 B dummy_irq + 1 guard; stack from $01C0
-DUMMY_IRQ = RELOC_E_BASE
+RELOC_E_LIMIT = $01bf
 STACK_FLOOR = $01c0
 
 ; Rope runtime in cassette buffer ($033C-$03FB); survives KERNAL disk LOAD

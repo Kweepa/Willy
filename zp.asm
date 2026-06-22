@@ -77,7 +77,7 @@
 ;   $0334-$33B  reloc block C (GetCollision)
 ;   $0392-$3FB  reloc block B (ConvertXYToScreenAddr, GetSpriteFrameAddr, CalcGuardian*)
 ;   $1000-$100C  reloc block D (ResetMap; overwrites BASIC stub after WarmStart entry)
-;   $01B6-$01BE  reloc block E (dummy_irq; WarmStart patches $0314/$0315)
+;   $01B6-$01BE  reloc block E (rope_release)
 ;
 ; Page $0100 copied tables (WarmStart; stack must stay above $01C0):
 ;   $100-$13D  pickup_got

@@ -1,4 +1,4 @@
-; Relocated leaf routines — bytes assembled in boot zone, run at $02xx/$03xx.
+; Relocated leaf routines — bytes assembled in boot zone, run at $01B6/$02xx/$03xx/$1000.
 ; WarmStart copies each block before jmp start_game.
 
 reloc_a_src
@@ -175,19 +175,12 @@ reloc_d_size = * - reloc_d_src
 
 reloc_e_src
 !pseudopc RELOC_E_BASE {
-dummy_irq
-    ; 1. Acknowledge the hardware interrupt
-    bit $9124                   ; Clear VIA 2 Timer 1 interrupt flag
-
-    ; 2. Restore the registers the KERNAL pushed
-    pla
-    tay
-    pla
-    tax
-    pla
-
-    ; 3. Safely exit
-    rti
+rope_release
+    lda #0
+    sta rope_willy_is_holding
+    lda #ROPE_GRAB_COOLDOWN_MAX
+    sta rope_grab_cooldown
+    rts
 }
 reloc_e_size = * - reloc_e_src
 !if RELOC_E_BASE + reloc_e_size > RELOC_E_LIMIT {
