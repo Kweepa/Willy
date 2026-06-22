@@ -4,6 +4,9 @@
 ;
 ;   $02-$61   game scalars (px/py, pointers, guardian scratch hx..guard_axis $20-$29, g_fctl=$27, etc.)
 ;   $62-$64   spawn_px/py, initial_room_load
+;   $5d-$5e   safe_px/py (last grounded position, fall-death respawn)
+;   $60       fall_death_respawn
+;   $65       safe_map
 ;   $66       willy_hidden
 ;   $67       rope_grab_cooldown
 ;   $5c       edge_skip_draw — 1 after edge LoadRoom (DrawPlayerEntry skip)
@@ -157,13 +160,17 @@ tmp_xadd        = $30
 align_tmp       = $58
 entry_px        = $59
 entry_py        = $5a
+safe_px         = $5d          ; last grounded position (fall-death respawn only)
+safe_py         = $5e
+fall_death_respawn = $60       ; 1 = DrawMap uses safe_px/py and map from hit_below
 edge_skip_draw  = $5c          ; 1 = CheckRoomEdge just LoadRoom'd; skip DrawPlayerBody
 map             = $5b
 use_room_spawn  = $5f          ; 1 = ParseRoomMeta sets px/py from @spawn
 
-spawn_px        = $62          ; respawn position (before rope block; not in old_screen table)
+spawn_px        = $62          ; room-entry respawn (guardian death, etc.)
 spawn_py        = $63
 initial_room_load = $64        ; 1 = first DrawMap after ResetGame (use @spawn)
+safe_map        = $65          ; room of last grounded position
 willy_hidden    = $66          ; 1 = ending sequence; skip player erase/input/draw
 rope_grab_cooldown  = $67
 

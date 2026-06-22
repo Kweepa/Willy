@@ -133,7 +133,11 @@ collide_body
 +
     lda on_ground
     sta was_on_ground
+    lda inairtime
+    cmp #70
+    bcs +
     inc inairtime
++
     lda inairtime
     cmp #27
     bcs +
@@ -267,6 +271,17 @@ collide_dont_move_y
     lda #0
     sta xadd
 +
+    lda on_ground
+    beq +
+    lda dead
+    bne +
+    lda map
+    sta safe_map
+    lda px
+    sta safe_px
+    lda py
+    sta safe_py
++
     lda meta_content_room_has_rope
     beq collide_draw_player
     jsr rope_draw_maybe          ; animate rope + attach detection via DrawPlayer/coll_check
@@ -284,6 +299,10 @@ hit_below
     lda inairtime
     cmp #70
     bcc +
+    lda safe_map
+    sta map
+    lda #1
+    sta fall_death_respawn
     lda #1
     sta dead
 +

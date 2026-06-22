@@ -30,6 +30,7 @@ title_release_wait
     sta willy_hidden
     sta xadd
     sta edge_skip_draw
+    sta fall_death_respawn
     ldx #pickup_got_last - pickup_got
 -
     sta pickup_got,x
@@ -44,10 +45,21 @@ DrawMap
     sta dead
     lda initial_room_load
     bne drawmap_first_room
+    lda fall_death_respawn
+    beq +
+    lda safe_px
+    sta px
+    lda safe_py
+    sta py
+    lda #0
+    sta fall_death_respawn
+    beq ++
++
     lda spawn_px
     sta px
     lda spawn_py
     sta py
+++
     lda #0
     sta use_room_spawn
     jmp LoadRoom               ; tail call — LoadRoom draws via DrawPlayerBody
