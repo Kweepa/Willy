@@ -295,17 +295,9 @@ hit_above
     sta newy
     jmp move_up_down
 hit_below
-    ; fatal fall if inairtime >= 70 (inlined CheckDeathFall)
-    lda inairtime
-    cmp #70
-    bcc +
-    lda safe_map
-    sta map
-    lda #1
-    sta fall_death_respawn
-    lda #1
-    sta dead
-+
+    ; fatal fall if inairtime == 70
+    jsr try_fall_death
+
     lda #1
     sta on_ground
     lda #27

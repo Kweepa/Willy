@@ -106,6 +106,7 @@ do_falling_ramp_check
     sta py
     lda #1
     sta is_on_ramp
+    jsr try_fall_death
 
 .fall_ramp_check_end
     rts

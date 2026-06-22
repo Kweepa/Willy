@@ -43,3 +43,15 @@ SetColors
     dex
     bne -
     rts
+
+try_fall_death
+    lda inairtime
+    cmp #70
+    bcc +
+    lda #1
+    sta fall_death_respawn
+    sta dead
+    lda safe_map
+    sta map
++
+    rts
