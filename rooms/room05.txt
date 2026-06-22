@@ -1,7 +1,7 @@
 @room 5
 @title The Security Guard
 @conn 10 4 6 19
-@spawn 44 104
+@spawn 4 104
 @border BLU
 @belt 1
 
@@ -11,22 +11,22 @@
 2,0,5,0,10,132,21,206,23,68,43,228,47,228,18,68,8,128,7,4,21,82,42,172,85,64,170,132,69,4,29,196
 
 @tilemap
-W                       
-WW                      
-WWW                     
-WWWW                    
-WWWW                    
-WWWW                    
-WWW                     
-WWW \                   
-WWW F\F  F  F FFFF FFFFF
-WWW WW\  W  W WWWW WWWWW
-    WWW\ W  W WWWW WWWWW
-    WWW \W  W WWWW WW   
-    WWW  \  W WWWW WW   
-          \          >>>
-           \         WWW
-WW  WWWWWWWW+WWWWWWWWWWW
+                        
+\                       
+W\                      
+WW\                     
+WWW\                    
+WWWW\                   
+WW   \                  
+WW    \                 
+WW   FFF  F  F  F  FFFFF
+WW   WWW  W  W  W  WWWWW
+     WWW  W  W  W  WWWWW
+       W  W  W  W  W    
+       W  W  W  W  W    
+                      >>
+                      WW
+WW  WWWWWWWWWWWWWWWWWWWW
 
 @floorcolor GRN
 @wallcolor CYN
@@ -36,13 +36,13 @@ WW  WWWWWWWW+WWWWWWWWWWW
 @itemcolor BLK
 
 @guardians
-x=10 y=64(40..104) v=1 f=0..1 GRN
-x=7 y=80(44..104) v=2 f=0..1 RED
-x=18 y=80(44..104) v=2 f=0..1 RED
-x=13 y=48(48..96) v=4 f=0..1 YEL
+x=8 y=80(44..104) v=2 f=0..1 RED
+x=11 y=64(40..104) v=1 f=0..1 GRN
+x=14 y=48(48..96) v=4 f=0..1 YEL
+x=17 y=80(44..104) v=2 f=0..1 RED
 
 @floorudg 255,255,170,85,170,85,170,85
 @walludg 14,198,149,176,54,134,192,237
-@nastyudg 0,0,0,0,0,0,0,0 ; invert
+@nastyudg 0,0,0,0,0,0,0,0
 @rampudg 224,64,32,16,14,4,2,1
-@beltudg 111,0,183,0,170,85,170,85 ; invert
+@beltudg 111,0,183,0,170,85,170,85

@@ -32,11 +32,11 @@
         /FFFFFFFFFFFFFFF
        /                
       /                 
-FFFFF/ FFFFFFFFFFFFFFFFF
+FFFFF/FFFFFFFFFFFFFFFFFF
     /                   
-   /                    
-  /                     
-F/FFFFFFFFFFFFFFFFFFFFFF
+   /                     
+  /                      
+FF  FFFFFFFFFFFFFFFFFFFF
 
 @floorcolor PUR
 @wallcolor YEL

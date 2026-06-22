@@ -1,7 +1,7 @@
 @room 19
 @title Forgotten Abbey
 @conn 0 5 0 49
-@spawn 44 104
+@spawn 88 56
 @border BLU
 @belt -1
 
@@ -19,39 +19,39 @@
 @tilemap
 WWWWWWWWWWWWWWWWWWWWWWWW
 WWWWWWWWWWWWWWWWWWWWWWWW
-WW  *   *       *     WW
-WW+                   WW
-WW                    WW
-WWW                   WW
-WW                    WW
-WW  <<<<<<<<<<<<<<<<<<<<
-WW       *            WW
-WW                   FWW
-WWFF                  WW
-FF  FFFFFFFFFFFFFFFFFFWW
-FF                    WW
-WWW                     
-WWWW                    
+W      *    *    *     W
+W+                     W
+W                      W
+WW                     W
+W                      W
+W   <<<<<<<<<<<<<<<<<<<W
+W           *          W
+W                     FW
+WFF                    W
+F    FFFFFFFFFFFFFFFFFFW
+F                      W
+WW\                    
+WWW\                   
 WWWWWWWWWWWWWWWWWWWWWWWW
 
 @floorcolor GRN
-@wallcolor CYN
+@wallcolor PUR
 @nastycolor RED
-@rampcolor WHT
-@beltcolor WHT
+@rampcolor PUR
+@beltcolor CYN
 @itemcolor YEL
 
 @guardians
-y=40 x=4(4..12) v=1 f=0..7 GRN
-y=40 x=8(5..20) v=1 f=0..7 YEL
-y=72 x=5(4..12) v=-1 f=0..7 RED
+y=40 x=4(4..16) v=1 f=0..7 GRN
+y=40 x=10(10..22) v=1 f=0..7 YEL
+y=72 x=8(7..12) v=-1 f=0..7 RED
 y=72 x=16(14..19) v=1 f=0..7 WHT
-y=104 x=4(4..5) v=-1 f=0..7 YEL
-y=104 x=5(5..10) v=-1 f=0..7 BLU
+y=104 x=5(4..8) v=-1 f=0..7 YEL
+y=104 x=11(10..20) v=-1 f=0..7 BLU
 
 @floorudg 255,255,242,36,64,2,0,136
 @walludg 68,170,17,68,17,170,68,17
-@nastyudg 24,60,126,153,153,126,66,60 ; invert
+@nastyudg 24,60,126,153,153,126,66,60
 @rampudg 128,64,224,48,168,212,34,137
 @beltudg 112,85,0,187,170,170,170,170
 @itemudg 24,36,219,219,36,24,24,24
