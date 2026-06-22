@@ -9,4 +9,6 @@ This port started with the Manic Miner port I did some time ago. It originally w
 
 Like with Manic Miner, the challenge is to make the game work with a reduced screen width. I was able to fit all 20 Manic Miner screens into a 22 column wide screen easily, so I wasn't worried about doing the same here. The biggest extra wrinkle is that there are ramps in Jet Set Willy, so long ramps take up more of the room horizontally, but I think they will still work.
 
-Then there are a couple of other issues which I'll get to: the ropes; and the pickups, which need to persist.
+Ropes were a challenge to fit in memory, and the delta tables had to be reworked for the reduced screen width.
+
+Currently 24 of the 60 rooms are playable.
