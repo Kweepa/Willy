@@ -1,4 +1,5 @@
 @room 28
+@playable
 @title First Landing
 @conn 34 27 255 29
 @spawn 44 56
@@ -38,7 +39,7 @@ W        /        W
 W       /         W     
 W      /          W     
 W     /                 
-     /    +             
+     /                  
     /            WFWFWFW
 FFFFFFFFFFFFFFF  WWWWWWW
 

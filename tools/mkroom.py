@@ -393,6 +393,7 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         "guardiansprites": b"",
         "playerbmp": b"",
         "rope": False,
+        "playable": False,
         "logo": None,
     }
     block = None
@@ -461,6 +462,8 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
                 room["belt"] = int(parts[1])
             elif tag == "rope":
                 room["rope"] = True
+            elif tag == "playable":
+                room["playable"] = True
             elif tag == "tilecolors":
                 if len(parts[1:]) != TILE_COLOR_BYTES:
                     raise ValueError(
@@ -1117,6 +1120,48 @@ def room_dos_name(room_id: int) -> str:
     return f"r{room_id:02d}"
 
 
+def scan_playable_header(text: str) -> tuple[int | None, bool]:
+    """Read @room id and @playable from header tags only (no full parse)."""
+    room_id: int | None = None
+    playable = False
+    for raw in text.splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line.startswith("@"):
+            continue
+        parts = line.split()
+        tag = parts[0][1:].lower()
+        if tag == "room" and len(parts) > 1:
+            room_id = int(parts[1])
+        elif tag == "playable":
+            playable = True
+    return room_id, playable
+
+
+def playable_status(indir: Path) -> tuple[list[tuple[int, str]], list[tuple[int, str]]]:
+    """Scan room*.txt; return (playable, need_work) as (id, filename) pairs."""
+    playable: list[tuple[int, str]] = []
+    need_work: list[tuple[int, str]] = []
+    for src in sorted(indir.glob("room*.txt")):
+        text = src.read_text(encoding="utf-8")
+        room_id, is_playable = scan_playable_header(text)
+        if room_id is None:
+            room_id = int(src.stem[4:]) if src.stem[4:].isdigit() else -1
+        entry = (room_id, src.name)
+        if is_playable:
+            playable.append(entry)
+        else:
+            need_work.append(entry)
+    return playable, need_work
+
+
+def print_playable_summary(indir: Path) -> None:
+    playable, need_work = playable_status(indir)
+    total = len(playable) + len(need_work)
+    print(
+        f"playable: {len(playable)}/{total} rooms done, {len(need_work)} need work"
+    )
+
+
 def convert_file(src: Path, outstem: Path, room: dict | None = None) -> None:
     if room is None:
         room = parse_room(src.read_text(encoding="utf-8"), source=src)
@@ -1134,7 +1179,18 @@ def main():
     ap.add_argument("input", nargs="?", help="roomNN.txt file or directory with --all")
     ap.add_argument("output", nargs="?", help="output file stem e.g. rooms/out/33")
     ap.add_argument("--all", action="store_true", help="convert all room*.txt in input dir")
+    ap.add_argument(
+        "--status",
+        action="store_true",
+        help="report @playable room counts only (no build)",
+    )
     args = ap.parse_args()
+    if args.status:
+        indir = Path(args.input or "rooms")
+        if not indir.is_dir():
+            ap.error(f"not a directory: {indir}")
+        print_playable_summary(indir)
+        return
     if args.all:
         indir = Path(args.input or "rooms")
         outdir = Path(args.output or "rooms/out")
@@ -1150,6 +1206,7 @@ def main():
         if errors:
             print(f"\n{len(errors)} room(s) failed", file=sys.stderr)
             sys.exit(1)
+        print_playable_summary(indir)
         return
     if not args.input or not args.output:
         ap.error("need input and output, or --all")

@@ -1,4 +1,5 @@
 @room 42
+@playable
 @title Under the Roof
 @conn 48 41 36 43
 @spawn 68 104

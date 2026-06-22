@@ -1,4 +1,5 @@
 @room 34
+@playable
 @title Top Landing
 @conn 255 33 28 35
 @spawn 44 16

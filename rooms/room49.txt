@@ -1,4 +1,5 @@
 @room 49
+@playable
 @title The Wine Cellar
 @conn 52 19 0 51
 @spawn 8 0

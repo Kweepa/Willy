@@ -1,4 +1,5 @@
 @room 37
+@playable
 @title Orangery
 @conn 43 36 31 56
 @spawn 44 104

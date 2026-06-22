@@ -1,4 +1,5 @@
 @room 43
+@playable
 @title Conservatory Roof
 @conn 0 42 37 0
 @spawn 44 104

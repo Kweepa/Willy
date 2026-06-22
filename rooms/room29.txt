@@ -1,4 +1,5 @@
 @room 29
+@playable
 @title The Nightmare Room
 @conn 255 28 255 30
 @spawn 44 16

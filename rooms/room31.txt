@@ -1,4 +1,5 @@
 @room 31
+@playable
 @title Swimming Pool
 @conn 37 30 0 54
 @spawn 80 80

@@ -1,4 +1,5 @@
 @room 62
+@playable
 @title Press Space
 @logo
 @conn 255 255 255 255

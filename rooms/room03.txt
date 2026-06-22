@@ -1,4 +1,5 @@
 @room 3
+@playable
 @title Foot of Megatree
 @conn 8 2 0 4
 @spawn 4 104

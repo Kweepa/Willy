@@ -1,4 +1,5 @@
 @room 4
+@playable
 @title The Drive
 @conn 6 3 45 5
 @spawn 4 48

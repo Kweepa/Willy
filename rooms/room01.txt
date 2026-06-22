@@ -1,4 +1,5 @@
 @room 1
+@playable
 @title The Bridge
 @conn 0 0 0 2
 @spawn 4 104

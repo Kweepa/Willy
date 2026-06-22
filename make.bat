@@ -17,4 +17,6 @@ echo [4/4] Building disk image...
 python tools\mkdisk.py --out jsw.d64 --prg jsw.prg --rooms rooms/out
 if errorlevel 1 exit /b 1
 
+python tools\mkroom.py --status rooms
+
 \app\vice3.10\bin\xvic -pal +basicload -autostart jsw.d64

@@ -1,4 +1,5 @@
 @room 25
+@playable
 @title Cold Store
 @conn 31 24 0 52
 @spawn 44 104

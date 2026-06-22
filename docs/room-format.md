@@ -42,6 +42,7 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@spawn` | px py | Willy start (quarter-char X, single-pixel head Y) |
 | `@border` | colour | Border colour (BLK WHT RED CYN PUR GRN BLU YEL). `mkroom` stores `border \| 8` in meta — full VIC `$900F` byte (white background + border). |
 | `@belt` | speed | Conveyor speed: `-1`, `0`, or `1` |
+| `@playable` | — | Tooling only: room is playtest-ready. Ignored by the binary build. `mkroom.py --status` (or `--all`) reports how many rooms are tagged vs still need work. |
 | `@guardiansprites` | block | 256 bytes: 8 frames × 32 bytes. Author in Skool interleaved format (left, right byte pairs per scanline). `mkroom` converts to column-major (16-byte left column, 16-byte right column) in the PRG. |
 | `@hguard` | index | Horizontal guardian sprite index |
 | `@vguard` | index | Vertical guardian sprite index |
@@ -118,6 +119,7 @@ Save as [`rooms/room01.txt`](../rooms/room01.txt).
 
 @room 1
 @title The Landing
+@playable
 @conn FF FF 2 FF
 @spawn 44 56
 @border BLK
@@ -254,6 +256,9 @@ python tools/mkroom.py rooms/room01.txt rooms/out/ROOM01
 
 # All rooms/room*.txt → rooms/out/
 python tools/mkroom.py --all rooms rooms/out
+
+# Playable-room progress (@playable tag; no build)
+python tools/mkroom.py --status rooms
 
 # D64 (needs built jsw.prg optional)
 python tools/mkdisk.py --out jsw.d64 --prg jsw.prg --rooms rooms/out

@@ -1,4 +1,5 @@
 @room 2
+@playable
 @title Under the MegaTree
 @conn 0 1 0 3
 @spawn 44 104

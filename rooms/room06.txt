@@ -1,4 +1,5 @@
 @room 6
+@playable
 @title Entrance to Hades
 @conn 255 255 255 255
 @spawn 4 4

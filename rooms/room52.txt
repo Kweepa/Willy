@@ -1,4 +1,5 @@
 @room 52
+@playable
 @title Back Stairway
 @conn 54 25 49 53
 @spawn 44 104

@@ -1,4 +1,5 @@
 @room 36
+@playable
 @title A bit of tree
 @conn 42 255 30 37
 @spawn 48 104

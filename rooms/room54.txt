@@ -1,4 +1,5 @@
 @room 54
+@playable
 @title West Wing
 @conn 56 31 52 55
 @spawn 44 104

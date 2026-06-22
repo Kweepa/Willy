@@ -1,4 +1,5 @@
 @room 35
+@playable
 @title Master Bedroom
 @conn 255 34 255 255
 @spawn 44 16

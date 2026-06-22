@@ -1,4 +1,5 @@
 @room 5
+@playable
 @title The Security Guard
 @conn 10 4 6 19
 @spawn 4 104
