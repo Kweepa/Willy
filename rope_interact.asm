@@ -73,10 +73,9 @@ rope_jump
 ; rope_index / rope_udg_advance are dead here (rope_draw already finished),
 ; so they are reused as best-diff / best-index scratch.
 rope_attach
-    lda rope_willy_is_holding
-    bne rope_attach_done            ; already carried
-    lda rope_grab_cooldown
-    bne rope_attach_done            ; cooling down
+    lda rope_willy_is_holding       ; already carried
+    ora rope_grab_cooldown          ; cooling down
+    bne rope_attach_done  
     txa
     pha                             ; save coll_check X
     lda py

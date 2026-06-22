@@ -89,10 +89,8 @@ lr_move
     ; xadd is guaranteed nonzero here (early return above), so just gate the
     ; walking-ramp snap on was_on_ground OR is_on_ramp.
     lda was_on_ground
-    bne ++
-    lda is_on_ramp
+    ora is_on_ramp
     beq +
-++
     jsr do_walking_ramp_check
 +
     lda is_on_ramp
@@ -113,9 +111,8 @@ Collide
     beq collide_active
     rts
 collide_active
-    lda meta_content_room_has_rope
-    beq collide_body
-    lda rope_willy_is_holding
+    lda meta_content_room_has_rope ; skip if !(rope && holding)
+    and rope_willy_is_holding
     beq collide_body
     jsr RopePlayerInput          ; climb / descend / jump / fall-off
     lda rope_willy_is_holding
@@ -266,7 +263,7 @@ collide_dont_move_y
     beq +
     lda belt_active
     bne +                       ; If conveyor is actively pushing us, do NOT clear xadd!
-    lda #0
+    ; lda #0 ; see test result above
     sta xadd
 +
     lda on_ground
