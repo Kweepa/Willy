@@ -63,30 +63,31 @@ GetVerticalGuardianBmpAddr
     jmp GetSpriteFrameAddr   ; tail call — rts resumes at caller after jsr GetVerticalGuardianBmpAddr
 
 MoveGuardian
-    lda guard_axis
-    tax
+    ; advance either x or y
+    ldx guard_axis
     lda hx,x
     clc
     adc hd
     sta hx,x
     tay
+
+    ; convert hd into a 0 or 1 index in x
+    ldx #0
     lda hd
     bmi +
-    tya
-    cmp hr
-    bne +++
-    beq ++
+    inx
 +
+    ; compare left or right extent against new coord stored in y
     tya
-    cmp hl
-    bne +++
-++
+    cmp hl,x
+    bne +
+
     lda hd     ; flip direction
     eor #$ff
     clc
     adc #1
     sta hd
-+++
++
     inc g_frame
     lda g_frame
     and g_fctl
