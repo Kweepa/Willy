@@ -262,7 +262,10 @@ rope_loop_top
     sec
     sbc #8
     bpl +
-    lda #0
+    ldy meta_content_conn       ; north @conn — same gate as willy.asm jump-above
+    bpl ++                      ; valid room: store negative py in A
+    lda #0                      ; $FF: clamp to screen top
+++
 +
     sta py
 ++
