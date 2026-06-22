@@ -146,8 +146,8 @@ rightIsPressed  = $2d
 guard_udg_off   = $48
 guard_udg_index = $49
 
-hguard_count    = $4a
-vguard_count    = $4b
+hguard_count    = $4a          ; these need to be adjacent and in this order
+vguard_count    = $4b          ; so they can be indexed by guard_axis
 
 last_py         = $4e
 belt_active     = $4f

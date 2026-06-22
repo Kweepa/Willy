@@ -95,22 +95,14 @@ MoveGuardian
     rts
 
 DrawGuardian
-    lda guard_axis
-    cmp #GUARDIAN_VERTICAL
-    php
-    bcc +
-    inc vguard_count
-    bne ++
-+
-    inc hguard_count
-++
+    ldx guard_axis
+    inc hguard_count,x
+
     ldx hx
     ldy hy
     jsr ConvertXYToScreenAddr
 
-    plp
     ldx #3
-    bcc draw_guard_loop
     lda hy
     and #7
     beq draw_guard_loop
@@ -206,30 +198,28 @@ MoveGuardians
     sta vguard_count
 --
     ; UDG slot from guardian_index (inlined CalcGuardianUDGIndex)
+    ; multiply by 6
     lda guardian_index
     asl
-    clc
-    adc guardian_index
+    adc guardian_index  ; asl clears C
     asl
     sta guard_udg_off
-    clc
-    adc #GUARDIAN_CHR
+    adc #GUARDIAN_CHR ; asl clears C
     sta guard_udg_index
+
     jsr CopyDownGuardianData
     lda guard_axis
-    cmp #GUARDIAN_VERTICAL
-    bcs +
+    bne +
     jsr ShouldMoveHorizontalGuardianThisFrame
     bne draw_guardian
-    jmp move_guardian
+    beq move_guardian
 +
     jsr ShouldMoveVerticalGuardianThisFrame
     bne draw_guardian
 move_guardian
     jsr MoveGuardian
     lda guard_axis
-    cmp #GUARDIAN_VERTICAL
-    bcs +
+    bne +
     jsr GetHorizontalGuardianFrame
     jmp got_sprite_frame
 +
