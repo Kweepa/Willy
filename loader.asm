@@ -93,9 +93,10 @@ ParseRoomMeta
     lda meta_content_border
     sta $900f
 
-    ; minimal rope/conveyor clear
+    ; minimal rope/conveyor/ramp clear
     ldx #0
     stx belt_active
+    stx is_on_ramp
     stx rope_willy_is_holding
     stx rope_udg
     stx rope_frame

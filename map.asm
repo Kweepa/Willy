@@ -124,8 +124,6 @@ do_room_change
     sta use_room_spawn          ; edge transition - px/py already set, not @spawn
     jsr LoadRoom
     jsr SaveSpawn
-    lda #51
-    sta inairtime
     lda #1
     sta edge_skip_draw          ; LoadRoom drew via DrawPlayerBody
 edge_done
