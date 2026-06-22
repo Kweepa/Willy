@@ -58,7 +58,6 @@ drawmap_first_room
     jsr SaveSpawn
     lda #0
     sta use_room_spawn
-    lda #0
     sta initial_room_load
 	rts
 

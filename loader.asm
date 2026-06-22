@@ -121,5 +121,4 @@ skip_room_spawn
     sta was_on_ground
     lda py
     sta last_py
-    jsr ApplyEndgameRoomLoad
-    rts
+    jmp ApplyEndgameRoomLoad  ; tail call
