@@ -181,7 +181,9 @@ collide_body
     cmp #8
     bcs jump_above_check
     ldy meta_content_conn   ; north @conn; allow exit without tile probe
-    bpl move_up_down
+    bpl +
+    jmp move_up_down
++
     lda #27
     sta inairtime
     lda #0
@@ -221,7 +223,9 @@ collide_down
 +
     ldy #96
     jsr try_touch_below
-    bcs hit_below
+    bcc +
+    jmp hit_below
++
     iny
     jsr try_touch_below
     bcs hit_below
@@ -234,11 +238,19 @@ look_below_2
 +
     ldy #72
     jsr try_touch_below
-    bcs check_jump
+    bcs +                    ; leading foot grounded -> still probe trailing foot
     iny
     jsr try_touch_below
     bcc move_up_down
+    bcs check_jump
++
+    ldy #73
+    jsr try_touch_below      ; a belt here overrides the platform touch (carries Willy on)
 check_jump
+    lda xadd
+    bne +
+    sta belt_active          ; fully off the belt -> release lock
++
     lda #1
     sta on_ground
     lda #27
