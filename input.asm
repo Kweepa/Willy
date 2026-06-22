@@ -18,10 +18,10 @@
 !zone input_implementation
 
 ScanKeyRow
-    lda #$ff    ; restore DDR for VIA2
-    sta $9122
-    lda #$00
-    sta $9123   ; set data direction for $9121
+    ldy #$ff    ; restore DDR for VIA2
+    sty $9122
+    iny ; set to 0
+    sty $9123   ; set data direction for $9121
     stx $9120   ; request row
     lda $9121   ; read
     eor #$ff    ; $ff is no keys pressed
@@ -58,8 +58,6 @@ GetPlayerInput
 .player_input_try_jump
     ldx #$ef
     jsr ScanKeyRow
-    beq .player_input_done
-    lda #1
-    sta jumpIsPressed
+    sta jumpIsPressed ; just needs to be non-zero
 .player_input_done
     rts
