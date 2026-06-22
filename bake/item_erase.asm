@@ -1,4 +1,4 @@
-; Per-room item erase stub — 11 bytes in meta tail @ meta_off_item_erase.
+; Per-room item erase stub — 11 bytes in meta tail @ meta_content_item_erase.
 ; CLI: -DCOL_ADDR=... -DMAP_ADDR=... -DEMPTY_COLOR=... -DSLOT_BYTES=11
 
 !source "equates.asm"

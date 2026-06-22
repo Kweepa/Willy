@@ -8,13 +8,13 @@ calculate_ramp_y
     lda px
     tax
     sec
-    sbc meta_ramp_rx1
+    sbc meta_content_ramp_rx1
     tay
     bpl +
     rts
 +
     txa
-    cmp meta_ramp_rx2
+    cmp meta_content_ramp_rx2
     bcc +
     rts
 +
@@ -22,15 +22,15 @@ calculate_ramp_y
 
     tya
     asl
-    eor meta_ramp_E
+    eor meta_content_ramp_E
     clc
-    adc meta_ramp_A
+    adc meta_content_ramp_A
     clc
-    adc meta_ramp_ry
+    adc meta_content_ramp_ry
     sta ramp_y
-    cmp meta_ramp_ymin
+    cmp meta_content_ramp_ymin
     bcs +
-    lda meta_ramp_ymin
+    lda meta_content_ramp_ymin
     sta ramp_y
 +
     lda #1

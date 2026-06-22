@@ -90,7 +90,7 @@ edge_hit
     cmp #EDGE_WEST_PX + 1
     bcs edge_next
 +
-    lda meta_content_src + meta_off_conn,y   ; conn byte (inlined GetConnByte)
+    lda meta_content_conn,y   ; conn byte (inlined GetConnByte)
     cmp #$ff
     beq edge_no_conn
     sta map

@@ -3,7 +3,8 @@
 ; Layout map ($02-$FF game state; migration: hot pack was $62-$87, now $D6-$FB):
 ;
 ;   $02-$61   game scalars (px/py, pointers, guardian scratch hx..guard_axis $20-$29, g_fctl=$27, etc.)
-;   $62-$66   spawn_px/py, initial_room_load, room_has_rope, willy_hidden
+;   $62-$64   spawn_px/py, initial_room_load
+;   $66       willy_hidden
 ;   $67       rope_grab_cooldown
 ;   $5c       edge_skip_draw — 1 after edge LoadRoom (DrawPlayerEntry skip)
 ;   $46/$47   left_right_ctr / up_down_ctr (guardian anim; moved off $9D/$9F)
@@ -163,7 +164,6 @@ use_room_spawn  = $5f          ; 1 = ParseRoomMeta sets px/py from @spawn
 spawn_px        = $62          ; respawn position (before rope block; not in old_screen table)
 spawn_py        = $63
 initial_room_load = $64        ; 1 = first DrawMap after ResetGame (use @spawn)
-room_has_rope   = $65
 willy_hidden    = $66          ; 1 = ending sequence; skip player erase/input/draw
 rope_grab_cooldown  = $67
 

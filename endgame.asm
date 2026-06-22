@@ -10,7 +10,7 @@ ApplyEndgameRoomLoad
     cmp #ROOM_MASTER_BED
     bne apply_endgame_done
     lda #0
-    sta meta_content_src + meta_off_guardians
+    sta meta_content_guardians
 apply_endgame_done
     rts
 

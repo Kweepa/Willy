@@ -33,7 +33,7 @@ Local labels are bare `+` or `-` on their own line. Count only local labels when
 +
     rts
 
-    cmp meta_content_src + meta_off_guardians
+    cmp meta_content_guardians
     bne -
 
 ; ❌ BAD — named labels for trivial local jumps

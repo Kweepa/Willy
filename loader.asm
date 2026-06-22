@@ -58,12 +58,14 @@ LoadRoom
     tax
     lda tile_color_src,x
     sta color_base,y
+
     lda screen_base+$80,y
     sta map_base+$80,y
     and #$0f
     tax
     lda tile_color_src,x
     sta color_base+$80,y
+
     iny
     bne -
 
@@ -81,17 +83,15 @@ LoadRoom
     jsr item_draw
 +
 
-    jmp DrawPlayerBody
+    jmp DrawPlayerBody ; tail call
 
 
 ;
 ; Layout: guardians, border, spawn x2, belt, ramp, rx1, rx2, ry, E, A, conn x4, item draw;
-;         meta_off_rope, guardian AoS
+;         meta_content_room_has_rope, guardian AoS
 ParseRoomMeta
-    lda meta_content_src + meta_off_border
+    lda meta_content_border
     sta $900f
-    lda meta_content_src + meta_off_rope
-    sta room_has_rope
 
     ; minimal rope/conveyor clear
     ldx #0
@@ -108,9 +108,9 @@ ParseRoomMeta
     ; otherwise px and py are already set up (from room transition)
     lda use_room_spawn
     beq skip_room_spawn
-    lda meta_content_src + meta_off_spawn_px
+    lda meta_content_spawn_px
     sta px
-    lda meta_content_src + meta_off_spawn_py
+    lda meta_content_spawn_py
     sta py
 
 skip_room_spawn

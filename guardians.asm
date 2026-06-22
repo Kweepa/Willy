@@ -11,7 +11,7 @@ CopyDownGuardianData
     rts
 
 EraseGuardians
-    lda meta_content_src + meta_off_guardians
+    lda meta_content_guardians
     beq erase_guardians_done
     lda #0
     sta guardian_index
@@ -39,7 +39,7 @@ erase_guardian_loop
 
     inc guardian_index
     lda guardian_index
-    cmp meta_content_src + meta_off_guardians
+    cmp meta_content_guardians
     bne erase_guardian_loop
 erase_guardians_done
     rts
@@ -190,7 +190,7 @@ mod_src_col2
     rts
 
 MoveGuardians
-    lda meta_content_src + meta_off_guardians
+    lda meta_content_guardians
     beq move_guardians_done
     lda #0
     sta guardian_index
@@ -245,7 +245,7 @@ EndGuardianLoop
     +BorderDebugGuardianIndex
     inc guardian_index
     lda guardian_index
-    cmp meta_content_src + meta_off_guardians
+    cmp meta_content_guardians
     bne --
 move_guardians_done
     rts

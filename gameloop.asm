@@ -8,7 +8,7 @@ main_loop
     jsr ErasePlayer
     jsr EraseGuardians
     jsr UpdateMoveCounters
-    lda room_has_rope
+    lda meta_content_room_has_rope
     beq +
     jsr rope_pre_draw
 +

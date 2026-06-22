@@ -1,4 +1,4 @@
-; Rope player input, grab/attach, release. Callers gate on room_has_rope.
+; Rope player input, grab/attach, release. Callers gate on meta_content_room_has_rope.
 
 rope_near_key   !byte rightIsPressed, leftIsPressed  ; descend toward rope side (swing_side 0=right, 1=left)
 rope_far_key    !byte leftIsPressed, rightIsPressed  ; climb

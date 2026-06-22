@@ -113,7 +113,7 @@ Collide
     beq collide_active
     rts
 collide_active
-    lda room_has_rope
+    lda meta_content_room_has_rope
     beq collide_body
     lda rope_willy_is_holding
     beq collide_body
@@ -179,7 +179,7 @@ collide_body
     lda py
     cmp #8
     bcs jump_above_check
-    lda meta_content_src + meta_off_conn   ; north @conn; allow exit without tile probe
+    lda meta_content_conn   ; north @conn; allow exit without tile probe
     cmp #$ff
     bne move_up_down
     lda #27
@@ -268,7 +268,7 @@ collide_dont_move_y
     lda #0
     sta xadd
 +
-    lda room_has_rope
+    lda meta_content_room_has_rope
     beq collide_draw_player
     jsr rope_draw_maybe          ; animate rope + attach detection via DrawPlayer/coll_check
 collide_draw_player
@@ -508,11 +508,11 @@ HandleOverlapChar
 +
 
     ; hit a guardian (22-33) or rope UDG (34+). Guardians kill directly;
-    ; rope UDGs attach only when room_has_rope (no pha — kill_player must
+    ; rope UDGs attach only when meta_content_room_has_rope (no pha — kill_player must
     ; not return with an extra byte on the stack).
     cmp #ROPE_FIRST_UDG
     bcc kill_player
-    lda room_has_rope
+    lda meta_content_room_has_rope
     beq kill_player
     jmp rope_attach ; tail call
 
