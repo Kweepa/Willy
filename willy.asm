@@ -175,20 +175,18 @@ collide_body
     and #$f8
     cmp align_tmp
     bne +
-    jmp move_up_down
+    jmp collide_jmp_move_up_down
 +
     lda py
     cmp #8
     bcs jump_above_check
     ldy meta_content_conn   ; north @conn; allow exit without tile probe
-    bpl +
-    jmp move_up_down
-+
+    bpl collide_jmp_move_up_down
     lda #27
     sta inairtime
     lda #0
     sta newy
-    beq move_up_down
+    beq collide_jmp_move_up_down
 jump_above_check
     ldy #0
     jsr try_touch
@@ -200,7 +198,7 @@ jump_above_check
     bcc +
     jmp hit_above
 +
-    bcc move_up_down
+    bcc collide_jmp_move_up_down
 +
 collide_down
     lda on_ground
@@ -211,7 +209,7 @@ collide_down
 +
     lda is_on_ramp
     beq +
-    bne check_jump
+    jmp check_jump
 +
     lda py
     and #$07
@@ -219,17 +217,29 @@ collide_down
     lda newy
     and #$f8
     cmp align_tmp
-    beq move_up_down
+    beq collide_jmp_move_up_down
 +
     ldy #96
     jsr try_touch_below
-    bcc +
-    jmp hit_below
-+
+    bcs hit_below
     iny
     jsr try_touch_below
     bcs hit_below
-    bcc move_up_down
+    bcc collide_jmp_move_up_down
+hit_below
+    jsr try_fall_death
+
+    lda #1
+    sta on_ground
+    lda #27
+    sta inairtime
+
+    lda newy
+    and #$f8
+    sta newy
+    jmp collide_jmp_move_up_down
+collide_jmp_move_up_down
+    jmp move_up_down
 look_below_2
     lda was_on_ground
     beq +
@@ -241,7 +251,7 @@ look_below_2
     bcs +                    ; leading foot grounded -> still probe trailing foot
     iny
     jsr try_touch_below
-    bcc move_up_down
+    bcc collide_jmp_move_up_down
     bcs check_jump
 +
     ldy #73
@@ -300,20 +310,7 @@ hit_above
     lda py
     and #$f8
     sta newy
-    jmp move_up_down
-hit_below
-    ; fatal fall if inairtime == 70
-    jsr try_fall_death
-
-    lda #1
-    sta on_ground
-    lda #27
-    sta inairtime
-
-    lda newy
-    and #$f8
-    sta newy
-    jmp move_up_down
+    jmp collide_jmp_move_up_down
 
 ErasePlayer
     lda willy_hidden
