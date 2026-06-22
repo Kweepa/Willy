@@ -90,8 +90,7 @@ edge_hit
     bcs edge_next
 +
     lda meta_content_conn,y   ; conn byte (inlined GetConnByte)
-    cmp #$ff
-    beq edge_no_conn
+    bmi edge_no_conn
     sta map
     lda edge_tbl+4,x
     sta entry_px
@@ -111,13 +110,11 @@ edge_next
     jmp edge_done
 do_room_change
     lda entry_px
-    cmp #$ff
-    beq +
+    bmi +
     sta px
 +
     lda entry_py
-    cmp #$ff
-    beq +
+    bmi +
     sta py
 +
     lda #0

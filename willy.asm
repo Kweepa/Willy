@@ -179,9 +179,8 @@ collide_body
     lda py
     cmp #8
     bcs jump_above_check
-    lda meta_content_conn   ; north @conn; allow exit without tile probe
-    cmp #$ff
-    bne move_up_down
+    ldy meta_content_conn   ; north @conn; allow exit without tile probe
+    bpl move_up_down
     lda #27
     sta inairtime
     lda #0
