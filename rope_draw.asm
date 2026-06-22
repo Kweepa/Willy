@@ -264,10 +264,9 @@ rope_loop_top
     bpl +
     ldy meta_content_conn       ; north @conn — same gate as willy.asm jump-above
     bpl +
-++
     lda #0                      ; clamp: sealed north or not at anchor
 +
     sta py
-++
 
+++
     rts
