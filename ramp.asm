@@ -10,14 +10,12 @@ calculate_ramp_y
     sec
     sbc meta_content_ramp_rx1
     tay
-    bpl +
-    rts
-+
+    bmi .exit_calc
+
     txa
     cmp meta_content_ramp_rx2
-    bcc +
-    rts
-+
+    bcs .exit_calc
+
     ; ramp_y = ry + ((2 * dx EOR E) + A)  — E/A baked per ramp type
 
     tya
@@ -35,6 +33,8 @@ calculate_ramp_y
 +
     lda #1
     sta is_in_ramp_bounds
+
+.exit_calc
     rts
 
 ; ===========================================================================
@@ -46,9 +46,8 @@ do_walking_ramp_check
     lda #0
     sta is_on_ramp
     lda is_in_ramp_bounds
-    bne +
-    rts
-+
+    beq wr_out
+
     lda py
     clc
     adc #16
@@ -74,7 +73,6 @@ wr_snap:
     sta py
     lda #1
     sta is_on_ramp
-    rts
 
 wr_out:
     rts
@@ -88,28 +86,27 @@ do_falling_ramp_check
     lda #0
     sta is_on_ramp
     lda is_in_ramp_bounds
-    bne +
-    rts
-+
+    beq .fall_ramp_check_end
+
     lda last_py
     clc
     adc #16
     cmp ramp_y
-    bcc +
-    rts
-+
+    bcs .fall_ramp_check_end
+
     lda newy
     ; clc - we know carry is clear (see bcc above)
     adc #16
     cmp ramp_y
-    bcs +
-    rts
-+
+    bcc .fall_ramp_check_end
+
     lda ramp_y
     ; sec - we know carry is set (see bcs above)
     sbc #16
     sta py
     lda #1
     sta is_on_ramp
+
+.fall_ramp_check_end
     rts
 
