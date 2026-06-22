@@ -205,10 +205,8 @@ jump_above_check
 +
 collide_down
     lda on_ground
-    bne +
-    lda is_on_ramp
-    bne +
-    lda xadd
+    ora is_on_ramp
+    ora xadd
     bne +
     jsr do_falling_ramp_check
 +
