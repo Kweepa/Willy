@@ -1,7 +1,8 @@
 @room 10
+@playable
 @title The Front Door
 @conn 0 9 5 11
-@spawn 44 104
+@spawn 4 96
 @border RED
 @belt 0
 
@@ -22,7 +23,7 @@ WWWWWWWWWWWW
                         
                         
                         
-F                       
+F\                       
 WW\                     
 
 @floorcolor WHT
@@ -30,11 +31,11 @@ WW\
 @nastycolor WHT
 @rampcolor WHT
 @beltcolor WHT
-@itemcolor CYN
+@itemcolor PUR
 
-@floorudg 255,170,119,170,119,170,85,170 ; invert
-@walludg 32,16,14,193,48,9,198,32
-@nastyudg 0,0,0,0,0,0,0,0 ; invert
+@floorudg 255,170,119,170,119,170,85,170
+@walludg 32,16,14,193,48,9,198,32 ; invert
+@nastyudg 0,0,0,0,0,0,0,0
 @rampudg 192,64,176,80,172,84,171,85
-@beltudg 0,0,0,0,0,0,0,0 ; invert
+@beltudg 0,0,0,0,0,0,0,0
 @itemudg 12,28,28,30,27,63,120,255

@@ -2,7 +2,7 @@
 @playable
 @title The Security Guard
 @conn 10 4 6 19
-@spawn 4 104
+@spawn 24 48
 @border BLU
 @belt 1
 
@@ -12,21 +12,21 @@
 2,0,5,0,10,132,21,206,23,68,43,228,47,228,18,68,8,128,7,4,21,82,42,172,85,64,170,132,69,4,29,196
 
 @tilemap
-                        
-\                       
-W\                      
-WW\                     
-WWW\                    
-WWWW\                   
-WW   \                  
-WW    \                 
-WW   FFF  F  F  F  FFFFF
-WW   WWW  W  W  W  WWWWW
-     WWW  W  W  W  WWWWW
-       W  W  W  W  W    
-       W  W  W  W  W    
-                      >>
-                      WW
+W\                       
+WW\                      
+WWW\                     
+WWWW\                    
+WWWWW\                   
+WWWWWW\                  
+WW     \                 
+WW      \                
+WW   FFFF  F  F  F  FFFF
+WW   WWWW  W  W  W  WWWW
+     WWWW  W  W  W  WWWW
+        W  W  W  W  W    
+        W  W  W  W  W    
+                       >
+                       W
 WW  WWWWWWWWWWWWWWWWWWWW
 
 @floorcolor GRN
@@ -37,10 +37,10 @@ WW  WWWWWWWWWWWWWWWWWWWW
 @itemcolor BLK
 
 @guardians
-x=8 y=80(44..104) v=2 f=0..1 RED
-x=11 y=64(40..104) v=1 f=0..1 GRN
-x=14 y=48(48..96) v=4 f=0..1 YEL
-x=17 y=80(44..104) v=2 f=0..1 RED
+x=9 y=80(44..104) v=2 f=0..1 RED
+x=12 y=64(40..104) v=1 f=0..1 GRN
+x=15 y=48(48..96) v=4 f=0..1 YEL
+x=18 y=80(44..104) v=2 f=0..1 RED
 
 @floorudg 255,255,170,85,170,85,170,85
 @walludg 14,198,149,176,54,134,192,237
