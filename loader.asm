@@ -95,6 +95,7 @@ ParseRoomMeta
 
     ; minimal rope/conveyor/ramp clear
     ldx #0
+    stx $900c ; shut off sound effects
     stx belt_active
     stx is_on_ramp
     stx rope_willy_is_holding
