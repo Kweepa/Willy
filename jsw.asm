@@ -12,6 +12,7 @@
 !source "ramp.asm"
 !source "willy.asm"
 !source "util.asm"
+!source "sound.asm"
 !source "input.asm"
 !source "guardians.asm"
 !source "endgame.asm"

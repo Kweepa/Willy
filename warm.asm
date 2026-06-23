@@ -35,6 +35,16 @@ WarmStart
     dex
     bpl -
 
+    lda #10     ; set volume
+    sta $900e
+
+    ldx #4      ; clear voices
+    lda #0
+-
+    sta $900a-1,x
+    dex
+    bne -
+
     jsr RelocateDrawPlayerTables
     jsr RelocateRopeXadd
 

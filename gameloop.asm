@@ -14,6 +14,8 @@ main_loop
 +
     jsr MoveGuardians
     jsr GetPlayerInput
+    lda #0
+    sta $900c
     jsr Collide
     jsr DrawHud
     jsr CheckEndingTeleport
@@ -24,8 +26,21 @@ main_loop
     lda dead
     beq main_loop
 
-	lda #(RED + 8)
-	sta $900f
+    ; death flash
+    ldy #24
+    lda #(WHITE + 8)
+    ldx #0
+-
+    eor #(WHITE ^ RED)
+    sta $900f
+    txa
+    eor #240
+    tax
+    stx $900c
+    jsr WaitForRaster
+    dey
+    bne -
+ 
     dec men
     bne start_map
     beq start_game

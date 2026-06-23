@@ -138,11 +138,10 @@ collide_body
     lda inairtime
     cmp #27
     bcs +
-    lda #0
-    sta was_on_ground
+    ldx #0
+    stx was_on_ground
 +
-    lda inairtime
-    cmp #52
+    cmp #52 ; comparing inairtime
     bne +
     lda #0
     sta xadd
@@ -168,6 +167,18 @@ collide_body
     clc
     adc py
     sta newy
+
+    ; play jump sound
+    ldy was_on_ground
+    bne +
+    txa ; clamped inairtime in X
+    lsr
+    tax
+    ldy jumpnotes,x
+    sty $900c
+    ; end play jump sound
++
+
     lda inairtime
     cmp #27
     bcs collide_down
@@ -505,6 +516,10 @@ HandleOverlapChar
     inc pickup_got,x
     inc items_collected
     jsr item_erase
+
+    ; play item pickup sound
+    lda #240
+    sta $900c
 +
     pla
     tax
