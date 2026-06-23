@@ -73,69 +73,51 @@ drawmap_first_room
     sta initial_room_load
 	rts
 
-; row: coord(0=px,1=py), cmp(0=le,1=ge), limit+1 for le / limit for ge, conn, entry_px, entry_py
-EDGE_ROW_SIZE = 6
-
 CheckRoomEdge
+    ; prepare new coordinates
+    ldx px
+    ldy py
+
+    ; check west
+    lda meta_content_conn + 3
+    cpx #$ff
+    bne +
+    ldx #91
+    bne do_room_change ; always
++
+    ; check east
+    lda meta_content_conn + 1
+    cpx #92
+    bne +
     ldx #0
--
-    lda edge_tbl,x
-    bne +
-    lda px
-    jmp ++
+    beq do_room_change ; always
 +
-    lda py
-++
-    cmp edge_tbl+2,x
-    lda edge_tbl+1,x
-    beq +
-    bcc edge_next
-    bne edge_hit
+    ; check north
+    lda meta_content_conn
+    cpy #128
+    bcc +   ; branch if Y < 128
+    ldy #104
+    bne do_room_change ; always
 +
-    bcs edge_next
-edge_hit
-    ldy edge_tbl+3,x
-    cpy #3                      ; west conn — exit only at px <= EDGE_WEST_PX
-    bne +
-    lda px
-    cmp #EDGE_WEST_PX + 1
-    bcs edge_next
+    ; check south
+    lda meta_content_conn + 2
+    cpy #111
+    bcc +    ; branch if Y < 111
+    ldy #0
+    beq do_room_change ; always
 +
-    lda meta_content_conn,y   ; conn byte (inlined GetConnByte)
-    bmi edge_no_conn
-    sta map
-    lda edge_tbl+4,x
-    sta entry_px
-    lda edge_tbl+5,x
-    sta entry_py
-    jmp do_room_change
-edge_no_conn
-    bne edge_next               ; Y = conn index; 0 = north (py>=$80), skip south
-    beq edge_done
-edge_next
-    txa
-    clc
-    adc #EDGE_ROW_SIZE
-    tax
-    cpx #EDGE_ROW_SIZE*4
-    bcc -
-    jmp edge_done
+    clc ; draw player after, since we didn't transition
+    rts
+
 do_room_change
-    lda entry_px
-    bmi +
-    sta px
-+
-    lda entry_py
-    bmi +
-    sta py
-+
+    sta map
+    stx px
+    sty py
+    sty last_py  ; if we change from bottom to top of room, this would be huge
+
     lda #0
     sta use_room_spawn          ; edge transition - px/py already set, not @spawn
     jsr LoadRoom
     jsr SaveSpawn
-    lda #1
-    sta edge_skip_draw          ; LoadRoom drew via DrawPlayerBody
-edge_done
-    lda py
-    sta last_py
+    sec ; don't draw player after, since we did transition
     rts

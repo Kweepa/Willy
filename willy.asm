@@ -351,13 +351,10 @@ erase_player_done
 DrawPlayerEntry
     lda dead
     bne +
-    jsr CheckRoomEdge
-    lda edge_skip_draw
-    beq DrawPlayerBody
-+
-    lda #0
-    sta edge_skip_draw
+    jsr CheckRoomEdge   ; return C=1 if should not draw Willy (transitioning)
+    bcc +
     rts
++
 
 DrawPlayerBody
     lda willy_hidden
