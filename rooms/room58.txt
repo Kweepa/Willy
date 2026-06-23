@@ -1,7 +1,7 @@
 @room 58
 @playable
 @title The Beach
-@conn 58 51 0 59
+@conn 255 51 255 59
 @spawn 91 48
 @border RED
 @belt -1
@@ -31,7 +31,7 @@ WWWWW              WWWWW
 @wallcolor CYN
 @nastycolor YEL
 @rampcolor YEL
-@beltcolor GRN
+@beltcolor CYN
 @itemcolor PUR
 
 @floorudg 0,0,64,4,0,16,0,1 ; invert

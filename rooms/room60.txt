@@ -1,6 +1,7 @@
 @room 60
+@playable
 @title The Bow
-@conn 0 59 0 0
+@conn 255 59 255 255
 @spawn 44 104
 @border CYN
 @belt 1
@@ -25,28 +26,28 @@
                         
                FFFFFFFFF
                 W       
-          F     W       
+           F    W       
                 WF+     
-                W       
-     FFFFFFFFFFFFFFFFFFF
-                        
-                        
-                        
-        \               
-*********\>>>>>>>>>>>>>>
+     \          W       
+      \FFFFFFFFFFFFFFFFF
+       \                  
+        \                 
+         \                
+          \               
+***********>>>>>>>>>>>>>
 
 @floorcolor GRN
 @wallcolor CYN
-@nastycolor WHT
+@nastycolor BLU
 @rampcolor WHT
 @beltcolor YEL
 @itemcolor PUR
 
 @guardians
-y=24 x=15(14..22) v=-1 f=0..3 YEL
-y=104 x=12(9..22) v=-1 f=4..7 PUR
+y=24 x=17(16..22) v=-1 f=0..3 YEL
+y=104 x=12(11..22) v=-1 f=4..7 PUR
 
-@floorudg 255,170,85,255,0,0,0,0 ; invert
+@floorudg 255,170,85,255,0,0,0,0
 @walludg 201,201,201,201,201,201,201,201
 @nastyudg 64,130,82,0,0,0,0,0 ; invert
 @rampudg 128,64,32,16,8,4,2,1
