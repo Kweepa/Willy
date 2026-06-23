@@ -26,6 +26,13 @@ main_loop
     lda dead
     beq main_loop
 
+    lda safe_map
+    cmp map
+    beq +
+    sta map
+    sta fall_death_respawn ; can't fall into the off license (map 0)
++
+
     ; death flash
     ldy #24
     lda #(WHITE + 8)

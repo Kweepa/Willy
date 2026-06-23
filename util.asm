@@ -49,9 +49,6 @@ try_fall_death
     cmp #70
     bcc +
     lda #1
-    sta fall_death_respawn
     sta dead
-    lda safe_map
-    sta map
 +
     rts
