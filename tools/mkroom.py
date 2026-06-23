@@ -203,15 +203,35 @@ def fmt_loc(source: Path | str | None = None, line_no: int | None = None) -> str
     return loc + ": "
 
 
+def scan_room_title(text: str) -> str:
+    """Read @title from header without full parse."""
+    for raw in text.splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line.lower().startswith("@title"):
+            continue
+        parts = line.split(None, 1)
+        return parts[1] if len(parts) > 1 else ""
+    return ""
+
+
 def room_error(room: dict | None, msg: str) -> ValueError:
     if room:
-        src = room.get("_source")
         rid = room.get("id", "?")
-        if src:
-            return ValueError(f"{src} (room {rid}): {msg}")
         if rid != "?":
             return ValueError(f"room {rid}: {msg}")
     return ValueError(msg)
+
+
+def format_build_error(
+    src: Path,
+    exc: BaseException,
+    *,
+    text: str | None = None,
+    room: dict | None = None,
+) -> str:
+    title = (room or {}).get("title") or (scan_room_title(text) if text else "")
+    head = f"{src.name} — {title}" if title else src.name
+    return f"error: {head}: {exc}"
 
 
 def parse_guardian_line(
@@ -1196,13 +1216,18 @@ def main():
         outdir = Path(args.output or "rooms/out")
         errors: list[tuple[Path, str]] = []
         for src in sorted(indir.glob("room*.txt")):
+            text = ""
+            room = None
             try:
                 text = src.read_text(encoding="utf-8")
                 room = parse_room(text, source=src)
                 convert_file(src, outdir / str(room["id"]), room=room)
             except (ValueError, OSError) as e:
                 errors.append((src, str(e)))
-                print(f"error: {src.name}: {e}", file=sys.stderr)
+                print(
+                    format_build_error(src, e, text=text or None, room=room),
+                    file=sys.stderr,
+                )
         if errors:
             print(f"\n{len(errors)} room(s) failed", file=sys.stderr)
             sys.exit(1)
@@ -1210,7 +1235,16 @@ def main():
         return
     if not args.input or not args.output:
         ap.error("need input and output, or --all")
-    convert_file(Path(args.input), Path(args.output))
+    src = Path(args.input)
+    text = ""
+    room = None
+    try:
+        text = src.read_text(encoding="utf-8")
+        room = parse_room(text, source=src)
+        convert_file(src, Path(args.output), room=room)
+    except (ValueError, OSError) as e:
+        print(format_build_error(src, e, text=text or None, room=room), file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
