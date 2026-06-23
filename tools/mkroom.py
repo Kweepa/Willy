@@ -1157,16 +1157,19 @@ def scan_playable_header(text: str) -> tuple[int | None, bool]:
     return room_id, playable
 
 
-def playable_status(indir: Path) -> tuple[list[tuple[int, str]], list[tuple[int, str]]]:
-    """Scan room*.txt; return (playable, need_work) as (id, filename) pairs."""
-    playable: list[tuple[int, str]] = []
-    need_work: list[tuple[int, str]] = []
+def playable_status(
+    indir: Path,
+) -> tuple[list[tuple[int, str, str]], list[tuple[int, str, str]]]:
+    """Scan room*.txt; return (playable, need_work) as (id, filename, title) tuples."""
+    playable: list[tuple[int, str, str]] = []
+    need_work: list[tuple[int, str, str]] = []
     for src in sorted(indir.glob("room*.txt")):
         text = src.read_text(encoding="utf-8")
         room_id, is_playable = scan_playable_header(text)
         if room_id is None:
             room_id = int(src.stem[4:]) if src.stem[4:].isdigit() else -1
-        entry = (room_id, src.name)
+        title = scan_room_title(text)
+        entry = (room_id, src.name, title)
         if is_playable:
             playable.append(entry)
         else:
@@ -1180,6 +1183,10 @@ def print_playable_summary(indir: Path) -> None:
     print(
         f"playable: {len(playable)}/{total} rooms done, {len(need_work)} need work"
     )
+    if need_work:
+        for room_id, filename, title in sorted(need_work, key=lambda x: x[0]):
+            name = title or "(untitled)"
+            print(f"  room {room_id:2d} — {name} ({filename})")
 
 
 def convert_file(src: Path, outstem: Path, room: dict | None = None) -> None:
