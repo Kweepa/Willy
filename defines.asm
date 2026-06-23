@@ -27,7 +27,7 @@ guardian_udgs = udg_base + GUARDIAN_CHR*8
 player_udg = udg_base + PLAY_CHR*8
 
 ; Sync at row 15/16 boundary (below playfield, above HUD). Screen shifted down ($9001 = $32).
-RASTERLINE_PAL      = $6E
+RASTERLINE_PAL      = $70
 RASTERLINE_NTSC     = $62
 
 GUARDIAN_HORIZONTAL = 0
