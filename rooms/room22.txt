@@ -21,8 +21,8 @@
 @tilemap
     W       \           
     W        \          
-    W         \         
-               \   *    
+    W         \    *     
+               \       
                 \       
    FWFFFFFFFFFFF \  FFFF
     W+            \     
