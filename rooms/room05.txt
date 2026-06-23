@@ -2,7 +2,7 @@
 @playable
 @title The Security Guard
 @conn 10 4 6 19
-@spawn 24 48
+@spawn 1 104
 @border BLU
 @belt 1
 

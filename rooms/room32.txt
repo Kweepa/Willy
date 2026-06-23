@@ -1,7 +1,8 @@
 @room 32
+@playable
 @title Halfway up E Wall
-@conn 38 0 26 33
-@spawn 44 104
+@conn 38 255 26 255
+@spawn 36 104
 @border RED
 @belt 0
 
@@ -13,34 +14,34 @@
 0,0,1,248,2,100,3,156,3,12,1,248,0,144,1,8,2,4,4,2,8,1,14,7,10,5,12,3,10,5,14,7
 
 @tilemap
-WW    WW                
-WW    WW                
-WW    WW                
-WWW                     
-W WW                    
-W WWW                   
-WW   W                  
-WW   WW\                
-WWWWWWWW\               
-WWWWWWWW \              
-WW    WW  \             
-WW    WW   \            
-WW    WW    \           
-WWF   WW                
-WW    WW                
-WW   FWW    +           
+WW        WW                
+WW        WW                
+WW    \   WW                
+W     W\                    
+W     WW\                   
+W    FWWW\                  
+WW       W\                 
+WW       WW\                
+WW  F WWWWWW                
+WW    WWWWWW                
+WW   F    WW                
+WWF       WW                
+WW        WW                
+WW    F   WW                
+WW        WW                
+WW       FWW                
 
 @floorcolor CYN
-@wallcolor WHT
+@wallcolor BLU
 @nastycolor WHT
 @rampcolor WHT
 @beltcolor WHT
 @itemcolor BLK
 
 @guardians
-y=48 x=2(2..3) v=-1 f=0..3 YEL
+y=48 x=3(2..8) v=-1 f=0..3 YEL
 
 @floorudg 255,255,90,153,189,90,60,90
-@walludg 51,17,68,204,51,17,68,204
-@nastyudg 0,0,0,0,0,0,0,0 ; invert
+@walludg 51,17,68,204,51,17,68,204 ; invert
+@nastyudg 0,0,0,0,0,0,0,0
 @rampudg 128,192,224,112,184,28,78,199

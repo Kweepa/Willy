@@ -1,7 +1,8 @@
 @room 18
+@playable
 @title On the Roof
-@conn 18 17 0 48
-@spawn 44 104
+@conn 255 17 0 48
+@spawn 1 56
 @border RED
 @belt 1
 @rope
@@ -25,29 +26,29 @@
                         
                         
                         
-                  WWF   
-                  WW*F  
-WWWWF             WWWWWW
-WWWW*             WWWWWW
-WWWW*             WWWWWW
-WWWWWF            WWWWWW
-WWWWW*            WWWWWW
-WWWWW*WWF         WWWWWW
-WWWWWWWWWW>>+>>>>>WWWWWW
+                   WWF   
+                   WW*F  
+WWWWF              WWWWW
+WWWW*              WWWWW
+WWWW*              WWWWW
+WWWWWF            +WWWWW
+WWWWW*             WWWWW
+WWWWW*  WWF        WWWWW
+WWWWWWWWWWWW>>>>>WWWWWWW
 
 @floorcolor WHT
-@wallcolor YEL
+@wallcolor GRN
 @nastycolor YEL
 @rampcolor WHT
-@beltcolor RED
-@itemcolor BLU
+@beltcolor PUR
+@itemcolor CYN
 
 @guardians
-y=104 x=18(10..18) v=1 f=0..7 CYN
+y=104 x=18(11..18) v=-1 f=0..7 CYN
 
-@emptyudg 0,0,0,0,0,0,0,0 ; invert
+@emptyudg 0,0,0,0,0,0,0,0
 @floorudg 128,192,224,208,88,156,222,205
-@walludg 17,248,7,8,240,15,208,63
-@nastyudg 85,153,221,204,85,153,221,204 ; invert
+@walludg 17,248,7,8,240,15,208,63 ; invert
+@nastyudg 85,153,221,204,85,153,221,204
 @beltudg 240,240,240,255,255,0,0,255
 @itemudg 1,2,5,10,84,40,48,72
