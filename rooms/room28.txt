@@ -1,7 +1,7 @@
 @room 28
 @playable
 @title First Landing
-@conn 34 27 255 29
+@conn 34 27 22 29
 @spawn 44 56
 @border PUR
 @belt 0
