@@ -1,6 +1,7 @@
 @room 47
+@playable
 @title [
-@conn 0 0 0 0
+@conn 255 255 255 255
 @spawn 44 104
 @border BLK
 @belt 0
@@ -23,14 +24,14 @@
                         
                         
                         
-            +           
+                       
 
 @floorcolor BLK
 @wallcolor BLK
-@nastycolor WHT
+@nastycolor BLK
 @rampcolor BLK
 @beltcolor BLK
 @itemcolor BLK
 
-@walludg 0,0,0,0,0,0,0,16
-@nastyudg 0,0,0,0,0,0,0,0 ; invert
+@walludg 0,0,0,0,0,0,0,0
+@nastyudg 0,0,0,0,0,0,0,0
