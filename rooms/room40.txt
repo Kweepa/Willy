@@ -1,7 +1,8 @@
 @room 40
+@playable
 @title Dr Jones' dream
-@conn 16 39 0 41
-@spawn 44 104
+@conn 255 39 0 41
+@spawn 90 104
 @border BLU
 @belt -1
 
@@ -20,19 +21,19 @@
 @tilemap
                         
                         
-           *WWW         
-           WWWWWW       
-           WFFFFFF      
-     *WWWW *FFF FFF     
-     WWWWWWW  FWWWW     
-     FFFF  WF  WWW+ W   
-FF   FFFF  W  FWW       
-     WWFF  WF  WW       
-  F  WWFF  W  FW   F \  
-    F WFF  WF  W        
-   F  WFF     FW    F F 
-      W       FW     F  
-      WWFF    FWF       
+          *WWW         
+          WWWWWW       
+          WFFFFFF      
+    *WWWW *FFF FFF     
+    WWWWWWW  FWWWW\    
+    FFFF  WF  WWW+ \   
+F   FFFF  W  FWW    \  
+    WWFF  WF  WW     \ 
+ F  WWFF  W  FW   F   \
+   F WFF  WF  W        
+  F  WFF     FW     F  
+     W       FW   F    
+     WWFF    FWF       
 <<<<<<<<<<<<<<<<<<<<<<<<
 
 @emptycolor PUR
@@ -40,16 +41,16 @@ FF   FFFF  W  FWW
 @wallcolor PUR
 @nastycolor PUR
 @rampcolor CYN
-@beltcolor YEL
+@beltcolor GRN
 @itemcolor WHT
 
 @guardians
-x=17 y=72(64..104) v=-2 f=0..3 RED
-x=9 y=96(56..96) v=-5 f=4..7 YEL
+x=16 y=72(64..104) v=-2 f=0..3 RED
+x=8 y=96(56..96) v=-2 f=4..7 YEL
 
 @floorudg 254,85,42,170,85,170,170,255
-@walludg 17,68,34,136,17,68,34,136
-@nastyudg 1,4,34,8,17,68,34,136 ; invert
+@walludg 17,68,34,136,17,68,34,136 ; invert
+@nastyudg 1,4,34,8,17,68,34,136
 @rampudg 64,144,36,72,18,36,9,2
 @beltudg 165,0,165,0,170,255,255,85
 @itemudg 240,240,120,184,76,50,13,3

@@ -23,12 +23,12 @@
                        W
                         
                         
-     FF          FF   WW
-     FF         /FF    *
+     FF         /FF   WW
      FF        / FF    *
      FF       /  FF    *
      FF      /   FF    *
-    WWWW    /   WWWW   *
+     FF     /    FF    *
+    WWWW   /    WWWW   *
     WW W<<<<<<<<W WW   *
    WWWWWWWWWWWWWWWWWW  *
    WWWW WW WW WW WWWW  *

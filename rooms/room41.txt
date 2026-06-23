@@ -1,7 +1,8 @@
 @room 41
+@playable
 @title The Attic
 @conn 0 40 34 42
-@spawn 44 104
+@spawn 90 48
 @border BLU
 @belt 1
 
@@ -19,36 +20,36 @@
                         
                         
                         
-  *     *               
-FFWFFFFFWF              
-WW                      
-WW           FF   >>>>FF
-WW                      
-WW             FF       
-WW                      
-WW               F      
-WW                      
-WW   *   *  *           
-FFFWFFWFFWFW+FFWFFFFFWWF
+   *    *               
+FFFWFFFFWFF              
+W                       
+WF             F  >>>  F
+W                       
+WF              F       
+W                       
+WF               F      
+W                       
+WF   *   *  *           
+FFFFFWFFFWFFWFFWFFFFWFWF
 
 @floorcolor YEL
-@wallcolor YEL
+@wallcolor PUR
 @nastycolor GRN
 @rampcolor WHT
 @beltcolor RED
 @itemcolor BLU
 
 @guardians
-x=2 y=66(56..88) v=2 f=0..1 PUR
-x=4 y=70(56..88) v=2 f=0..1 YEL
-x=6 y=74(56..88) v=2 f=0..1 BLU
-x=7 y=78(56..88) v=2 f=0..1 GRN
-x=9 y=82(56..88) v=2 f=0..1 RED
-x=10 y=86(56..88) v=2 f=2..3 CYN
+x=3 y=66(56..88) v=2 f=0..1 PUR
+x=5 y=70(56..88) v=2 f=0..1 YEL
+x=7 y=74(56..88) v=2 f=0..1 BLU
+x=9 y=78(56..88) v=2 f=0..1 GRN
+x=11 y=82(56..88) v=2 f=0..1 RED
+x=13 y=86(56..88) v=2 f=2..3 CYN
 
 @floorudg 206,255,0,231,0,127,0,251
-@walludg 238,17,108,146,17,201,34,156
-@nastyudg 36,18,68,170,85,170,91,255 ; invert
-@rampudg 0,0,0,0,0,0,0,0 ; invert
-@beltudg 240,170,60,170,85,170,85,170 ; invert
+@walludg 238,17,108,146,17,201,34,156 ; invert
+@nastyudg 36,18,68,170,85,170,91,255
+@rampudg 0,0,0,0,0,0,0,0
+@beltudg 240,170,60,170,85,170,85,170
 @itemudg 17,34,51,68,85,102,119,136
