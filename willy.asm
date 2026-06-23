@@ -58,6 +58,18 @@ CollideLeftRight
     cmp tmp
     bne lr_move
 
+    ; lr_touch at px=0 wraps to col 23 — never probe at left screen edge
+    cpx #0
+    bne +
+    lda px
+    beq lr_move
++
+    ; same at px=91 before east transition at px=92
+    cpx #1
+    bne lr_do_touch
+    lda px
+    cmp #91
+    beq lr_move
 lr_do_touch
     ldy lr_touch_a,x
     jsr try_touch
