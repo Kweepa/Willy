@@ -65,8 +65,8 @@ INTENTIONAL_WRITES: dict[str, tuple[int, str]] = {
     "draw_player_chrs": (6, "WarmStart RelocateDrawPlayerTables"),
 }
 
-# Page-$0100 symbols (not low ZP) — skip in ZP asm scan
-PAGE100_SYMBOLS = {"edge_tbl", "x24rowtab", "jumptab", "pickup_got", "pickup_got_last"}
+# Stack-page symbols (not low ZP) — skip in ZP asm scan
+STACK_PAGE_SYMBOLS = {"x24rowtab", "jumptab", "jumpnotes", "pickup_got", "pickup_got_last"}
 
 VIRTUAL_REGIONS: list[tuple[str, int, int]] = [
     ("DrawPlayer_clear", 0xA0, 54),
@@ -79,11 +79,11 @@ KERNAL_RESERVE = [
     (0xB7, 0xC4, "SETNAM/SETLFS/LOAD setup"),
 ]
 
-PAGE100_REGIONS: list[tuple[str, int, int]] = [
+STACK_PAGE_REGIONS: list[tuple[str, int, int]] = [
     ("pickup_got", 0x100, 0x3E),  # $100-$13D inclusive
-    ("edge_tbl", 0x140, 24),
-    ("x24rowtab", 0x158, 32),
-    ("jumptab", 0x17C, 58),
+    ("x24rowtab", 0x140, 36),
+    ("jumptab", 0x164, 54),
+    ("jumpnotes", 0x19A, 27),
 ]
 
 CLEAR_ZONE = (0xA0, 0xD5)
@@ -237,9 +237,9 @@ def check_kernal(regions: list[Region]) -> list[str]:
     return warnings
 
 
-def check_page100(symbols: dict[str, int]) -> list[str]:
+def check_stack_page(symbols: dict[str, int]) -> list[str]:
     errors: list[str] = []
-    regions = [Region(n, s, sz) for n, s, sz in PAGE100_REGIONS]
+    regions = [Region(n, s, sz) for n, s, sz in STACK_PAGE_REGIONS]
     if "pickup_got_last" in symbols:
         got = symbols["pickup_got"]
         last = symbols["pickup_got_last"]
@@ -248,14 +248,14 @@ def check_page100(symbols: dict[str, int]) -> list[str]:
         for b in regions[i + 1 :]:
             if a.overlaps(b):
                 errors.append(
-                    f"page-$100 overlap: {a.name} {fmt_addr(a.start)}-{fmt_addr(a.end)} "
+                    f"stack-page overlap: {a.name} {fmt_addr(a.start)}-{fmt_addr(a.end)} "
                     f"vs {b.name} {fmt_addr(b.start)}-{fmt_addr(b.end)}"
                 )
     prev_end = 0xFF
     for r in regions:
         if r.start > prev_end + 1:
             gap = r.start - prev_end - 1
-            print(f"  page-$100 gap: {fmt_addr(prev_end + 1)}-{fmt_addr(r.start - 1)} ({gap} B)")
+            print(f"  stack-page gap: {fmt_addr(prev_end + 1)}-{fmt_addr(r.start - 1)} ({gap} B)")
         prev_end = max(prev_end, r.end)
     return errors
 
@@ -287,7 +287,7 @@ def eval_imm(expr: str, constants: dict[str, int]) -> int | None:
 def load_asm_constants() -> dict[str, int]:
     consts: dict[str, int] = {
         "boot_zp_size": 32,
-        "boot_page_size": 114,
+        "stack_page_size": 117,
         "ROPE_UDG_BYTES": 128,
     }
     for path in (ROOT / "defines.asm", ROOT / "runtime_const.asm", ROOT / "header.asm"):
@@ -325,7 +325,7 @@ def scan_plus1_clashes(symbols: dict[str, int], asm_dir: Path) -> list[str]:
             if not m:
                 continue
             op, sym = m.group(1).lower(), m.group(2)
-            if sym not in zp_names or sym in PAGE100_SYMBOLS:
+            if sym not in zp_names or sym in STACK_PAGE_SYMBOLS:
                 continue
             if sym not in symbols:
                 continue
@@ -371,7 +371,7 @@ def scan_asm_writes(symbols: dict[str, int], asm_dir: Path) -> list[str]:
             if not m:
                 continue
             op, sym, op2, reg = m.group(1).lower(), m.group(2), m.group(3), m.group(4)
-            if sym not in zp_names or sym in PAGE100_SYMBOLS:
+            if sym not in zp_names or sym in STACK_PAGE_SYMBOLS:
                 continue
             base_size = SIZE_OVERRIDES.get(sym, 1)
             loc = f"{path.name}:{lineno}"
@@ -437,8 +437,8 @@ def main() -> int:
     all_warnings.extend(check_kernal(regions))
 
     if not args.no_page100:
-        print("Page $0100 tables:")
-        all_errors.extend(check_page100(symbols))
+        print("Stack page tables:")
+        all_errors.extend(check_stack_page(symbols))
         print()
 
     if args.asm:

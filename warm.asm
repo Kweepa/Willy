@@ -83,10 +83,10 @@ WarmStart
     dex
     bpl -
 
-    ldx #boot_page_size - 1     ; edge_tbl, x24rowtab, jumptab at $140+
+    ldx #stack_page_size - 1    ; x24rowtab..jumpnotes at $140+
 -
-    lda boot_page_pack,x
-    sta edge_tbl,x
+    lda stack_page_pack,x
+    sta x24rowtab,x
     dex
     bpl -
 

@@ -82,13 +82,13 @@
 ;   $1000-$100C  reloc block D (ResetMap; overwrites BASIC stub after WarmStart entry)
 ;   $01B6-$01BE  reloc block E (rope_release)
 ;
-; Page $0100 copied tables (WarmStart; stack must stay above $01C0):
+; Stack page ($100-$1FF) copied tables (WarmStart; stack must stay above $01C0):
 ;   $100-$13D  pickup_got
-;   $140-$157  edge_tbl (24 B)
-;   $158-$177  x24rowtab (32 B)
-;   $17C-$1B5  jumptab (58 B)
+;   $140-$163  x24rowtab (36 B)
+;   $164-$199  jumptab (54 B)
+;   $19A-$1B4  jumpnotes (27 B)
 ;   $01BF       guard byte before stack
-;   $01C0-$01FF stack
+;   $01C0-$01FF CPU stack
 ;
 ; Copied const tables (WarmStart; see runtime_const.asm boot pack):
 ;   $D6-$EF  belt..draw_vguard (26 B); $37-$42 draw_player tables (12 B)
@@ -218,7 +218,7 @@ up_down_ctr     = $47
 player_overlap  = $a0
 player_touch    = $a6
 
-; Page $0100 copied tables (WarmStart; stack must stay above $01C0)
-edge_tbl        = $140
-x24rowtab       = $158
-jumptab         = $17c
+; Stack page ($100-$1FF) copied tables (WarmStart; stack must stay above $01C0)
+x24rowtab       = $140
+jumptab         = $164
+jumpnotes       = $19a

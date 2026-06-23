@@ -1,4 +1,4 @@
-; Boot source tables — copied once at WarmStart to ZP ($D6+), page $100 ($140+), and cassette buffer ($35C+).
+; Boot source tables — copied once at WarmStart to ZP ($D6+), stack page ($140+), and cassette buffer ($35C+).
 ; Not read at runtime; game code uses equates in zp.asm / header.asm.
 
 boot_zp_pack
@@ -13,12 +13,7 @@ boot_zp_pack_end = *
 
 boot_zp_room_size = boot_draw_player_offsets - boot_zp_pack
 
-boot_page_pack
-    ; edge_tbl_boot / map.asm
-    !byte 0, 1, EDGE_EAST_PX, 1, EDGE_EAST_ENTRY_PX, $ff  ; east
-    !byte 0, 0, EDGE_WEST_PX + 1, 3, EDGE_WEST_ENTRY_PX, $ff ; west
-    !byte 1, 1, 128, 0, $ff, 104                          ; up (py >= $80: signed py < 0)
-    !byte 1, 1, 111, 2, $ff, 0                            ; down
+stack_page_pack
     ; x24rowtab_boot
     !word screen_base - 24
     !word screen_base + 0
@@ -41,7 +36,11 @@ boot_page_pack
     ; jumptab_boot / willy.asm Collide
     !byte -2, -1, -2, -1, -2, -1, -1, -1, -2, -1, -1, 0, -1, -1, -1, 0, -1, 0, -1, 0, 0, -1, 0, 0, 0, 0, 0
     !byte 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 2, 1, 1, 1, 2, 1, 2, 1, 2
-boot_page_pack_end = *
+    ; jumpnotes / willy.asm Collide
+    !byte 150,155,160,165,170,175,180,185,190
+    !byte 195,200,205,210,215,210,205,200,195
+    !byte 190,185,180,175,170,165,160,155,150
+stack_page_pack_end = *
 
 !source "rope_xadd_boot.asm"
 
@@ -53,9 +52,9 @@ boot_zp_size = boot_zp_pack_end - boot_zp_pack
 !error "boot_zp_room_size must be 18"
 }
 
-boot_page_size = boot_page_pack_end - boot_page_pack
-!if boot_page_size <> 114 {
-!error "boot_page_size must be 114"
+stack_page_size = stack_page_pack_end - stack_page_pack
+!if stack_page_size <> 117 {
+!error "stack_page_size must be 117"
 }
 
 boot_rope_xadd_size = boot_rope_xadd_pack_end - boot_rope_xadd_pack

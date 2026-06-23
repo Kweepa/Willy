@@ -49,13 +49,6 @@ ROOM_START = 1
 ROOM_TITLE = 62
 ENDING_TRIGGER_PX = 20
 
-; px is quarter-char units; 24-col playfield (cols 0-23)
-; Room transitions use hysteresis: exit threshold vs entry px differ by 1.
-EDGE_WEST_PX = 0               ; west exit when px <= 0
-EDGE_EAST_PX = 91              ; east exit when px >= 91
-EDGE_EAST_ENTRY_PX = 1         ; entering from the east (spawn west side)
-EDGE_WEST_ENTRY_PX = 90        ; entering from the west (spawn east side)
-
 ; 1 = emit border colour writes for raster timing bars; 0 = no code/size cost
 BORDER_DEBUG = 0
 
