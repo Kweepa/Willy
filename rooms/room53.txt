@@ -1,32 +1,33 @@
 @room 53
+@playable
 @title Back Door
 @conn 55 52 51 0
-@spawn 44 104
+@spawn 44 72
 @border BLU
 @belt 1
 
 @guardiansprites
 
 @tilemap
+            WW            
+            WW            
+            WW            
+            WW            
+            WW            
+            WW            
+            WW            
+            WW          
                         
                         
                         
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-       /FFFFFFFFFFFFFFFF
-      /WWW              
-     /WWWW              
-    /WWWWW              
-   /WWWWWW>>+>>>>>>>>>>>
+           /FFFFFFFFFFFF
+          /WW
+         /WWW        
+        /WWWW        
+       /WWWWW>>>>>>>>>>>
 
 @floorcolor PUR
-@wallcolor YEL
+@wallcolor GRN
 @nastycolor WHT
 @rampcolor WHT
 @beltcolor RED
@@ -34,6 +35,6 @@
 
 @floorudg 255,255,255,170,85,170,85,0
 @walludg 105,210,165,75,150,45,90,180
-@nastyudg 0,0,0,0,0,0,0,0 ; invert
+@nastyudg 0,0,0,0,0,0,0,0
 @rampudg 3,3,13,15,54,61,218,244
 @beltudg 240,240,240,240,102,102,0,0
