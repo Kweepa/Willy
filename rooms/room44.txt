@@ -1,7 +1,8 @@
 @room 44
+@playable
 @title Top of the house
-@conn 0 0 38 14
-@spawn 44 104
+@conn 255 255 38 14
+@spawn 0 24
 @border PUR
 @belt 0
 
@@ -17,28 +18,28 @@
                         
                         
                         
-              +         
-WW           /F         
-W           /F          
-W          /F           
-WW        /F            
-WWW      /F             
-WWWWW  W/F              
-WWWWWWWWF               
-WWWWWWWW                
-                        
-                        
-WWWWWWWW                
+                  +         
+WF W             /F         
+WF              /F          
+WF             /F           
+WF W          /F            
+WF WW        /F             
+WF WWW  W  W/F              
+WF WWWWWWWWWF               
+WF WWWWWWWWW                
+ F                        
+                          
+WWWWWWWWWWWW                
 
-@floorcolor YEL
+@floorcolor WHT
 @wallcolor PUR
 @nastycolor WHT
 @rampcolor WHT
 @beltcolor WHT
-@itemcolor GRN
+@itemcolor CYN
 
 @guardians
-x=15 y=24(0..64) v=2 f=0..3 CYN
+x=20 y=24(0..64) v=2 f=0..3 CYN
 
 @floorudg 160,64,128,0,0,0,0,0
 @walludg 81,170,0,170,21,170,0,170 ; invert
