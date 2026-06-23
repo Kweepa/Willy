@@ -1,7 +1,8 @@
 @room 17
+@playable
 @title On the Battlements
-@conn 0 16 0 18
-@spawn 44 104
+@conn 255 16 255 18
+@spawn 1 56
 @border BLU
 @belt -1
 
@@ -20,29 +21,29 @@
                         
                         
                         
-WWWW WWW <<<<< WWW WWWWW
-WWWW WWW WWWWW WWW WWWWW
-WWWW WWW WWWWW WWW WWWWW
-WWWW WWW WWWWW WWW WWWWW
-WWWW WWW WWWWW WWW WWWWW
-WWWW WWW WWWWW WWW WWWWW
+WWWF  WWF  <<<F  WWF  WW
+WWW*  WW*  WWW*  WW*  WW
+WWW*  WW*  WWW*  WW*  WW
+WWW*  WW*  WWW*  WW*  WW
+WWW*  WW*  WWW*  WW*  WW
+WWW*  WW*  WWW*  WW*  WW
 WWWWWWWWWWWWWWWWWWWWWWWW
 
 @floorcolor GRN
 @wallcolor YEL
-@nastycolor BLK
+@nastycolor GRN
 @rampcolor GRN
 @beltcolor RED
 @itemcolor CYN
 
 @guardians
 x=4 y=64(40..104) v=1 f=0..1 GRN
-x=8 y=80(44..104) v=2 f=0..1 RED
-x=14 y=48(48..96) v=4 f=0..1 YEL
-x=18 y=32(32..96) v=6 f=0..1 CYN
+x=9 y=80(44..104) v=2 f=0..1 RED
+x=15 y=48(48..96) v=4 f=0..1 YEL
+x=20 y=34(34..104) v=5 f=0..1 CYN
 
 @floorudg 128,192,224,176,144,148,214,119
-@walludg 0,127,127,99,107,99,127,127
-@nastyudg 74,42,26,72,108,106,41,136
-@beltudg 40,170,10,0,85,85,85,255 ; invert
+@walludg 127,127,99,107,99,127,127,0
+@nastyudg 74,42,26,72,108,106,41,136 ; invert
+@beltudg 40,170,10,0,85,85,85,255
 @itemudg 24,36,24,44,94,94,231,102

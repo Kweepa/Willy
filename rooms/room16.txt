@@ -1,7 +1,8 @@
 @room 16
+@playable
 @title A Quirkafleeg
 @conn 50 15 0 17
-@spawn 44 104
+@spawn 1 56
 @border RED
 @belt 0
 @rope
@@ -27,7 +28,7 @@
                         
                         
                         
-WWWW\              WWWWW
+WWWW>              WWWWW
 WWWWF              WWWWW
 WWWWF              WWWWW
 WWWWF              WWWWW
@@ -35,19 +36,19 @@ WWWWF              WWWWW
 WWWWF              WWWWW
 WWWWF**************WWWWW
 
-@floorcolor BLK
-@wallcolor CYN
+@floorcolor WHT
+@wallcolor BLU
 @nastycolor CYN
 @rampcolor WHT
 @beltcolor WHT
-@itemcolor PUR
+@itemcolor RED
 
 @guardians
-y=32 x=5(0..5) v=-1 f=0..7 GRN
+y=32 x=5(0..7) v=-1 f=0..7 GRN
 
-@floorudg 51,187,221,204,85,153,221,238
-@walludg 39,246,0,220,209,4,119,128
-@nastyudg 64,228,78,68,68,68,238,255 ; invert
+@floorudg 51,187,221,204,85,153,221,238 ; invert
+@walludg 39,246,0,220,209,4,119,128 ; invert
+@nastyudg 64,228,78,68,68,68,238,255
 @rampudg 128,64,32,48,168,100,34,17
-@beltudg 0,0,0,0,0,0,0,0 ; invert
+@beltudg 128,64,32,48,168,100,34,17
 @itemudg 24,36,24,44,94,94,231,102
