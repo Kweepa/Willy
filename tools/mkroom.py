@@ -291,8 +291,10 @@ def format_build_error(
     room: dict | None = None,
 ) -> str:
     title = (room or {}).get("title") or (scan_room_title(text) if text else "")
-    head = f"{src.name} — {title}" if title else src.name
-    return f"error: {head}: {exc}"
+    head = title if title else src.name
+    msg = str(exc)
+    msg = re.sub(r"^room \d+: ", "", msg)
+    return f"error: {head}: {msg}"
 
 
 def parse_guardian_line(
