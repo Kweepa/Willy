@@ -474,6 +474,7 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         "rope": False,
         "playable": False,
         "logo": None,
+        "hudright": "",
     }
     block = None
     block_lines = []
@@ -533,6 +534,8 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
                 room["id"] = int(parts[1])
             elif tag == "title":
                 room["title"] = line.split(None, 1)[1]
+            elif tag == "hudright":
+                room["hudright"] = line.split(None, 1)[1]
             elif tag == "conn":
                 room["conn"] = [parse_byte(x) for x in parts[1:5]]
             elif tag == "spawn":
@@ -627,6 +630,25 @@ def stamp_hud_title(tiles: bytearray, room: dict) -> None:
     base = (SCREEN_ROWS - 1) * WIDTH
     for i, ch in enumerate(title):
         tiles[base + i] = ascii_to_rom_screen(ch)
+
+
+def stamp_logo_hud_title(tiles: bytearray, room: dict) -> None:
+    """Logo room HUD row: @title left, optional @hudright flush to col 23."""
+    left = room["title"].upper()
+    right = room.get("hudright", "").upper()
+    if len(left) + len(right) > WIDTH:
+        raise room_error(
+            room,
+            f"@title + @hudright ({len(left)}+{len(right)}) exceed {WIDTH} HUD columns",
+        )
+    base = (SCREEN_ROWS - 1) * WIDTH
+    for i in range(WIDTH):
+        tiles[base + i] = ascii_to_rom_screen(" ")
+    for i, ch in enumerate(left):
+        tiles[base + i] = ascii_to_rom_screen(ch)
+    start = WIDTH - len(right)
+    for i, ch in enumerate(right):
+        tiles[base + start + i] = ascii_to_rom_screen(ch)
 
 
 def stamp_hud_men(tiles: bytearray) -> None:
@@ -1171,7 +1193,7 @@ def build_logo_room_image(room: dict, scan_key_row: int) -> bytes:
             f"logo needs {len(udg_data)} UDG bytes at $1C00; max {LOGO_UDG_MAX_BYTES}",
         )
 
-    stamp_hud_title(screen, room)
+    stamp_logo_hud_title(screen, room)
     tail = build_tail(room)
     prefix = build_prefix(room, scan_key_row)
 
