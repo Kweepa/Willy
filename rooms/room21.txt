@@ -39,10 +39,10 @@ FFFFFFFFFFFFFFFFFFFFFFFF
       WW                
       WW          FFFFFF
       WW                
-\     WW      +         
- \    WW                
-  \                     
-   \       >>>>>>>>>>   
+      WW      +         
+\     WW                
+ \                      
+  \        >>>>>>>>>>   
 FFFFFFFFFFFFFFFFFFFFFFFF
 WWWWWWWWWWWWWWWWWWWWWWWW
 

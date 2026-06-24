@@ -90,8 +90,8 @@ do_falling_ramp_check
 
     lda last_py
     clc
-    adc #15         ; 15 instead of 16 so that when entering a room from above on a ramp
-    cmp ramp_y      ; we end up on the ramp in this room not falling through it
+    adc #13         ; 13 instead of 16 so that when changing rooms east/west on a ramp
+    cmp ramp_y      ; we end up on the ramp in in the new room, not falling through it
     bcs .fall_ramp_check_end
 
     lda newy
