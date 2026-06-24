@@ -25,9 +25,9 @@
                         
                         
                         
-     **                 
-    ***FFF              
-      ***    /FFFFFFFFFF
+    **                 
+   ***FFF              
+      **     /FFFFFFFFFF
             / **W** *W**  
            /   ***  *W*   
           /          **   

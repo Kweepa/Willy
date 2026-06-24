@@ -65,4 +65,3 @@ x=10 y=24(0..96) v=6 f=8 GRN
 @nastyudg 3,132,72,48,3,132,72,48 ; invert
 @rampudg 3,3,12,13,50,55,194,200
 @beltudg 3,132,72,48,3,132,72,48 ; invert
-@itemudg 

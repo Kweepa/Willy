@@ -44,7 +44,7 @@ WWWW>>>>>>>>>>>>>>>>WWWW
 @itemcolor CYN
 
 @guardians
-y=48 x=18(5..15) v=-1 f=4..7 GRN
+y=48 x=15(5..15) v=-1 f=4..7 GRN
 y=72 x=7(5..18) v=1 f=4..7 YEL
 y=104 x=14(5..18) v=-1 f=0..3 PUR
 

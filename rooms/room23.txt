@@ -13,7 +13,7 @@
 
 @tilemap
                         
-                        
+         +              
                         
                         
                         
@@ -23,7 +23,7 @@ FF  FF  FF
 FF  FF                /W
         FF           /WW
                     /WWW
-                   /+     
+                   /      
 FF  FF  FF        /       
             FFF  /        
                 /WWWWWWW
@@ -40,11 +40,11 @@ WWWWWWWWWWWWWWWWWWWWWWWW
 x=2 y=32(8..104) v=3 f=0..1 PUR
 x=6 y=96(0..104) v=2 f=0..1 YEL
 x=10 y=64(0..104) v=-4 f=0..1 GRN
-x=15 y=32(8..96) v=3 f=0..1 PUR
+x=15 y=30(12..90) v=3 f=0..1 PUR
 
 @floorudg 254,1,125,133,129,129,129,1
 @walludg 66,165,90,36,36,90,165,66 ; invert
 @nastyudg 0,0,0,0,0,0,0,0 ; invert
 @rampudg 3,0,12,0,48,0,192,0
 @beltudg 0,0,0,0,0,0,0,0 ; invert
-@itemudg 32,64,160,24,22,9,8,4
+@itemudg 32,64,160,24,22,9,8,4 ; bottle opener
