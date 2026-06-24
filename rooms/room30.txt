@@ -1,7 +1,7 @@
 @room 30
 @playable
 @title The Banyan Tree
-@conn 255 29 255 31
+@conn 36 29 255 31
 @spawn 8 16
 @border PUR
 @belt 0
