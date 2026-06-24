@@ -170,6 +170,10 @@ G_OFF_FCTL = 7
 G_OFF_COLOR = 8
 G_OFF_AXIS = 9
 
+GUARDIAN_HORIZONTAL = 0
+GUARDIAN_VERTICAL = 1
+GUARDIAN_ORBIT_STEP_CAP = 512
+
 
 def parse_byte(s: str) -> int:
     """Parse a byte: decimal by default; $XX or 0xXX for hex (used in @*udg, @conn, sprite blocks)."""
@@ -334,7 +338,7 @@ def parse_guardian_line(
             )
         fctl_store = 1 if frame_count == 8 else 0  # bidirectional flag
 
-    return {
+    out = {
         "x": gx & 0xFF,
         "y": gy & 0xFF,
         "min": gmin & 0xFF,
@@ -345,6 +349,144 @@ def parse_guardian_line(
         "color": parse_vic_color(colour),
         "axis": axis,
     }
+    if line_no is not None:
+        out["line_no"] = line_no
+    out["line"] = line
+    return out
+
+
+def guardian_vel_signed(vel_byte: int) -> int:
+    return vel_byte if vel_byte < 128 else vel_byte - 256
+
+
+def guardian_error_loc(room: dict, g: dict) -> str:
+    src = Path(room["_source"]).name if room.get("_source") else "room"
+    line_no = g.get("line_no")
+    if line_no is not None:
+        return f"{src}:{line_no}"
+    return src
+
+
+def guardian_footprint_cells(hx: int, hy: int) -> list[tuple[int, int]]:
+    """Screen cells occupied by DrawGuardian (ConvertXYToScreenAddr + cell_off_2x3)."""
+    col = hx >> 2
+    row = hy >> 3
+    if (hy & 7) == 0:
+        dr_rows = (0, 0, 1, 1)
+    else:
+        dr_rows = (0, 0, 1, 1, 2, 2)
+    cells: list[tuple[int, int]] = []
+    for i, dr in enumerate(dr_rows):
+        c, r = col + (i & 1), row + dr
+        if 0 <= c < WIDTH and 0 <= r < TILEMAP_ROWS:
+            cells.append((c, r))
+    return cells
+
+
+def iter_guardian_orbit(g: dict) -> list[tuple[int, int, int]]:
+    """Return (hx, hy, step_index) for each position on the bounce orbit."""
+    axis = g["axis"]
+    vmin, vmax = g["min"], g["max"]
+    vel = guardian_vel_signed(g["vel"])
+    if axis == GUARDIAN_HORIZONTAL:
+        start, fixed = g["x"], g["y"]
+    else:
+        start, fixed = g["y"], g["x"]
+
+    out: list[tuple[int, int, int]] = []
+    if vel == 0:
+        if axis == GUARDIAN_HORIZONTAL:
+            out.append((start, fixed, 0))
+        else:
+            out.append((fixed, start, 0))
+        return out
+
+    pos = start
+    v = vel
+    seen: set[tuple[int, int]] = set()
+    step = 0
+    while step < GUARDIAN_ORBIT_STEP_CAP:
+        pos += v
+        key = (pos, v)
+        if key in seen:
+            break
+        seen.add(key)
+        if axis == GUARDIAN_HORIZONTAL:
+            out.append((pos, fixed, step))
+        else:
+            out.append((fixed, pos, step))
+        step += 1
+        if v > 0 and pos == vmax:
+            v = -v
+        elif v < 0 and pos == vmin:
+            v = -v
+    else:
+        raise ValueError(
+            f"guardian orbit exceeded {GUARDIAN_ORBIT_STEP_CAP} steps "
+            f"(range [{vmin}..{vmax}] v={vel})"
+        )
+    return out
+
+
+def validate_guardian_ranges(room: dict) -> None:
+    for g in room["guardians"]:
+        loc = guardian_error_loc(room, g)
+        axis = g["axis"]
+        vmin, vmax = g["min"], g["max"]
+        vel = guardian_vel_signed(g["vel"])
+        start = g["x"] if axis == GUARDIAN_HORIZONTAL else g["y"]
+
+        if vel == 0:
+            if not vmin <= start <= vmax:
+                raise room_error(
+                    room,
+                    f"{loc}: stationary_outside start={start} not in [{vmin}..{vmax}]",
+                )
+            continue
+
+        first = start + vel
+        if not vmin <= first <= vmax:
+            raise room_error(
+                room,
+                f"{loc}: first_step_outside first={first} not in [{vmin}..{vmax}]",
+            )
+
+        if axis == GUARDIAN_VERTICAL:
+            a = abs(vel)
+            if (start - vmin) % a:
+                raise room_error(
+                    room,
+                    f"{loc}: off_grid (start={start}-min={vmin}) % {a} != 0",
+                )
+            if (vmax - vmin) % a:
+                raise room_error(
+                    room,
+                    f"{loc}: span_indivisible (max-min)={vmax - vmin} % {a} != 0",
+                )
+
+
+def tilemap_passable_for_guardian(ch: str) -> bool:
+    """Only space and dot are empty for guardian path checks ('+' blocks)."""
+    return ch in (" ", ".")
+
+
+def validate_guardian_paths(room: dict) -> None:
+    tilemap = room["tilemap"]
+    for g in room["guardians"]:
+        loc = guardian_error_loc(room, g)
+        for hx, hy, step in iter_guardian_orbit(g):
+            for col, row in guardian_footprint_cells(hx, hy):
+                ch = tilemap[row][col]
+                if not tilemap_passable_for_guardian(ch):
+                    raise room_error(
+                        room,
+                        f"{loc}: path_not_empty step {step} cell ({col},{row}) tile {ch!r}",
+                    )
+
+
+def validate_guardians(room: dict) -> None:
+    validate_guardian_ranges(room)
+    validate_guardian_paths(room)
 
 
 def parse_tile_char(ch: str, room: dict | None = None) -> int:
@@ -476,6 +618,8 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         "logo": None,
         "hudright": "",
     }
+    if source:
+        room["_source"] = str(source)
     block = None
     block_lines = []
 
@@ -595,8 +739,7 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         room["items"] = extract_items_from_tilemap(room["tilemap"], room)
         room["ramp"] = infer_ramp_from_tilemap(room["tilemap"], room)
         validate_tilemap_belt(room["tilemap"], room["belt"], room)
-    if source:
-        room["_source"] = str(source)
+        validate_guardians(room)
     return room
 
 
