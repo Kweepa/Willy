@@ -28,6 +28,7 @@ UDG_BYTES = 56
 TILE_COLOR_BYTES = 6
 ITEM_DRAW_BYTES = 16
 ITEM_ERASE_BYTES = 11
+ITEM_FLICKER_BYTES = 16
 BAKE_DIR = Path(__file__).resolve().parent.parent / "bake"
 ACME = Path(r"\app\acme\acme.exe")
 JSW_LBL = Path(__file__).resolve().parent.parent / "jsw.lbl"
@@ -47,10 +48,12 @@ GUARDIAN_RECORD_BYTES = 10
 MAX_GUARDIANS = 6
 TAIL_BYTES = 104
 META_SIZE = 16 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
-IMAGE_LOAD = 0x1A12
+IMAGE_LOAD = 0x1A02
 CONVEYOR_PREFIX_BYTES = 19
 DO_BELT_SLOT_BYTES = 29
-GUARDIAN_PREFIX_BYTES = CONVEYOR_PREFIX_BYTES + DO_BELT_SLOT_BYTES + TILE_COLOR_BYTES
+GUARDIAN_PREFIX_BYTES = (
+    ITEM_FLICKER_BYTES + CONVEYOR_PREFIX_BYTES + DO_BELT_SLOT_BYTES + TILE_COLOR_BYTES
+)
 LOGO_ROOM_ID = 62
 LOGO_ORIGIN_COL = 4
 LOGO_ORIGIN_ROW = 4
@@ -62,9 +65,9 @@ SCREEN_BASE = 0x1E00
 MAP_BASE = 0x9400
 COLOR_BASE = 0x9600
 MAX_ITEMS = 1
-ROOM_IMAGE_SIZE = 0x5EE           # 1518 bytes ($1A12-$1FFF); DoBelt slot 29 B
+ROOM_IMAGE_SIZE = 0x5FE           # 1534 bytes ($1A02-$1FFF); FlickerItem +16 at load base
 HUD_UDG_BYTES = 16
-# Pad pins screen at $1E00: IMAGE_LOAD + prefix + sprites + player + hud + udg + pad == SCREEN_BASE
+# Pad pins screen at $1E00: IMAGE_LOAD + flicker + code prefix + sprites + ... + pad == SCREEN_BASE
 RUNTIME_UDG_PAD = 0x150           # 336 bytes ($1CB0-$1DFF)
 TILE_CHR_BASE = 16
 TILE_EMPTY = 0
@@ -673,8 +676,28 @@ def assemble_room_code(
     return data
 
 
+PICKUP_GOT_BASE = 0x100
+
+
+def build_item_flicker(room: dict) -> bytes:
+    """16 bytes at image_base ($1A02) — ACME bake/item_flicker.asm."""
+    if room.get("logo") or not room["items"]:
+        return noop_stub(ITEM_FLICKER_BYTES)
+    col, row = room["items"][0]
+    cell_off = row * WIDTH + col
+    col_addr = COLOR_BASE + cell_off
+    return assemble_room_code(
+        "item_flicker.asm",
+        {
+            "PICKUP_GOT": PICKUP_GOT_BASE + room["id"],
+            "COL_ADDR": col_addr,
+        },
+        ITEM_FLICKER_BYTES,
+    )
+
+
 def build_conveyor_animate(room: dict) -> bytes:
-    """19 bytes at image_base — ACME bake/animate_conveyors.asm."""
+    """19 bytes at room_code_base ($1A12) — ACME bake/animate_conveyors.asm."""
     return assemble_room_code(
         "animate_conveyors.asm",
         {"BELT": belt_byte(room["belt"])},
@@ -693,7 +716,8 @@ def build_do_belt(room: dict, scan_key_row: int) -> bytes:
 
 def build_prefix(room: dict, scan_key_row: int) -> bytes:
     return (
-        build_conveyor_animate(room)
+        build_item_flicker(room)
+        + build_conveyor_animate(room)
         + build_do_belt(room, scan_key_row)
         + build_tile_colors(room)
     )
@@ -1146,7 +1170,7 @@ def build_logo_room_image(room: dict, scan_key_row: int) -> bytes:
 
 
 def build_room_image(room: dict, scan_key_row: int) -> bytes:
-    """RAM image loaded at $1A12 (1518 bytes)."""
+    """RAM image loaded at $1A02 (1534 bytes)."""
     if room.get("logo"):
         return build_logo_room_image(room, scan_key_row)
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap", room))

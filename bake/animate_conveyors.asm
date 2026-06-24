@@ -1,4 +1,4 @@
-; Per-room conveyor UDG animation — 19-byte fixed prefix slot @ image_base.
+; Per-room conveyor UDG animation — 19-byte prefix slot @ $1A12 (room_code_base).
 ; CLI: -DBELT=$ff|$01|$00 -DSLOT_BYTES=19
 
 !source "equates.asm"

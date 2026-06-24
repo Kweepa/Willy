@@ -1,18 +1,19 @@
 ;
-; LoadRoom - KERNAL LOAD R00 PRG to image_base ($1A12), then:
+; LoadRoom - KERNAL LOAD R00 PRG to image_base ($1A02), then:
 ;   paint color RAM from tile_color_src lookup (tile types 0-5)
 ;   paint map_base ($9400): store tile type 0-5 (low nybble of screen chr 16-21);
 ;     map_base is VIC colour RAM — only low nybble valid; read with AND #$0f
 ;   draw item chr 15 separately (DrawItem) — not in tilemap
 ;
-; PRG image layout (1518 bytes at $1A12, ends $1FFF):
-;   +$000 AnimateConveyors 19 @ $1A12
-;   +$013 DoBelt 29 @ $1A25
-;   +$032 tile colours 6 @ $1A42
-;   +$038 guardian sprites 288 @ $1A48
-;   +$158 player_bmp 256 @ $1B68       (title room: logo UDGs span from $1C00)
-;   +$258 HUD UDG 16 @ $1C68 (chr 13-14)
-;   +$268 tile UDG 56 @ $1C78 (chr 15-21)
+; PRG image layout (1534 bytes at $1A02, ends $1FFF):
+;   +$000 FlickerItem 16 @ $1A02
+;   +$010 AnimateConveyors 19 @ $1A12
+;   +$023 DoBelt 29 @ $1A25
+;   +$040 tile colours 6 @ $1A42
+;   +$046 guardian sprites 288 @ $1A48
+;   +$166 player_bmp 256 @ $1B68       (title room: logo UDGs span from $1C00)
+;   +$266 HUD UDG 16 @ $1C68 (chr 13-14)
+;   +$276 tile UDG 56 @ $1C78 (chr 15-21)
 ;   +$280 runtime pad 336 ($1CB0-$1DFF)
 ;   +$3F0 screen 408 @ $1E00 (24x17)
 ;   +$588 tail 104 @ $1F98 (meta, guardian AoS)

@@ -19,7 +19,8 @@ main_loop
     jsr Collide
     jsr DrawHud
     jsr CheckEndingTeleport
-    jsr AnimateConveyors        ; baked per room at image_base
+    jsr FlickerItem             ; baked per room at image_base
+    jsr AnimateConveyors
     jsr WaitForRaster
     +BorderDebugColor 8
 

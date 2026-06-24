@@ -1,14 +1,17 @@
 ; unexpanded JSW layout
 
-image_base = $1a12                    ; +2 vs $1A10: DoBelt slot 29 B; pad pins screen -> $1E00
+image_base = $1a02                    ; KERNAL LOAD; room image $1A02-$1FFF (1534 B)
+item_flicker_prefix_bytes = 16
+room_code_base = $1a12                ; AnimateConveyors+; same absolute addrs as before flicker
 conveyor_prefix_bytes = 19
 do_belt_prefix_bytes = 29
-AnimateConveyors = image_base
-DoBelt = image_base + conveyor_prefix_bytes
+FlickerItem = image_base
+AnimateConveyors = room_code_base
+DoBelt = room_code_base + conveyor_prefix_bytes
 tile_color_bytes = 6
-tile_color_src = image_base + conveyor_prefix_bytes + do_belt_prefix_bytes
+tile_color_src = room_code_base + conveyor_prefix_bytes + do_belt_prefix_bytes
 guardian_sprites_base = tile_color_src + tile_color_bytes
-guardian_prefix_bytes = guardian_sprites_base - image_base
+guardian_prefix_bytes = guardian_sprites_base - room_code_base
 player_bmp = guardian_sprites_base + 288
 hud_udg_base = player_bmp + 256         ; chr 13-14 @ $1C68-$1C77
 runtime_udg_pad = $150                  ; 336 B ($1CB0-$1DFF); pins screen_base after load
@@ -30,7 +33,7 @@ STACK_FLOOR = $01c0
 ROPE_SEGMENT_Y = $33c            ; 32 B segment Y table ($33C-$35B)
 ROPE_XADD = $35c                 ; 54 B horiz shift table ($35C-$391); copied at WarmStart
 rope_xadd = ROPE_XADD
-room_image_size = $5ee           ; 1518 bytes ($1A12-$1FFF); DoBelt slot 29 B
+room_image_size = $5fe           ; 1534 bytes ($1A02-$1FFF); +16 B FlickerItem prefix
 tail_size = $68                  ; 104 bytes at end of room image
 meta_content_src = image_base + room_image_size - tail_size
 
