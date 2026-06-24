@@ -25,11 +25,3 @@ prg_end = *
 !source "warm.asm"
 !source "runtime_const.asm"
 !source "relocated_code.asm"
-
-prg_overlap = prg_end - image_base
-
-!if prg_overlap > 0 {
-!warn "PRG extends ", prg_overlap, " bytes past image_base room load base - trim resident code/data"
-} else {
-!warn "PRG has ", -prg_overlap, " bytes free before image_base room load base"
-}

@@ -35,8 +35,38 @@ RAM = [
 ]
 
 
+ROOM_BASE = 0x1A12
+
+
+def prg_slack(lbl: Path) -> int:
+    labels = {}
+    for line in lbl.read_text().splitlines():
+        m = re.match(r"al C:([0-9a-f]+) \.(.+)", line, re.I)
+        if m:
+            labels[m.group(2)] = int(m.group(1), 16)
+    prg_end = labels.get("prg_end", max(labels.values()))
+    return ROOM_BASE - prg_end
+
+
 def main():
-    lbl = Path(sys.argv[1] if len(sys.argv) > 1 else "jsw.lbl")
+    args = sys.argv[1:]
+    if args and args[0] == "--slack":
+        lbl = Path(args[1] if len(args) > 1 else "jsw.lbl")
+        slack = prg_slack(lbl)
+        if slack < 0:
+            over = -slack
+            print(
+                f"PRG extends {over} (0x{over:02X}) bytes past "
+                f"${ROOM_BASE:04X} image_base room load base"
+            )
+            sys.exit(1)
+        print(
+            f"PRG has {slack} (0x{slack:02X}) bytes free before "
+            f"${ROOM_BASE:04X} image_base room load base"
+        )
+        return
+
+    lbl = Path(args[0] if args else "jsw.lbl")
     labels = {}
     for line in lbl.read_text().splitlines():
         m = re.match(r"al C:([0-9a-f]+) \.(.+)", line, re.I)
@@ -53,7 +83,7 @@ def main():
     bounds.sort()
     prg_end = labels.get("prg_end", max(labels.values()))
     load_base = 0x1000
-    room_base = 0x1A12
+    room_base = ROOM_BASE
     room_size = 0x5EE
 
     total = prg_end - load_base

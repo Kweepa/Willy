@@ -13,5 +13,7 @@ echo [3/3] Building disk image...
 python tools\mkdisk.py --out jsw.d64 --prg jsw.prg --rooms rooms/out
 if errorlevel 1 exit /b 1
 
+python tools\memmap.py --slack
+if errorlevel 1 exit /b 1
 echo After reproducing a death, run: python tools\debug_dump.py
 \app\vice3.10\bin\xvic -pal +basicload -autostart jsw.d64 -remotemonitor -remotemonitoraddress 127.0.0.1:6510

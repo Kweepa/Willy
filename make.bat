@@ -18,5 +18,7 @@ python tools\mkdisk.py --out jsw.d64 --prg jsw.prg --rooms rooms/out
 if errorlevel 1 exit /b 1
 
 python tools\mkroom.py --status rooms
+python tools\memmap.py --slack
+if errorlevel 1 exit /b 1
 
 \app\vice3.10\bin\xvic -pal +basicload -autostart jsw.d64
