@@ -402,6 +402,7 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         "conn": [0xFF, 0xFF, 0xFF, 0xFF],
         "spawn": (0, 0),
         "border": 0,
+        "background": 0,
         "belt": 0,
         "ramp": 0,
         "tilemap": [],
@@ -478,6 +479,8 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
                 room["spawn"] = (int(parts[1]), int(parts[2]))
             elif tag == "border":
                 room["border"] = parse_vic_color(parts[1])
+            elif tag == "background":
+                room["background"] = parse_vic_color(parts[1])
             elif tag == "belt":
                 room["belt"] = int(parts[1])
             elif tag == "rope":
@@ -956,7 +959,7 @@ def build_meta(room: dict) -> bytes:
         raise room_error(room, f"too many guardians ({len(g)}, max {MAX_GUARDIANS})")
     meta = bytearray()
     meta.append(len(g))
-    meta.append(room["border"] | 8)   # full $900F: white bg (bit 3) + border 0-7
+    meta.append((room["background"] << 4) | 8 | room["border"])  # full $900F
     meta.append(room["spawn"][0] & 0xFF)
     meta.append(room["spawn"][1] & 0xFF)
     meta.append(belt_byte(room["belt"]))

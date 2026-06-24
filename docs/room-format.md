@@ -40,7 +40,8 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@title` | text | Room name (HUD row 16, max 18 characters) |
 | `@conn` | N E S W | Neighbours: room number or `FF` (hex ok: `$FF`) |
 | `@spawn` | px py | Willy start (quarter-char X, single-pixel head Y) |
-| `@border` | colour | Border colour (BLK WHT RED CYN PUR GRN BLU YEL). `mkroom` stores `border \| 8` in meta — full VIC `$900F` byte (white background + border). |
+| `@border` | colour | Border colour (BLK WHT RED CYN PUR GRN BLU YEL). Combined with `@background` into the meta border byte (full VIC `$900F` value). |
+| `@background` | colour | Screen background colour; optional, default **BLK**. Omit when black background is correct. |
 | `@belt` | speed | Conveyor speed: `-1`, `0`, or `1` |
 | `@playable` | — | Tooling only: room is playtest-ready. Ignored by the binary build. `mkroom.py --status` (or `--all`) reports how many rooms are tagged vs still need work. |
 | `@guardiansprites` | block | 256 bytes: 8 frames × 32 bytes. Author in Skool interleaved format (left, right byte pairs per scanline). `mkroom` converts to column-major (16-byte left column, 16-byte right column) in the PRG. |
@@ -95,15 +96,16 @@ Split outputs (optional): `ROOMnn.TIL`, `ROOMnn.COL`, `ROOMnn.MET`.
 
 ### Meta border byte (`$1F99`) and VIC `$900F`
 
-`$900F` sets **screen background** (bits 3–5) and **border** (bits 0–2) only; it does not affect per-cell color RAM.
+`$900F` sets **screen background** (bits 4–7) and **border** (bits 0–3) only; it does not affect per-cell color RAM.
 
-Packed value: `(background << 3) | border`. All rooms use white background (`bg = 1`), so meta stores `border | 8`:
+Packed value: `(background << 4) | 8 | border`. Bit 3 (`| 8`) is always set in the baked byte. Omitting `@background` is equivalent to `@background BLK`.
 
-| `@border` | Meta byte | `$900F` |
-|-----------|-----------|---------|
-| BLK | 8 | white bg, black border |
-| RED | 10 | white bg, red border |
-| BLU | 14 | white bg, blue border |
+| `@background` | `@border` | Meta byte | `$900F` |
+|---------------|-----------|-----------|---------|
+| (omit / BLK) | BLK | 8 | black bg, black border |
+| (omit / BLK) | CYN | 11 | black bg, cyan border |
+| (omit / BLK) | RED | 10 | black bg, red border |
+| RED | CYN | 43 | red bg, cyan border |
 
 Runtime (`ParseRoomMeta`) loads this byte and writes it directly to `$900F` — no `and`/`ora` at load time.
 
