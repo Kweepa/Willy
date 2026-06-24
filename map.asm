@@ -119,5 +119,8 @@ do_room_change
     sta use_room_spawn          ; edge transition - px/py already set, not @spawn
     jsr LoadRoom
     jsr SaveSpawn
+
+    jsr do_falling_ramp_check
+
     sec ; don't draw player after, since we did transition
     rts

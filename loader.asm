@@ -41,15 +41,61 @@ LoadRoom
     jsr $ffd5                    ; LOAD — uses SETNAM/SETLFS; loads file to RAM
     sei                          ; KERNAL LOAD leaves IRQs enabled
 
-    jsr ParseRoomMeta
+    lda meta_content_border
+    sta $900f
 
+     ; shut off sound effects
+    ldx #0
+    stx $900c
+
+    ; minimal rope/conveyor/ramp clear
+    stx belt_active
+    stx is_on_ramp
+    stx rope_willy_is_holding
+    stx rope_udg
+    stx rope_frame
+    stx rope_grab_cooldown ; allow immediate grab on entering a rope room
+    stx rope_swing_side ; this needs to be 0 or 1
+    inx
+    stx rope_swing_dir ; this needs to be -1 or 1
+
+    stx on_ground
+    stx was_on_ground
+
+    ; spawn at position set in the room meta data?
+    ; otherwise px and py are already set up (from room transition)
+    lda use_room_spawn
+    beq +
+    lda meta_content_spawn_px
+    sta px
+    lda meta_content_spawn_py
+    sta py
++
+    ; must be after px is set
+    jsr calculate_ramp_y
+
+    lda #27
+    sta inairtime
+    lda py
+    sta last_py
+
+    ; special map cases
     lda map
     cmp #ROOM_TITLE
     bne +
     rts
 +
+    ; check for endgame - turn off Maria if conditions are met
+    cmp #ROOM_MASTER_BED
+    bne +
+    lda items_collected
+    cmp #ITEMS_REQUIRED
+    bcc +
+    lda #0
+    sta meta_content_guardians
++
 
-.paint_colours
+    ; paint screen colours
     ldy #0
 -
     lda screen_base,y
@@ -76,51 +122,10 @@ LoadRoom
     dey
     bne -
 
-.draw_item
+    ; draw item
     ldx map
     lda pickup_got,x
     bne +
     jsr item_draw
 +
-
-    jmp DrawPlayerBody ; tail call
-
-
-;
-; Layout: guardians, border, spawn x2, belt, ramp, rx1, rx2, ry, E, A, conn x4, item draw;
-;         meta_content_room_has_rope, guardian AoS
-ParseRoomMeta
-    lda meta_content_border
-    sta $900f
-
-    ; minimal rope/conveyor/ramp clear
-    ldx #0
-    stx $900c ; shut off sound effects
-    stx belt_active
-    stx is_on_ramp
-    stx rope_willy_is_holding
-    stx rope_udg
-    stx rope_frame
-    stx rope_grab_cooldown ; allow immediate grab on entering a rope room
-    stx rope_swing_side ; this needs to be 0 or 1
-    inx
-    stx rope_swing_dir ; this needs to be -1 or 1
-
-    ; spawn at position set in the room meta data?
-    ; otherwise px and py are already set up (from room transition)
-    lda use_room_spawn
-    beq skip_room_spawn
-    lda meta_content_spawn_px
-    sta px
-    lda meta_content_spawn_py
-    sta py
-
-skip_room_spawn
-    lda #27
-    sta inairtime
-    lda #1
-    sta on_ground
-    sta was_on_ground
-    lda py
-    sta last_py
-    jmp ApplyEndgameRoomLoad  ; tail call
+    rts
