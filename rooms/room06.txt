@@ -3,7 +3,8 @@
 @title Entrance to Hades
 @conn 255 255 255 255
 @spawn 36 8
-@border YEL
+@border RED
+@background YEL
 @belt 0
 
 @guardiansprites

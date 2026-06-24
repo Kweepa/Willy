@@ -4,6 +4,7 @@
 @conn 255 255 16 255
 @spawn 48 104
 @border CYN
+@background BLU
 @belt 1
 
 @guardiansprites

@@ -3,7 +3,8 @@
 @title Cold Store
 @conn 31 24 0 52
 @spawn 44 104
-@border BLU
+@border CYN
+@background BLU
 @belt 0
 @rope
 

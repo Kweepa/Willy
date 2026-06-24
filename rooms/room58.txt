@@ -4,6 +4,7 @@
 @conn 255 51 255 59
 @spawn 91 48
 @border RED
+@background BLU
 @belt -1
 @rope
 
