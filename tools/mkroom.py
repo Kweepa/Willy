@@ -1244,6 +1244,18 @@ def playable_status(
     return playable, need_work
 
 
+def count_items(indir: Path) -> int:
+    """Total pickup markers ('+') across playable rooms (excludes @logo)."""
+    total = 0
+    for src in sorted(indir.glob("room*.txt")):
+        text = src.read_text(encoding="utf-8")
+        room = parse_room(text, source=src)
+        if room.get("logo"):
+            continue
+        total += len(room["items"])
+    return total
+
+
 def print_playable_summary(indir: Path) -> None:
     playable, need_work = playable_status(indir)
     total = len(playable) + len(need_work)
@@ -1278,7 +1290,18 @@ def main():
         action="store_true",
         help="report @playable room counts only (no build)",
     )
+    ap.add_argument(
+        "--count-items",
+        action="store_true",
+        help="print total '+' pickup count for rooms dir (for -DITEMS_REQUIRED)",
+    )
     args = ap.parse_args()
+    if args.count_items:
+        indir = Path(args.input or "rooms")
+        if not indir.is_dir():
+            ap.error(f"not a directory: {indir}")
+        print(count_items(indir))
+        return
     if args.status:
         indir = Path(args.input or "rooms")
         if not indir.is_dir():

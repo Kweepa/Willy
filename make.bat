@@ -2,7 +2,8 @@
 rem Build order: resident jsw.prg (jsw.lbl) -> room PRGs (ACME bake via mkroom) -> disk
 
 echo [1/4] Assembling resident jsw.prg...
-\app\acme\acme -o jsw.prg --vicelabels jsw.lbl jsw.asm
+for /f %%i in ('python tools\mkroom.py --count-items rooms') do set ITEMS_REQUIRED=%%i
+\app\acme\acme -o jsw.prg -DITEMS_REQUIRED=%ITEMS_REQUIRED% --vicelabels jsw.lbl jsw.asm
 if errorlevel 1 exit /b 1
 AcmeLabelSorter jsw.lbl jsws.lbl
 
@@ -20,5 +21,6 @@ if errorlevel 1 exit /b 1
 python tools\mkroom.py --status rooms
 python tools\memmap.py --slack
 if errorlevel 1 exit /b 1
+echo ITEMS_REQUIRED=%ITEMS_REQUIRED% (from room '+' markers)
 
 \app\vice3.10\bin\xvic -pal +basicload -autostart jsw.d64

@@ -42,10 +42,11 @@ RAMP_UP_LEFT = $FF
 
 ; Endgame: collect ITEMS_REQUIRED pickups, enter master bedroom (Maria vanishes),
 ; walk to ENDING_TRIGGER_PX, then teleport to bathroom for the toilet ending.
-ITEMS_REQUIRED = 2
+; ITEMS_REQUIRED is set at assemble time: make.bat counts '+' in rooms/*.txt
+; and passes -DITEMS_REQUIRED=N to ACME.
 ROOM_MASTER_BED = 35
 ROOM_BATHROOM = 33
-ROOM_START = 53
+ROOM_START = 5
 ROOM_TITLE = 62
 ENDING_TRIGGER_PX = 20
 
