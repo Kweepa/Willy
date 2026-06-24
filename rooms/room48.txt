@@ -33,11 +33,11 @@
        FFF     WW  F     
              F WW      W
                WW     WW
-           /F  WW   WWWW
-          /   FWW  W F W
-         /     WW      W
-        /WWWWWWWWWWWWWW 
-       / WWWWWWWWWWWWW 
+          /FF  WW   WWWW
+         /    FWW  W F W
+        /      WW      W
+       / WWWWWWWWWWWWWW 
+      /  WWWWWWWWWWWWW 
 
 @floorcolor CYN
 @wallcolor PUR

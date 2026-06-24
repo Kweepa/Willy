@@ -20,11 +20,11 @@
                         
                         
                         
-           /FFFFFFFFFFFF
-          /WW
-         /WWW        
-        /WWWW        
-       /WWWWW>>>>>>>>>>>
+          /FFFFFFFFFFFFF
+         /WW
+        /WWW        
+       /WWWW        
+      /WWWWW>>>>>>>>>>>>
 
 @floorcolor PUR
 @wallcolor GRN

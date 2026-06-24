@@ -30,15 +30,15 @@
                         
                         
 FFFW                    
-   W  *  *   *  *   *     
+   W  *  *   *  *   *   
    WFFFFFFFFFFFFFFFFFFFF
    W                    
    W+                   
 F  W                    
    W                   
-  FW                   / 
-   W                  /  
-F  WFFFFFFFFFFFFFFFF /FF
+  FW                    
+   W                    
+F  WFFFFFFFFFFFFFFFF  FF
 
 @floorcolor PUR
 @wallcolor GRN

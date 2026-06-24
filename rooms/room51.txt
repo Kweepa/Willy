@@ -2,7 +2,7 @@
 @playable
 @title Tool Shed
 @conn 53 49 255 58
-@spawn 44 104
+@spawn 0 48
 @border CYN
 @belt 1
 

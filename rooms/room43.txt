@@ -26,15 +26,15 @@
                         
                         
                         
-                /WWWWWWW
-               / * *+ * 
-              /         
-             /          
-            /           
-           /            
-          /        F>>>>
-         /          FFFF
-        /        F      
+               /WWWWWWWW
+              /  * *+ * 
+             /         
+            /          
+           /           
+          /            
+         /         F>>>>
+        /           FFFF
+       /         F      
 
 @floorcolor GRN
 @wallcolor CYN
