@@ -83,37 +83,38 @@ CheckRoomEdge
     cpx #$ff
     bne +
     ldx #91
-    bne do_room_change ; always
+    bne .do_room_change ; always
 +
     ; check east
     lda meta_content_conn + 1
     cpx #92
     bne +
     ldx #0
-    beq do_room_change ; always
+    beq .do_room_change ; always
 +
     ; check north
     lda meta_content_conn
     cpy #128
     bcc +   ; branch if Y < 128
     ldy #104
-    bne do_room_change ; always
+    bne .do_room_change ; always
 +
     ; check south
     lda meta_content_conn + 2
     cpy #111
     bcc +    ; branch if Y < 111
     ldy #0
-    beq do_room_change ; always
+    beq .do_room_change ; always
 +
     clc ; draw player after, since we didn't transition
     rts
 
-do_room_change
+.do_room_change
     sta map
     stx px
     sty py
     sty last_py  ; if we change from bottom to top of room, this would be huge
+    sty newy
 
     lda #0
     sta use_room_spawn          ; edge transition - px/py already set, not @spawn
