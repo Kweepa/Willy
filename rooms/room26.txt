@@ -17,7 +17,7 @@
 
 @tilemap
 WW        WW             
-WW    +   WW             
+WW        WW             
 WW        WW             
 WW        WW             
 WW       FWW             

@@ -31,7 +31,7 @@
           WW      /    *
        FF WW     /  F  *
 FFFF      WWFFF        *
-  +       WW         F *
+          WW         F *
           WW       F   *
           WW  FF       *
           WW           *
