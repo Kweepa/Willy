@@ -2,9 +2,9 @@
 @playable
 @title The Front Door
 @conn 0 9 5 11
-@spawn 4 96
+@spawn 0 96
 @border RED
-@background CYN
+@background LIGHT BLU
 @belt 0
 
 @guardiansprites
@@ -24,8 +24,8 @@ WWWWWWWWWWWW
                         
                         
                         
-F\                       
-WW\                     
+FF\                       
+WWW\                     
 
 @floorcolor WHT
 @wallcolor RED

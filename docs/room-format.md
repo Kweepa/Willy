@@ -28,7 +28,7 @@ Each `@tilemap` row must be exactly **24 characters** wide. Rows that are entire
 
 ## Color digits
 
-Each cell is VIC color **0–7** (0=black, 1=white, 2=red, 3=cyan, 4=purple, 5=green, 6=blue, 7=yellow).
+Each cell is VIC color **0–7** (0=black, 1=white, 2=red, 3=cyan, 4=purple, 5=green, 6=blue, 7=yellow). Extended colours **8–15** are valid only for `@background` (see header tags).
 
 ## Header tags
 
@@ -41,7 +41,7 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@conn` | N E S W | Neighbours: room number or `FF` (hex ok: `$FF`) |
 | `@spawn` | px py | Willy start (quarter-char X, single-pixel head Y) |
 | `@border` | colour | Border colour (BLK WHT RED CYN PUR GRN BLU YEL). Combined with `@background` into the meta border byte (full VIC `$900F` value). |
-| `@background` | colour | Screen background colour; optional, default **BLK**. Omit when black background is correct. |
+| `@background` | colour | Screen background colour; optional, default **BLK**. Standard colours 0–7 as above; extended VIC background-only colours 8–15: **ORN**, **LIGHT ORN**, **LIGHT RED**, **LIGHT CYN**, **LIGHT PUR**, **LIGHT GRN**, **LIGHT BLU**, **LIGHT YEL** (two-word `LIGHT …` tokens). Digits 0–15 also accepted. Omit when black background is correct. |
 | `@belt` | speed | Conveyor speed: `-1`, `0`, or `1` |
 | `@playable` | — | Tooling only: room is playtest-ready. Ignored by the binary build. `mkroom.py --status` (or `--all`) reports how many rooms are tagged vs still need work. |
 | `@guardiansprites` | block | 256 bytes: 8 frames × 32 bytes. Author in Skool interleaved format (left, right byte pairs per scanline). `mkroom` converts to column-major (16-byte left column, 16-byte right column) in the PRG. |
@@ -106,6 +106,7 @@ Packed value: `(background << 4) | 8 | border`. Bit 3 (`| 8`) is always set in t
 | (omit / BLK) | CYN | 11 | black bg, cyan border |
 | (omit / BLK) | RED | 10 | black bg, red border |
 | RED | CYN | 43 | red bg, cyan border |
+| LIGHT CYN | BLK | B8 | light cyan bg, black border |
 
 Runtime (`ParseRoomMeta`) loads this byte and writes it directly to `$900F` — no `and`/`ora` at load time.
 

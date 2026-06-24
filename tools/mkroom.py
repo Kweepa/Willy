@@ -127,6 +127,18 @@ VIC_COLOR = {
     "YEL": 7,
 }
 
+# VIC-20 screen background only ($900F bits 4-7); not valid for border or color RAM.
+VIC_BG_EXTRA = {
+    "ORN": 8,
+    "LIGHT ORN": 9,
+    "LIGHT RED": 10,
+    "LIGHT CYN": 11,
+    "LIGHT PUR": 12,
+    "LIGHT GRN": 13,
+    "LIGHT BLU": 14,
+    "LIGHT YEL": 15,
+}
+
 GUARDIAN_DSL_H = re.compile(
     r"y\s*=\s*(\d+)\s+"
     r"x\s*=\s*(\d+)\((\d+)\.\.(\d+)\)\s+"
@@ -182,6 +194,37 @@ def parse_vic_color(token: str) -> int:
         return v
     names = ", ".join(VIC_COLOR)
     raise ValueError(f"unknown colour {token!r} (use {names})")
+
+
+def parse_vic_bg_color(value_tokens: list[str]) -> int:
+    """Parse @background colour: standard 0-7, extended 8-15, or digit 0-15."""
+    if not value_tokens:
+        raise ValueError("missing background colour")
+    if value_tokens[0].strip().upper() == "LIGHT":
+        if len(value_tokens) < 2:
+            raise ValueError("LIGHT background colour needs a second token (ORN, RED, …)")
+        key = f"LIGHT {value_tokens[1].strip().upper()}"
+        if key in VIC_BG_EXTRA:
+            return VIC_BG_EXTRA[key]
+        names = ", ".join(VIC_BG_EXTRA)
+        raise ValueError(f"unknown background colour {key!r} (use {names})")
+    s = value_tokens[0].strip().upper()
+    if s in VIC_COLOR:
+        return VIC_COLOR[s]
+    if s in VIC_BG_EXTRA:
+        return VIC_BG_EXTRA[s]
+    if s.isdigit():
+        v = int(s)
+        if v > 15:
+            raise ValueError(f"background colour out of range 0-15: {v}")
+        return v
+    std = ", ".join(VIC_COLOR)
+    extra = ", ".join(k for k in VIC_BG_EXTRA if not k.startswith("LIGHT "))
+    light = ", ".join(k for k in VIC_BG_EXTRA if k.startswith("LIGHT "))
+    raise ValueError(
+        f"unknown background colour {value_tokens[0]!r} "
+        f"(use {std}, {extra}, or {light})"
+    )
 
 
 def parse_byte_list(text: str) -> list[int]:
@@ -480,7 +523,7 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
             elif tag == "border":
                 room["border"] = parse_vic_color(parts[1])
             elif tag == "background":
-                room["background"] = parse_vic_color(parts[1])
+                room["background"] = parse_vic_bg_color(parts[1:])
             elif tag == "belt":
                 room["belt"] = int(parts[1])
             elif tag == "rope":
