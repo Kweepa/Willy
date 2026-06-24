@@ -57,13 +57,13 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@rampcolor` | colour | Ramp `/` `\` (type 4) |
 | `@beltcolor` | colour | Conveyor `<` `>` (type 5) |
 | `@itemcolor` | colour | Item pickup cell colour for baked `FlickerItem` (optional when no `+`; default YEL) |
-| `@emptyudg` | bytes | 8 comma-separated bytes for empty tile; optional, default **8×0** |
-| `@floorudg` | bytes | Floor UDG (`; invert` suffix optional) |
-| `@walludg` | bytes | Wall UDG |
-| `@nastyudg` | bytes | Hazard UDG |
-| `@rampudg` | bytes | Ramp UDG |
-| `@beltudg` | bytes | Conveyor UDG |
-| `@itemudg` | bytes | Item UDG (optional when no `+`) |
+| `@emptyudg` | bytes | 8 comma-separated bytes for empty tile; optional, default **8×0**. Decimal by default; **`$XX` hex** ok (e.g. `$FF, 0, 16`) |
+| `@floorudg` | bytes | Floor UDG (`; invert` suffix optional); decimal or **`$XX` hex** |
+| `@walludg` | bytes | Wall UDG; decimal or **`$XX` hex** |
+| `@nastyudg` | bytes | Hazard UDG; decimal or **`$XX` hex** |
+| `@rampudg` | bytes | Ramp UDG; decimal or **`$XX` hex** |
+| `@beltudg` | bytes | Conveyor UDG; decimal or **`$XX` hex** |
+| `@itemudg` | bytes | Item UDG (optional when no `+`); decimal or **`$XX` hex** |
 | `@guardians` | list | Guardian DSL per line (see below). Horizontal: **4 or 8** sprite frames (`f=0..3` uni, `f=0..7` bi); byte 7 stores bidirectional flag. Vertical: **1, 2, or 4** frames; byte 7 stores wrap mask. |
 | `@guardianbmp` | block | Optional; hex bytes, 128 per guardian in order |
 

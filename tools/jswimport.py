@@ -596,8 +596,15 @@ def needs_invert(attr: int) -> bool:
     return bool(attr & 0x40)
 
 
+def format_room_byte(b: int) -> str:
+    """Format a byte for room source: decimal 0-15, $XX hex for 16-255."""
+    if b <= 15:
+        return str(b)
+    return f"${b:02X}"
+
+
 def format_udg_tag(tag: str, bs: list[int], invert: bool) -> str:
-    parts = ",".join(str(b) for b in bs)
+    parts = ",".join(format_room_byte(b) for b in bs)
     suffix = " ; invert" if invert else ""
     return f"@{tag} {parts}{suffix}"
 

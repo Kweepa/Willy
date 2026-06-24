@@ -172,14 +172,25 @@ G_OFF_AXIS = 9
 
 
 def parse_byte(s: str) -> int:
-    """Parse a byte value; decimal by default (Skoolkit style), optional $FF hex."""
+    """Parse a byte: decimal by default; $XX or 0xXX for hex (used in @*udg, @conn, sprite blocks)."""
     s = s.strip().upper()
     if s.startswith("$"):
-        v = int(s[1:], 16)
+        try:
+            v = int(s[1:].strip(), 16)
+        except ValueError as e:
+            raise ValueError(f"invalid hex byte {s!r}") from e
     elif s.startswith("0X"):
-        v = int(s[2:], 16)
+        try:
+            v = int(s[2:], 16)
+        except ValueError as e:
+            raise ValueError(f"invalid hex byte {s!r}") from e
     else:
-        v = int(s)
+        try:
+            v = int(s, 10)
+        except ValueError as e:
+            raise ValueError(
+                f"byte value {s!r}: use decimal or $XX hex (e.g. 255 or $FF)"
+            ) from e
     if not 0 <= v <= 255:
         raise ValueError(f"byte out of range 0-255: {v}")
     return v
@@ -231,7 +242,7 @@ def parse_vic_bg_color(value_tokens: list[str]) -> int:
 
 
 def parse_byte_list(text: str) -> list[int]:
-    """Comma-separated byte list (Skoolkit style): 0, 0, 255, 24."""
+    """Comma-separated byte list: decimal by default, $XX hex ok (e.g. 255, $FF, 16)."""
     return [parse_byte(part) for part in text.split(",") if part.strip()]
 
 
@@ -347,7 +358,7 @@ def parse_tile_char(ch: str, room: dict | None = None) -> int:
 
 
 def parse_udg_bytes(content: str) -> bytes:
-    """Parse UDG byte list with optional '; invert' suffix."""
+    """Parse UDG byte list with optional '; invert' suffix. Bytes: decimal or $XX hex."""
     content = content.split("#", 1)[0].strip()
     invert = False
     if ";" in content:
@@ -457,6 +468,7 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         "items": [],
         "guardians": [],
         "tileudg": [bytes(8) for _ in range(7)],
+        "itemudg_defined": False,
         "guardiansprites": b"",
         "playerbmp": b"",
         "rope": False,
@@ -478,6 +490,8 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
                 idx = int(m.group(1))
                 if idx < 7:
                     room["tileudg"][idx] = parse_udg_bytes(m.group(2).strip())
+                    if idx == 6:
+                        room["itemudg_defined"] = True
         elif block == "guardiansprites":
             bs = []
             for line in block_lines:
@@ -543,7 +557,10 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
                 room["tilecolors"][TILE_COLOR_TAGS[tag]] = parse_vic_color(parts[1])
             elif tag in TILE_UDG_TAGS:
                 content = line.split(None, 1)[1] if len(parts) > 1 else ""
-                room["tileudg"][TILE_UDG_TAGS[tag]] = parse_udg_bytes(content)
+                idx = TILE_UDG_TAGS[tag]
+                room["tileudg"][idx] = parse_udg_bytes(content)
+                if idx == 6:
+                    room["itemudg_defined"] = True
             elif tag == "itemcolor":
                 room["itemcolor"] = parse_vic_color(parts[1])
             elif tag == "logo":
@@ -1256,6 +1273,81 @@ def count_items(indir: Path) -> int:
     return total
 
 
+LINT_SOLID_CHARS = frozenset("FW/\\<>")
+LINT_ITEM_MAX_TILE_DIST = 4
+LINT_ITEM_MAX_ABOVE = 5
+
+
+def _tilemap_solid_cells(tilemap: list) -> list[tuple[int, int]]:
+    cells: list[tuple[int, int]] = []
+    for row, line in enumerate(tilemap):
+        if row >= TILEMAP_ROWS:
+            continue
+        for col, ch in enumerate(normalize_tilemap_row(line)):
+            if ch in LINT_SOLID_CHARS:
+                cells.append((col, row))
+    return cells
+
+
+def _chebyshev(a: tuple[int, int], b: tuple[int, int]) -> int:
+    return max(abs(a[0] - b[0]), abs(a[1] - b[1]))
+
+
+def _nearest_solid_tiles(pos: tuple[int, int], solids: list[tuple[int, int]]) -> int:
+    if not solids:
+        return 999
+    return min(_chebyshev(pos, s) for s in solids)
+
+
+def _solid_reachable(pos: tuple[int, int], solids: list[tuple[int, int]]) -> bool:
+    """True if pickup is within Chebyshev distance or directly above solid (<=5 rows)."""
+    col, row = pos
+    for sc, sr in solids:
+        if sc == col and sr > row and sr - row <= LINT_ITEM_MAX_ABOVE:
+            return True
+        if _chebyshev(pos, (sc, sr)) <= LINT_ITEM_MAX_TILE_DIST:
+            return True
+    return False
+
+
+def lint_room(room: dict) -> list[str]:
+    """Return pickup placement warnings for one parsed room."""
+    if room.get("logo") or not room["items"]:
+        return []
+    warnings: list[str] = []
+    if not room.get("itemudg_defined"):
+        warnings.append("missing @itemudg")
+    elif not any(room["tileudg"][6]):
+        warnings.append("@itemudg is all zeros")
+    solids = _tilemap_solid_cells(room["tilemap"])
+    for col, row in room["items"]:
+        pos = (col, row)
+        if room["itemcolor"] == VIC_COLOR["BLK"]:
+            warnings.append(f"@itemcolor BLK (pickup at col {col} row {row})")
+        dist = _nearest_solid_tiles(pos, solids)
+        if not _solid_reachable(pos, solids):
+            warnings.append(
+                f"pickup >{LINT_ITEM_MAX_TILE_DIST} tiles from nearest "
+                f"F/W/ramp/belt (col {col} row {row}, nearest {dist} tiles)"
+            )
+    return warnings
+
+
+def print_room_lint(indir: Path) -> int:
+    """Print pickup lint warnings; return warning count."""
+    count = 0
+    for src in sorted(indir.glob("room*.txt")):
+        room = parse_room(src.read_text(encoding="utf-8"), source=src)
+        for msg in lint_room(room):
+            title = room.get("title") or ""
+            head = f"{src.name} — {title}" if title else src.name
+            print(f"warning: {head}: {msg}", file=sys.stderr)
+            count += 1
+    if count:
+        print(f"{count} pickup lint warning(s)", file=sys.stderr)
+    return count
+
+
 def print_playable_summary(indir: Path) -> None:
     playable, need_work = playable_status(indir)
     total = len(playable) + len(need_work)
@@ -1295,12 +1387,24 @@ def main():
         action="store_true",
         help="print total '+' pickup count for rooms dir (for -DITEMS_REQUIRED)",
     )
+    ap.add_argument(
+        "--lint",
+        action="store_true",
+        help="warn on BLK @itemcolor, missing/blank @itemudg, or pickups far from F/W/ramp/belt",
+    )
     args = ap.parse_args()
     if args.count_items:
         indir = Path(args.input or "rooms")
         if not indir.is_dir():
             ap.error(f"not a directory: {indir}")
         print(count_items(indir))
+        return
+    if args.lint:
+        indir = Path(args.input or "rooms")
+        if not indir.is_dir():
+            ap.error(f"not a directory: {indir}")
+        if print_room_lint(indir):
+            sys.exit(1)
         return
     if args.status:
         indir = Path(args.input or "rooms")
@@ -1329,6 +1433,7 @@ def main():
             print(f"\n{len(errors)} room(s) failed", file=sys.stderr)
             sys.exit(1)
         print_playable_summary(indir)
+        print_room_lint(indir)
         return
     if not args.input or not args.output:
         ap.error("need input and output, or --all")
