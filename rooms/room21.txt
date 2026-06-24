@@ -2,7 +2,7 @@
 @playable
 @title Ballroom West
 @conn 255 20 255 22
-@spawn 8 104
+@spawn 0 96
 @border BLU
 @belt 1
 
