@@ -40,11 +40,13 @@ main_loop
 -
     eor #(WHITE ^ RED)
     sta $900f
+    pha
     txa
     eor #240
     tax
     stx $900c
-    jsr WaitForRaster
+    jsr WaitForRaster ; clobbers A
+    pla
     dey
     bne -
  
