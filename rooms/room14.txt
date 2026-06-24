@@ -1,8 +1,8 @@
 @room 14
 @playable
 @title Rescue Esmerelda
-@conn 255 44 39 15
-@spawn 1 56
+@conn 20 44 39 15
+@spawn 0 56
 @border BLU
 @background RED
 @belt 1
@@ -31,10 +31,10 @@
                   +    W
                         
                 >>>> 
-                  W   FW
-                     F W
-                    F  W
-                   F   W
+                  W   /W
+                     / W
+                    /  W
+                   /   W
 WW  FWW  FWW  WWWWWW  FW 
 WW  *WW  *WW          FW
 WW  *WW  *WW          FW
@@ -46,7 +46,7 @@ WWWWWWWWWWWWWWWW  F   WW
 @floorcolor WHT
 @wallcolor GRN
 @nastycolor CYN
-@rampcolor CYN
+@rampcolor WHT
 @beltcolor YEL
 @itemcolor BLU
 
@@ -61,3 +61,4 @@ x=16 y=8(0..16) v=2 f=2..3 WHT
 @nastyudg 145,162,196,136,145,162,196,136
 @beltudg 241,170,248,170,0,238,0,187
 @itemudg 255,73,73,73,73,73,73,255
+@rampudg 3,3,12,12,49,50,196,200
