@@ -56,7 +56,7 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@nastycolor` | colour | Hazard `*` (type 3) |
 | `@rampcolor` | colour | Ramp `/` `\` (type 4) |
 | `@beltcolor` | colour | Conveyor `<` `>` (type 5) |
-| `@itemcolor` | colour | Item pickup cell colour (optional when no `+`; default YEL) |
+| `@itemcolor` | colour | Item pickup cell colour for baked `FlickerItem` (optional when no `+`; default YEL) |
 | `@emptyudg` | bytes | 8 comma-separated bytes for empty tile; optional, default **8×0** |
 | `@floorudg` | bytes | Floor UDG (`; invert` suffix optional) |
 | `@walludg` | bytes | Wall UDG |
@@ -75,22 +75,41 @@ Lines starting with `#` or `;` are comments; `#` may also appear mid-line. Blank
 
 ## Binary layout (output of `mkroom.py`)
 
-PRG loads at **`$1A10`** (1520 bytes, ends `$1FFF`):
+PRG loads at **`$1A02`** (1534 bytes image, ends `$1FFF`; 2-byte load address + 1534 = 1536-byte PRG):
 
 | Offset | Address | Size | Content |
 |--------|---------|------|---------|
-| 0 | `$1A10` | 19 | `AnimateConveyors` (baked prefix) |
-| 19 | `$1A23` | 31 | `DoBelt` (baked prefix) |
-| 50 | `$1A42` | 6 | Tile colours (types 0–5) |
-| 56 | `$1A48` | 288 | Guardian sprites (column-major from `@guardiansprites`) |
-| 344 | `$1B68` | 256 | `player_bmp` |
-| 600 | `$1C68` | 16 | HUD UDG bytes (chr 13=men, chr 14=items) |
-| 616 | `$1C78` | 56 | Tile UDG bytes (chr 15=item, chr 16–21=tiles 0–5) |
-| 672 | `$1CB0` | 336 | Runtime UDG pad (zeros; guardian + player UDG workspace) |
-| 1008 | `$1E00` | 408 | 24×17 screen (row 16 = HUD + title; item not baked in) |
-| 1416 | `$1F98` | 104 | Tail: meta, rope flag, guardian AoS (10 bytes × 6) |
+| 0 | `$1A02` | 16 | `FlickerItem` (baked prefix; `jsr` from gameloop) |
+| 16 | `$1A12` | 19 | `AnimateConveyors` |
+| 35 | `$1A25` | 29 | `DoBelt` |
+| 64 | `$1A42` | 6 | Tile colours (types 0–5) |
+| 70 | `$1A48` | 288 | Guardian sprites (column-major from `@guardiansprites`) |
+| 358 | `$1B68` | 256 | `player_bmp` |
+| 614 | `$1C68` | 16 | HUD UDG bytes (chr 13=men, chr 14=items) |
+| 630 | `$1C78` | 56 | Tile UDG bytes (chr 15=item, chr 16–21=tiles 0–5) |
+| 686 | `$1CB0` | 336 | Runtime UDG pad (zeros; guardian + player UDG workspace) |
+| 1022 | `$1E00` | 408 | 24×17 screen (row 16 = HUD + title; item not baked in) |
+| 1430 | `$1F98` | 104 | Meta tail (see below) |
 
-Item draw code (11 bytes at meta+15): `lda #15` / `sta screen` / `lda #color` / `sta color_ram` / `rts`. `DrawItem` does `jsr $1FA7` when `items_left` > 0.
+### Item pickup runtime
+
+- **`@itemcolor`** — baked into `FlickerItem` as the item cell colour address; `FlickerItem` cycles colour every frame (`inx` / `and #7`). Not written by `item_draw`.
+- **`FlickerItem`** — 16-byte prefix at `$1A02`; noop (`rts` + pad) when the room has no `+` pickup.
+- **`item_draw`** — 11 bytes at meta **+16**: `lda #15` / `sta screen` / `lda #TILE_ITEM` / `sta map` / `rts`. `LoadRoom` calls `jsr item_draw` when `pickup_got` for this room is clear.
+- **`item_erase`** — 11 bytes at meta **+27**: `lda #empty_col` / `sta colour` / `lda #TILE_EMPTY` / `sta map` / `rts` (on pickup).
+
+### Meta tail (`$1F98`, 104 bytes)
+
+Fixed meta header (**38** bytes), then rope flag, guardian AoS, spare:
+
+| Meta offset | Size | Content |
+|-------------|------|---------|
+| +0 | 16 | Guardian count, border/spawn/belt/ramp, `@conn` |
+| +16 | 11 | `item_draw` stub |
+| +27 | 11 | `item_erase` stub |
+| +38 | 1 | Rope flag |
+| +39 | 60 | Guardian AoS (6 × 10 bytes) |
+| +99 | 5 | Spare (reserved) |
 
 Split outputs (optional): `ROOMnn.TIL`, `ROOMnn.COL`, `ROOMnn.MET`.
 
@@ -245,7 +264,7 @@ Set `BORDER_DEBUG = 0` in `defines.asm` to disable raster timing border probes (
 
 ### Guardian data layout
 
-Room tail stores **60 bytes** of guardian state as **AoS**: six records of ten bytes each (`x`, `y`, `min`, `max`, `vel`, `frame`, `fmin`, `fctl`, `color`, `axis`) at `guardian_data_base` (tail offset **44**). Byte **`fctl`**: horizontal bidirectional flag (0/1); vertical `g_frame` wrap mask (0/1/3). Tile colours live in the prefix at `tile_color_src` (`$1A42`), not in the tail.
+Room tail stores **60 bytes** of guardian state as **AoS**: six records of ten bytes each (`x`, `y`, `min`, `max`, `vel`, `frame`, `fmin`, `fctl`, `color`, `axis`) at `guardian_data_base` (tail offset **39**). Byte **`fctl`**: horizontal bidirectional flag (0/1); vertical `g_frame` wrap mask (0/1/3). Tile colours live in the prefix at `tile_color_src` (`$1A42`), not in the tail.
 
 Each frame, `CopyDownGuardianData` / `CopyUpGuardianData` copy one record between room RAM and ZP scratch via tight `(arr),y` loops indexed from `hx`.
 

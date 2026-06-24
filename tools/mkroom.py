@@ -26,7 +26,7 @@ TILEMAP_ROWS = 16             # @tilemap lines (gameplay only)
 TILE_BYTES = WIDTH * SCREEN_ROWS
 UDG_BYTES = 56
 TILE_COLOR_BYTES = 6
-ITEM_DRAW_BYTES = 16
+ITEM_DRAW_BYTES = 11
 ITEM_ERASE_BYTES = 11
 ITEM_FLICKER_BYTES = 16
 BAKE_DIR = Path(__file__).resolve().parent.parent / "bake"
@@ -809,7 +809,7 @@ def build_logo_payload(path: Path) -> tuple[bytes, bytearray]:
 
 
 def build_item_draw(room: dict) -> bytes:
-    """16 bytes in meta tail — ACME bake/item_draw.asm."""
+    """11 bytes in meta tail — ACME bake/item_draw.asm."""
     if room.get("logo") or not room["items"]:
         return noop_stub(ITEM_DRAW_BYTES)
     col, row = room["items"][0]
@@ -818,14 +818,11 @@ def build_item_draw(room: dict) -> bytes:
     cell_off = row * WIDTH + col
     scr_addr = SCREEN_BASE + cell_off
     map_addr = scr_addr + (MAP_BASE - SCREEN_BASE)
-    col_addr = COLOR_BASE + cell_off
     return assemble_room_code(
         "item_draw.asm",
         {
             "SCR_ADDR": scr_addr,
-            "COL_ADDR": col_addr,
             "MAP_ADDR": map_addr,
-            "ITEM_COLOR": room["itemcolor"] & 0xFF,
             "ITEM_CHR": ITEM_CHR,
             "TILE_ITEM": TILE_ITEM,
         },
