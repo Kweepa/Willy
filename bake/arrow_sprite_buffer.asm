@@ -17,7 +17,7 @@ arrow_update_a_bake
 	rts
 +
 	; setup (x is 0 thanks to above check)
-	ldy #COOKED_Y  ; in pixels, straight from the room text file
+	ldy #COOKED_Y  ; ConvertXY Y for tile row (@arrow y >> 3), baked in mkroom
 	jsr ConvertXYToScreenAddr
 	jmp ARROW_UPDATE_B
 

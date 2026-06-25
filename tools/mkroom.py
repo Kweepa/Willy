@@ -1137,12 +1137,18 @@ def default_arrow_udg(velocity: int) -> bytes:
     raise room_error(None, f"arrow v must be -1 or 1, got {velocity}")
 
 
+def arrow_convert_y(entity_y: int) -> int:
+    """ConvertXYToScreenAddr row for a 1-row glyph on tile row entity_y >> 3."""
+    return (((entity_y >> 3) + 1) << 3) & 0xFF
+
+
 def arrow_bake_defines(room: dict) -> dict[str, int]:
     arrow = room["arrow"]
     v = arrow["v"]
+    entity_y = arrow["y"] & 0xFF
     return {
         "COOKED_X": arrow["x"] & 0xFF,
-        "COOKED_Y": arrow["y"] & 0xFF,
+        "COOKED_Y": arrow_convert_y(entity_y),
         "COOKED_SOUND_X": arrow["sound"] & 0xFF,
         "ARROW_V": 1 if v == 1 else 0xFF,
         "ARROW_TILE": ARROW_CHR,

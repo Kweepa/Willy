@@ -43,7 +43,7 @@ arrow_update_a
 	rts
 +
 	; setup (x is 0 thanks to above check)
-	ldy #COOKED_Y_VALUE ; in pixels, straight from the room text file
+	ldy #COOKED_Y  ; ConvertXY Y for tile row (@arrow y >> 3), baked in mkroom
 	jsr ConvertXYToScreenAddr
 	jmp arrow_update_b
 
@@ -63,10 +63,13 @@ arrow_update_b
 +
 	; increment and play sound
 	iny ; or dey, depending on direction (compile time instruction @arrow v= -1 or 1)
+	tya
+	and #127
+	tay
 	sty arrow_x_zp
 	cpy #cooked_launch_sound_x  ; <- compile time constant (@arrowsoundx)
 	bne +
-	lda #66
+	lda #129  ; low sound
 	sta $900c
 +
 	cpy #24

@@ -22,6 +22,9 @@ arrow_update_b_bake
 !if ARROW_V <> 1 {
 	dey ; or dey, depending on direction (compile time instruction @arrow v= -1 or 1)
 }
+	tya
+	and #127
+	tay
 	sty arrow_x_zp
 	cpy #COOKED_SOUND_X  ; <- compile time constant (@arrowsoundx)
 	bne +
