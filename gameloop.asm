@@ -31,11 +31,10 @@ main_loop
     lda dead
     beq main_loop
 
-    lda safe_map
-    cmp map
+    ; prevent infinite death loop
+    lda safe_transition_count
     beq +
-    sta map
-    sta fall_death_respawn ; can't fall into the off license (map 0)
+    sta fall_death_respawn
 +
 
     ; death flash

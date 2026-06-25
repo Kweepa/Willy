@@ -4,6 +4,7 @@
 ;
 ;   $02-$61   game scalars (px/py, pointers, guardian scratch hx..guard_axis $20-$29, g_fctl=$27, etc.)
 ;   $62-$64   spawn_px/py, initial_room_load
+;   $59       safe_transition_count (room changes since last grounded safe snapshot)
 ;   $5d-$5e   safe_px/py (last grounded position, fall-death respawn)
 ;   $60       fall_death_respawn
 ;   $65       safe_map
@@ -158,8 +159,7 @@ belt_active     = $4f
 tmp_xadd        = $30
 
 align_tmp       = $58
-entry_px        = $59
-entry_py        = $5a
+safe_transition_count = $59      ; room changes since last grounded safe snapshot
 safe_px         = $5d          ; last grounded position (fall-death respawn only)
 safe_py         = $5e
 fall_death_respawn = $60       ; 1 = DrawMap uses safe_px/py and map from hit_below

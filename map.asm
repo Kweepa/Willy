@@ -51,6 +51,8 @@ DrawMap
     sta px
     lda safe_py
     sta py
+    lda safe_map
+    sta map
     lda #0
     sta fall_death_respawn
     beq ++
@@ -111,6 +113,7 @@ CheckRoomEdge
 
 .do_room_change
     sta map
+    inc safe_transition_count
     stx px
     sty py
     sty last_py  ; if we change from bottom to top of room, this would be huge

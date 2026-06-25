@@ -321,6 +321,8 @@ collide_dont_move_y
     sta safe_px
     lda py
     sta safe_py
+    lda #0
+    sta safe_transition_count
 +
     lda meta_content_room_has_rope
     beq collide_draw_player
