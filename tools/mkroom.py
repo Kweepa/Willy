@@ -65,6 +65,7 @@ SCREEN_BASE = 0x1E00
 MAP_BASE = 0x9400
 COLOR_BASE = 0x9600
 MAX_ITEMS = 1
+DEFAULT_SPAWN = (46, 104)
 ROOM_IMAGE_SIZE = 0x5FE           # 1534 bytes ($1A02-$1FFF); FlickerItem +16 at load base
 HUD_UDG_BYTES = 16
 # Pad pins screen at $1E00: IMAGE_LOAD + flicker + code prefix + sprites + ... + pad == SCREEN_BASE
@@ -514,9 +515,19 @@ def validate_guardians(room: dict) -> None:
     validate_guardian_paths(room)
 
 
+def tile_to_spawn(col: int, row: int, room: dict | None = None) -> tuple[int, int]:
+    """Convert 'S' tile (lower body) to @spawn px/py (head one row above)."""
+    if row < 1:
+        raise room_error(
+            room,
+            f"'S' spawn marker at row {row} needs a row above for Willy's head",
+        )
+    return (col * 4, (row - 1) * 8)
+
+
 def parse_tile_char(ch: str, room: dict | None = None) -> int:
-    """Map ASCII tilemap character to tile type 0-5. '+' bakes as empty."""
-    if ch == "+":
+    """Map ASCII tilemap character to tile type 0-5. '+' and 'S' bake as empty."""
+    if ch in ("+", "S"):
         return TILE_EMPTY
     try:
         return TILE_CHAR_MAP[ch]
@@ -574,6 +585,34 @@ def extract_items_from_tilemap(
     return found
 
 
+def extract_spawn_from_tilemap(
+    tilemap: list, room: dict | None = None
+) -> tuple[int, int] | None:
+    """Return (col, row) for 'S' spawn marker, or None."""
+    found: list[tuple[int, int]] = []
+    for row, line in enumerate(tilemap):
+        if row >= TILEMAP_ROWS:
+            continue
+        for col, ch in enumerate(line):
+            if ch == "S":
+                found.append((col, row))
+    if len(found) > 1:
+        raise room_error(
+            room,
+            f"tilemap must have at most one 'S' spawn marker, found {len(found)}",
+        )
+    return found[0] if found else None
+
+
+def resolve_spawn(room: dict) -> None:
+    """Set room['spawn'] from tilemap S, @spawn tag, or DEFAULT_SPAWN."""
+    spawn_tile = extract_spawn_from_tilemap(room["tilemap"], room)
+    if spawn_tile is not None:
+        room["spawn"] = tile_to_spawn(*spawn_tile, room=room)
+    elif room["spawn"] is None:
+        room["spawn"] = DEFAULT_SPAWN
+
+
 def infer_ramp_from_tilemap(
     tilemap: list, room: dict | None = None
 ) -> int:
@@ -624,7 +663,7 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         "id": 0,
         "title": "",
         "conn": [0xFF, 0xFF, 0xFF, 0xFF],
-        "spawn": (0, 0),
+        "spawn": None,
         "border": 0,
         "background": 0,
         "belt": 0,
@@ -797,6 +836,7 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         validate_tilemap_belt(room["tilemap"], room["belt"], room)
         validate_guardians(room)
         validate_arrow_room(room)
+    resolve_spawn(room)
     return room
 
 
