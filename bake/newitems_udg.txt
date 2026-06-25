@@ -9,6 +9,7 @@
 @itemudg 0,25,34,124,170,170,68,0 ; glasses
 @itemudg 0,0,2,28,56,4,124,62 ; poop
 @itemudg 238,209,223,223,223,223,223,14 ; tp
+@itemudg 60,122,244,70,246,254,246,246 ; takeout bag
 @itemudg 14,24,24,30,44,80,224,192 ; wrench
 @itemudg 62,127,83,83,62,42,22,60 ; skull
 @itemudg 66,36,126,219,255,165,36,16 ; invader
