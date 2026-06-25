@@ -4,7 +4,7 @@
 @conn 0 0 0 2
 @spawn 4 104
 @border GRN
-@belt 0
+@belt -1
 
 @guardiansprites
 ; entity 20: page 188
@@ -38,7 +38,7 @@
                         
                         
                         
-                        
+              +         
                         
                         
                         
@@ -46,22 +46,23 @@
        /WW   WWW        
       /WWW   WWWW       
      /WWWW***WWWWW      
-FFFFFFWWWW<<<WWWWWFFFFFF
+FFFFFWWWWW<<<WWWWWFFFFFF
 
 @floorcolor GRN
 @wallcolor YEL
 @nastycolor CYN
 @rampcolor WHT
-@beltcolor GRN
+@beltcolor BLU
 @itemcolor WHT
 
 @guardians
-y=80 x=4(0..7) v=-1 f=0..7 RED
+y=80 x=4(0..8) v=-1 f=0..7 RED
 y=80 x=16(12..23) v=1 f=0..7 PUR
-x=10 y=24(0..96) v=6 f=8 GRN
+x=10 y=25(0..95) v=5 f=8 GRN
 
 @floorudg 255,255,253,187,214,114,96,64
 @walludg 34,119,34,136,34,119,34,136
 @nastyudg 3,132,72,48,3,132,72,48 ; invert
 @rampudg 3,3,12,13,50,55,194,200
 @beltudg 3,132,72,48,3,132,72,48 ; invert
+@itemudg 112,138,253,249,249,254,248,112 ; mug

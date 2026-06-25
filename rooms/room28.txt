@@ -2,7 +2,7 @@
 @playable
 @title First Landing
 @conn 34 27 22 29
-@spawn 44 56
+@spawn 44 104
 @border PUR
 @belt 0
 
@@ -35,7 +35,7 @@ W            /    W  *
 W           /     W  *  
 W          /      W  *  
 W         /       W     
-W        /        W     
+W        /        W+    
 W       /         W     
 W      /          W     
 W     /                 
@@ -51,9 +51,10 @@ FFFFFFFFFFFFFFF  WWWWWWW
 @itemcolor YEL
 
 @guardians
-y=96 x=19(17..23) v=1 f=0..7 YEL
+y=96 x=19(17..23) v=-1 f=0..7 YEL
 
 @floorudg 255,170,85,128,93,148,93,128
 @walludg 4,85,0,85,136,85,0,34 ; invert
 @nastyudg 126,129,165,153,153,165,129,126 ; invert
 @rampudg 3,3,12,12,48,48,192,192
+@itemudg 62,68,126,118,98,118,118,62 ; bible

@@ -29,7 +29,7 @@
             /           
            /FFFFFFFFFFFF
           /             
-         /              
+         /           +  
         /FFFFFFFFFFFFFFF
        /                
       /                 
@@ -44,7 +44,7 @@ FF  FFFFFFFFFFFFFFFFFFFF
 @nastycolor WHT
 @rampcolor WHT
 @beltcolor WHT
-@itemcolor BLK
+@itemcolor YEL
 
 @guardians
 y=104 x=17(9..23) v=1 f=0..3 CYN
@@ -56,3 +56,4 @@ x=2 y=24(0..64) v=2 f=8..8 CYN
 @nastyudg 0,0,0,0,0,0,0,0
 @rampudg 3,1,12,4,48,16,192,64
 @beltudg 0,0,0,0,0,0,0,0
+@itemudg 66,165,165,127,110,126,243,126 ; shopping bag

@@ -18,7 +18,7 @@ WWW\
 WWWW\                    
 WWWWW\                   
 WWWWWW\                  
-WW     \                 
+WW  +  \                 
 WW      \                
 WW   FFFF  F  F  F  FFFF
 WW   WWWW  W  W  W  WWWW
@@ -34,7 +34,7 @@ WW  WWWWWWWWWWWWWWWWWWWW
 @nastycolor WHT
 @rampcolor WHT
 @beltcolor RED
-@itemcolor BLK
+@itemcolor YEL
 
 @guardians
 x=9 y=80(44..104) v=2 f=0..1 RED
@@ -47,3 +47,4 @@ x=18 y=80(44..104) v=2 f=0..1 RED
 @nastyudg 0,0,0,0,0,0,0,0
 @rampudg 224,64,32,16,14,4,2,1
 @beltudg 111,0,183,0,170,85,170,85
+@itemudg 0,25,34,124,170,170,68,0 ; glasses

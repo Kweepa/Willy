@@ -28,11 +28,11 @@
           WW           *
        F  WW     F     *
           WW           *
-   FF     WW       FF  *
+   FF     WW+      FF  *
        F  WW           *
           WW      /    *
-       FF WW     /  F  *
-FFFF      WWFFF        *
+       FF WW  F  /  F  *
+FFFF      WWFF         *
           WW         F *
           WW       F   *
           WW  FF       *
@@ -44,7 +44,7 @@ FFFF      WWFFF        *
 @nastycolor RED
 @rampcolor GRN
 @beltcolor WHT
-@itemcolor BLK
+@itemcolor YEL
 
 @guardians
 y=16 x=1(0..9) v=-1 f=0..7 YEL
@@ -54,3 +54,4 @@ x=5 y=48(40..80) v=2 f=8..8 PUR
 @walludg 214,107,102,219,105,107,217,109
 @nastyudg 21,0,170,85,170,0,21,10
 @rampudg 3,8,36,16,64,32,128,128
+@itemudg 64,160,56,108,108,118,58,31 ; leaf

@@ -27,15 +27,15 @@
                         
                         
                         
-             WWWWWW     
+             WWWWWW  S  
           F   WWWW   FF  
                WW       
        FFF     WW  F     
              F WW      W
                WW     WW
           /FF  WW   WWWW
-         /    FWW  W F W
-        /      WW      W
+         /    FWW    F W
+        /      WW  F  +W
        / WWWWWWWWWWWWWW 
       /  WWWWWWWWWWWWW 
 
@@ -49,7 +49,7 @@
 @guardians
 y=16 x=1(0..6) v=-1 f=0..3 YEL
 y=24 x=15(13..18) v=1 f=0..3 GRN
-x=17 y=96(56..96) v=-4 f=4..7 YEL
+x=17 y=96(56..96) v=-1 f=4..7 YEL
 x=11 y=24(0..64) v=2 f=8 CYN
 
 @floorudg 255,34,68,136,85,34,0,0
@@ -57,4 +57,4 @@ x=11 y=24(0..64) v=2 f=8 CYN
 @nastyudg 85,162,85,152,28,42,69,138
 @rampudg 3,0,12,0,52,10,196,0
 @beltudg 0,0,0,0,0,0,0,0
-@itemudg 0,0,0,0,0,0,0,0
+@itemudg 60,122,244,70,246,254,246,246 ; takeout bag

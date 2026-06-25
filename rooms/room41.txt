@@ -25,14 +25,14 @@
    *    *               
 FFFWFFFFWFF              
 W                       
-WF             F  >>>  F
+WF           F    >>>  F
 W                       
-WF              F       
+WF             F        
 W                       
 WF               F      
 W                       
-WF   *   *  *           
-FFFFFWFFFWFFWFFWFFFFWFWF
+WF + *   *  *  *    *   
+FFFFFWFFFWFFWFFWFFFFWFFF
 
 @floorcolor YEL
 @wallcolor PUR
@@ -52,4 +52,4 @@ x=9 y=78(56..88) v=2 f=2..3 CYN
 @nastyudg 36,18,68,170,85,170,91,255
 @rampudg 0,0,0,0,0,0,0,0
 @beltudg 240,170,60,170,85,170,85,170
-@itemudg 17,34,51,68,85,102,119,136
+@itemudg 26,13,60,126,255,255,127,62 ; trash bag

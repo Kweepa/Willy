@@ -29,15 +29,15 @@
     /                   
    /                    
   /     >>>>>>>>>>>>>>>>
-WWWFF                   
+WWWFF             +     
                         
                         
                         
           WW      F
-      FF  WW    F           
-FFFF      WW  F              
-FF       FWW                 
-          WW     F          
+      FF  WW    F        
+FFFF      WW  F         
+FF       FWW            
+          WW     F      
 
 @floorcolor GRN
 @wallcolor RED
@@ -55,3 +55,4 @@ y=64 x=10(10..16) v=1 f=4..7 CYN
 @nastyudg 102,170,95,188,99,172,107,164 ; invert
 @rampudg 1,2,4,40,16,40,64,128
 @beltudg 165,170,189,102,102,102,102,102
+@itemudg 62,127,83,83,62,42,22,60 ; skull

@@ -2,7 +2,7 @@
 @playable
 @title The Drive
 @conn 6 3 45 5
-@spawn 4 48
+@spawn 64 104
 @border PUR
 @belt 1
 
@@ -25,14 +25,14 @@
                         
                         
                         
-                        
-FFF\                     
-WWWW\                      
-WWWWW\                     
-    WW\                    
-    WWW\                   
->>  WWWW\                  
-WW  WWWWW\                 
+  +                     
+FFF\                    
+WWWW\                   
+WWWWW\                  
+    WW\                 
+    WWW\                
+>>  WWWW\               
+WW  WWWWW\              
 WW  WWWWWWFFFFFFWWFFFFFF
 
 @floorcolor YEL
@@ -40,17 +40,17 @@ WW  WWWWWWFFFFFFWWFFFFFF
 @nastycolor GRN
 @rampcolor CYN
 @beltcolor RED
-@itemcolor BLK
+@itemcolor YEL
 
 @guardians
 y=40 x=5(0..6) v=-1 f=0..7 CYN
 y=64 x=6(5..21) v=-1 f=0..7 YEL
-y=80 x=12(10..21) v=1 f=0..7 PUR
-y=88 x=13(12..21) v=-1 f=0..7 GRN
-y=104 x=11(10..22) v=1 f=0..7 CYN
+y=88 x=16(12..21) v=-1 f=0..7 GRN
+y=104 x=11(10..23) v=1 f=0..7 CYN
 
 @floorudg 170,85,170,255,255,85,170,85
 @walludg 112,7,119,119,0,59,11,125
 @nastyudg 20,42,20,9,106,156,8,8
 @rampudg 192,64,112,112,12,116,119,5
 @beltudg 123,0,237,0,170,85,170,85
+@itemudg 0,0,4,210,203,43,86,124 ; eaten chicken

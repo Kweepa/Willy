@@ -2,7 +2,6 @@
 @playable
 @title West Wing
 @conn 56 31 52 55
-@spawn 44 104
 @border RED
 @belt 0
 
@@ -32,10 +31,10 @@ FFFWW                /
    WW              /    
                   /     
                  /      
-                /       
+    +           /       
                /        
               /         
-             /          
+             /  S       
 FFFFFFFFF   /FFFFFFFFFFW
            /           W
           /FFFFFFFFFFFFW
@@ -46,7 +45,7 @@ FFFFFFFFF   /FFFFFFFFFFW
 @nastycolor WHT
 @rampcolor WHT
 @beltcolor WHT
-@itemcolor BLK
+@itemcolor YEL
 
 @guardians
 x=9 y=32(0..96) v=4 f=0..1 CYN
@@ -58,3 +57,4 @@ y=80 x=6(0..6) v=-1 f=4..7 RED
 @nastyudg 0,0,0,0,0,0,0,0
 @rampudg 3,3,12,12,48,48,192,192
 @beltudg 0,0,0,0,0,0,0,0
+@itemudg 56,68,68,68,124,124,124,56 ; pill

@@ -18,7 +18,7 @@ WW        WW
 WW        WW                
 WW    \   WW                
 W     W\                    
-W     WW\                   
+W     WW\   +               
 W    FWWW\                  
 WW       W\                 
 WW       WW\                
@@ -36,7 +36,7 @@ WW       FWW
 @nastycolor WHT
 @rampcolor WHT
 @beltcolor WHT
-@itemcolor BLK
+@itemcolor YEL
 
 @guardians
 y=48 x=3(2..8) v=-1 f=0..3 YEL
@@ -45,3 +45,4 @@ y=48 x=3(2..8) v=-1 f=0..3 YEL
 @walludg 51,17,68,204,51,17,68,204 ; invert
 @nastyudg 0,0,0,0,0,0,0,0
 @rampudg 128,192,224,112,184,28,78,199
+@itemudg 14,51,109,95,186,190,236,112 ; plate

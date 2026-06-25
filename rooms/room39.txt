@@ -2,7 +2,7 @@
 @playable
 @title Emergency Dynamo
 @conn 14 38 0 40
-@spawn 90 24
+@spawn 91 24
 @border RED
 @background BLU
 @belt -1
@@ -19,7 +19,7 @@
 0,0,0,0,0,0,0,0,0,0,2,200,1,232,3,252,2,170,5,95,2,191,5,248,1,16,0,160,0,0,0,0
 
 @tilemap
-                       W
+      +                W
                        W
                        W
                         
@@ -41,13 +41,15 @@ WWWWWWWWWWWWWWWWWWWWWWWW
 @nastycolor CYN
 @rampcolor WHT
 @beltcolor RED
-@itemcolor BLK
+@itemcolor YEL
 
 @guardians
-y=24 x=4(0..23) v=-1 f=0..7 RED
+y=16 x=5(2..10) v=-1 f=0..7 RED
+y=16 x=18(14..21) v=1 f=0..7 PUR
 
 @floorudg 102,102,102,102,102,102,102,102 ; invert
 @walludg 191,21,0,81,251,81,0,21 ; invert
 @nastyudg 255,63,3,31,127,31,3,63
 @rampudg 3,0,12,0,48,0,192,0
 @beltudg 170,84,170,84,40,16,40,16
+@itemudg 14,24,24,30,44,80,224,192 ; wrench

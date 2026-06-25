@@ -20,7 +20,7 @@
       F     WW  F         
             WW  F         
      F      WW  F         
-            WW  F   <<FF
+            WW+ F   <<FF
       F     WW  F         
             WW  F         
          F  WW  F         
@@ -28,7 +28,7 @@
       F         F         
                 F         
      F          F         
-      W         F         
+      W         F  S      
       WFFFFFFFFFFFFFFFFF
       WWWWWWWW          
             WW          
@@ -39,7 +39,7 @@
 @nastycolor WHT
 @rampcolor WHT
 @beltcolor RED
-@itemcolor BLK
+@itemcolor YEL
 
 @guardians
 x=7 y=32(0..64) v=-2 f=0..3 CYN
@@ -50,3 +50,4 @@ x=10 y=24(0..80) v=1 f=4..5 RED
 @nastyudg 0,0,0,0,0,0,0,0
 @rampudg 0,0,0,0,0,0,0,0
 @beltudg 165,255,189,170,85,186,69,131
+@itemudg 66,36,126,219,255,165,36,16 ; invader

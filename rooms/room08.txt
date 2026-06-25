@@ -30,7 +30,7 @@
        FF            
               FWWWWW\     
            FF  W     \     
-WWWWWWWW       W         
+WWWWWWWW       W      +  
  *  *  WF      W         
  *  *  W    FFFW          
  *  *  W                   
@@ -45,7 +45,7 @@ WWWWWWWW       W
 @nastycolor YEL
 @rampcolor WHT
 @beltcolor WHT
-@itemcolor BLK
+@itemcolor YEL
 
 @guardians
 x=9 y=32(0..104) v=2 f=4..7 RED ; head
@@ -58,3 +58,4 @@ y=24 x=18(14..23) v=-1 f=0..3 YEL ; flower
 @nastyudg 110,116,56,30,110,116,56,30
 @rampudg 64,0,16,0,4,0,1,0
 @beltudg 0,0,0,0,0,0,0,0
+@itemudg 18,36,40,40,124,174,172,120 ; rabbit head
