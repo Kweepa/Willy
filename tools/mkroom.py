@@ -492,8 +492,8 @@ def validate_guardian_ranges(room: dict) -> None:
 
 
 def tilemap_passable_for_guardian(ch: str) -> bool:
-    """Only space and dot are empty for guardian path checks ('+' blocks)."""
-    return ch in (" ", ".")
+    """Only space and dot are empty for guardian path checks ('+' blocks, 'S' does not)."""
+    return ch in (" ", ".", "S")
 
 
 def validate_guardian_paths(room: dict) -> None:
