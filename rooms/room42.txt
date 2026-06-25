@@ -6,6 +6,8 @@
 @border RED
 @background BLU
 @belt 1
+@arrow y=97 x=208 v=1 sound=244
+
 
 @guardiansprites
 ; entity 55: page 187 sprite 0 f=0..3

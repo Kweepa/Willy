@@ -12,6 +12,7 @@ tile_color_bytes = 6
 tile_color_src = room_code_base + conveyor_prefix_bytes + do_belt_prefix_bytes
 guardian_sprites_base = tile_color_src + tile_color_bytes
 guardian_prefix_bytes = guardian_sprites_base - room_code_base
+; arrow_init + arrow_update_a @ guardian_sprites_base+256 ($1B48); arrow_update_b @ arrow_udg_addr+8 ($1DA8) — see defines.asm
 player_bmp = guardian_sprites_base + 288
 hud_udg_base = player_bmp + 256         ; chr 13-14 @ $1C68-$1C77
 runtime_udg_pad = $150                  ; 336 B ($1CB0-$1DFF); pins screen_base after load
@@ -58,7 +59,8 @@ meta_content_item_erase_size = 11
 meta_size = 38
 meta_content_room_has_rope = meta_content_src + 38
 meta_content_guardian_data = meta_content_src + 39
-meta_content_spare = meta_content_src + 99        ; 5 bytes reserved in tail
+meta_content_has_arrow = meta_content_src + 99
+meta_content_spare = meta_content_src + 100        ; 4 bytes reserved in tail
 item_draw = meta_content_item_draw
 item_erase = meta_content_item_erase
 guardian_data_base = meta_content_guardian_data

@@ -6,6 +6,8 @@
 @border CYN
 @background BLU
 @belt 0
+@arrow y=34 x=208 v=1 sound=244
+
 
 @guardiansprites
 ; orange?

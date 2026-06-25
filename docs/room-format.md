@@ -44,6 +44,8 @@ One tag per line, `@name value` or `@name` followed by a block.
 | `@background` | colour | Screen background colour; optional, default **BLK**. Standard colours 0–7 as above; extended VIC background-only colours 8–15: **ORN**, **LIGHT ORN**, **LIGHT RED**, **LIGHT CYN**, **LIGHT PUR**, **LIGHT GRN**, **LIGHT BLU**, **LIGHT YEL** (two-word `LIGHT …` tokens). Digits 0–15 also accepted. Omit when black background is correct. |
 | `@belt` | speed | Conveyor speed: `-1`, `0`, or `1` |
 | `@playable` | — | Tooling only: room is playtest-ready. Ignored by the binary build. `mkroom.py --status` (or `--all`) reports how many rooms are tagged vs still need work. |
+| `@arrow` | y x v sound | Optional flying arrow (one per room). **Mutually exclusive with `@rope`.** `y` = pixel Y; `x` = start column (0–255); `v` = `1` (LTR) or `-1` (RTL); `sound` = column where launch SFX fires. Baked **`arrow_init`** + **`arrow_update_a`** @ `$1B48` (sprite frame 8), **`arrow_update_b`** @ `$1DA8` (above chr 52 UDG); restores trail cells from map snapshot each tick. Meta flag at tail +99. |
+| `@arrowudg` | bytes | Optional 8-byte chr **52** UDG; default from `v=` if omitted (LTR: `0,0,194,127,194,0,0,0`; RTL: `0,0,67,254,67,0,0,0`). |
 | `@guardiansprites` | block | 256 bytes: 8 frames × 32 bytes. Author in Skool interleaved format (left, right byte pairs per scanline). `mkroom` converts to column-major (16-byte left column, 16-byte right column) in the PRG. |
 | `@hguard` | index | Horizontal guardian sprite index |
 | `@vguard` | index | Vertical guardian sprite index |
@@ -109,7 +111,8 @@ Fixed meta header (**38** bytes), then rope flag, guardian AoS, spare:
 | +27 | 11 | `item_erase` stub |
 | +38 | 1 | Rope flag |
 | +39 | 60 | Guardian AoS (6 × 10 bytes) |
-| +99 | 5 | Spare (reserved) |
+| +99 | 1 | Arrow flag (`meta_content_has_arrow`; non-zero = room has `@arrow`) |
+| +100 | 4 | Spare (reserved) |
 
 Split outputs (optional): `ROOMnn.TIL`, `ROOMnn.COL`, `ROOMnn.MET`.
 

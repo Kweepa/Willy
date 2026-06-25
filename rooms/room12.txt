@@ -5,6 +5,8 @@
 @spawn 52 104
 @border YEL
 @belt 0
+@arrow y=66 x=20 v=-1 sound=44
+
 
 @guardiansprites
 ; entity 24: page 188 sprite 0 f=0..7

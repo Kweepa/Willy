@@ -16,6 +16,10 @@ main_loop
     jsr GetPlayerInput
     lda #0
     sta $900c
+    lda meta_content_has_arrow
+    beq +
+    jsr arrow_update
++
     jsr Collide
     jsr DrawHud
     jsr CheckEndingTeleport

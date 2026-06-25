@@ -6,6 +6,8 @@
 @border PUR
 @background BLU
 @belt 0
+@arrow y=50 x=20 v=-1 sound=44
+
 
 @guardiansprites
 ; bird

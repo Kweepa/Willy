@@ -21,10 +21,15 @@ MEN_CHR = 13                    ; HUD men icon @ $1C68 (hud_udg_base)
 HUD_ITEM_CHR = 14               ; HUD items icon @ $1C70
 GUARDIAN_CHR = 22
 PLAY_CHR = 58
+ARROW_CHR = 52
 
 udg_base = $1c00
 guardian_udgs = udg_base + GUARDIAN_CHR*8
 player_udg = udg_base + PLAY_CHR*8
+arrow_udg_addr = udg_base + ARROW_CHR*8
+arrow_init = $1b48
+arrow_update = arrow_init + 5
+arrow_update_b = arrow_udg_addr + 8
 
 ; Sync at row 15/16 boundary (below playfield, above HUD). Screen shifted down ($9001 = $32).
 RASTERLINE_PAL      = $70
@@ -46,7 +51,7 @@ RAMP_UP_LEFT = $FF
 ; and passes -DITEMS_REQUIRED=N to ACME.
 ROOM_MASTER_BED = 35
 ROOM_BATHROOM = 33
-ROOM_START = 33
+ROOM_START = 7
 ROOM_TITLE = 62
 ENDING_TRIGGER_PX = 20
 

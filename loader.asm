@@ -129,4 +129,8 @@ LoadRoom
     bne +
     jsr item_draw
 +
+    lda meta_content_has_arrow
+    beq +
+    jsr arrow_init
++
     rts

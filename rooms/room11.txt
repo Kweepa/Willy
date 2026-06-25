@@ -5,6 +5,8 @@
 @spawn 88 96
 @border GRN
 @belt 0
+@arrow y=34 x=20 v=-1 sound=44
+
 
 @guardiansprites
 ; bat

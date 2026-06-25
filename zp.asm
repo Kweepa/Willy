@@ -17,7 +17,7 @@
 ;   $96-$9F   rope draw temps + rope state scalars
 ;   $A0-$A5   player_overlap (6 B)
 ;   $A6-$D5   player_touch (48 B) — DrawPlayer clears $A0-$D5 each frame
-;   $D6-$DB   (gap)
+;   $D6-$DB   (gap) — arrow_x_zp $D6 in arrow rooms; rope block unused there
 ;   $DC-$E1   cell_off_2x3 (boot)
 ;   $E2-$E7   lr_touch_a/b/c (boot)
 ;   $E8-$ED   draw_vguard_chrs (boot)
@@ -173,6 +173,7 @@ initial_room_load = $64        ; 1 = first DrawMap after ResetGame (use @spawn)
 safe_map        = $65          ; room of last grounded position
 willy_hidden    = $66          ; 1 = ending sequence; skip player erase/input/draw
 rope_grab_cooldown  = $67
+arrow_x_zp      = $d6          ; flying arrow column (@arrow rooms; not rope rooms)
 
 ramp_tmp        = $54
 ramp_y          = $55

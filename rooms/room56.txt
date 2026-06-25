@@ -5,6 +5,8 @@
 @spawn 90 104
 @border BLU
 @belt 0
+@arrow y=42 x=208 v=1 sound=244
+
 
 @guardiansprites
 ; one way saw

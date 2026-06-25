@@ -118,6 +118,38 @@ TILE_UDG_TAGS = {
 DEFAULT_ITEM_UDG = bytes([48, 72, 136, 144, 104, 4, 10, 4])
 DEFAULT_MEN_UDG = bytes([60, 60, 126, 52, 62, 60, 24, 60])
 DEFAULT_HUD_ITEM_UDG = bytes([4, 4, 174, 174, 162, 66, 66, 238])
+DEFAULT_ARROW_UDG_LTR = bytes([0, 0, 194, 127, 194, 0, 0, 0])
+DEFAULT_ARROW_UDG_RTL = bytes([0, 0, 67, 254, 67, 0, 0, 0])
+GUARDIAN_CHR = 22
+ARROW_CHR = 52
+ARROW_SPRITE_SLOT_BYTES = 32
+ARROW_UPDATE_B_BYTES = 40
+META_OFF_HAS_ARROW = 99
+UDG_BASE = 0x1C00
+RUNTIME_UDG_PAD_BASE = 0x1CB0
+GUARDIAN_SPRITES_BASE = (
+    IMAGE_LOAD
+    + ITEM_FLICKER_BYTES
+    + CONVEYOR_PREFIX_BYTES
+    + DO_BELT_SLOT_BYTES
+    + TILE_COLOR_BYTES
+)
+ARROW_INIT_ADDR = GUARDIAN_SPRITES_BASE + 256
+ARROW_UPDATE_A_ADDR = ARROW_INIT_ADDR + 5
+ARROW_UDG_ADDR = RUNTIME_UDG_PAD_BASE + (ARROW_CHR - GUARDIAN_CHR) * 8
+ARROW_UPDATE_B_ADDR = ARROW_UDG_ADDR + 8
+EMPTY_SCREEN_CHR = TILE_CHR_BASE + TILE_EMPTY
+ARROW_ENTITY_LTR = 60
+ARROW_ENTITY_RTL = 69
+ARROW_TEMPLATE_X = {ARROW_ENTITY_LTR: 208, ARROW_ENTITY_RTL: 28}
+ARROW_TEMPLATE_SOUND = {ARROW_ENTITY_LTR: 244, ARROW_ENTITY_RTL: 44}
+ARROW_TAG_RE = re.compile(
+    r"y\s*=\s*(\d+)\s+"
+    r"x\s*=\s*(\d+)\s+"
+    r"v\s*=\s*([-+]?\d+)\s+"
+    r"sound\s*=\s*(\d+)",
+    re.I,
+)
 
 VIC_COLOR = {
     "BLK": 0,
@@ -347,6 +379,7 @@ def parse_guardian_line(
         "max": gmax & 0xFF,
         "vel": parse_velocity(vel),
         "fmin": fmin_i,
+        "fmax": fmax_i,
         "fctl": fctl_store,
         "color": parse_vic_color(colour),
         "axis": axis,
@@ -619,6 +652,7 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         "playable": False,
         "logo": None,
         "hudright": "",
+        "arrow": None,
     }
     if source:
         room["_source"] = str(source)
@@ -714,6 +748,36 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
                 room["itemcolor"] = parse_vic_color(parts[1])
             elif tag == "logo":
                 room["logo"] = parts[1] if len(parts) > 1 else LOGO_DEFAULT_PATH.name
+            elif tag == "arrow":
+                if room.get("arrow") is not None:
+                    raise room_error(
+                        room, f"{loc(line_no)}only one @arrow per room allowed"
+                    )
+                if len(parts) < 2:
+                    raise room_error(room, f"{loc(line_no)}@arrow needs y/x/v/sound fields")
+                m = ARROW_TAG_RE.match(line.split(None, 1)[1] if len(parts) > 1 else "")
+                if not m:
+                    raise room_error(
+                        room,
+                        f"{loc(line_no)}@arrow y=<py> x=<col> v=[-1|1] sound=<col>",
+                    )
+                y, x, v, sound = m.groups()
+                v_i = int(v)
+                if v_i not in (-1, 1):
+                    raise room_error(room, f"{loc(line_no)}@arrow v must be -1 or 1")
+                room["arrow"] = {
+                    "y": int(y),
+                    "x": int(x),
+                    "v": v_i,
+                    "sound": int(sound),
+                }
+            elif tag == "arrowudg":
+                if room.get("arrow") is None:
+                    raise room_error(
+                        room, f"{loc(line_no)}@arrowudg requires @arrow in the same room"
+                    )
+                content = line.split(None, 1)[1] if len(parts) > 1 else ""
+                room["arrow"]["udg"] = parse_udg_bytes(content)
             continue
         if block == "tilemap":
             if raw_content.lstrip().startswith(";"):
@@ -742,7 +806,15 @@ def parse_room(text: str, source: Path | str | None = None) -> dict:
         room["ramp"] = infer_ramp_from_tilemap(room["tilemap"], room)
         validate_tilemap_belt(room["tilemap"], room["belt"], room)
         validate_guardians(room)
+        validate_arrow_room(room)
     return room
+
+
+def validate_arrow_room(room: dict) -> None:
+    if not room.get("arrow"):
+        return
+    if room.get("rope"):
+        raise room_error(room, "@arrow cannot be used with @rope in the same room")
 
 
 def grid_bytes(rows: list, name: str, room: dict | None = None) -> bytes:
@@ -1035,6 +1107,65 @@ def build_item_erase(room: dict) -> bytes:
     )
 
 
+def guardian_frame_indices(room: dict) -> set[int]:
+    used: set[int] = set()
+    for g in room["guardians"]:
+        used.update(range(g["fmin"], g["fmax"] + 1))
+    return used
+
+
+def arrow_sprite_conflict(room: dict) -> bool:
+    return 8 in guardian_frame_indices(room)
+
+
+def warn_arrow_sprite_conflict(room: dict) -> None:
+    if not room.get("arrow") or not arrow_sprite_conflict(room):
+        return
+    src = Path(room["_source"]).name if room.get("_source") else "room"
+    print(
+        f"warning: {src} — @arrow but guardian uses sprite frame 8 (f=8); "
+        f"arrow_init clobbers frame 8 at ${ARROW_INIT_ADDR:04X}",
+        file=sys.stderr,
+    )
+
+
+def default_arrow_udg(velocity: int) -> bytes:
+    if velocity == 1:
+        return DEFAULT_ARROW_UDG_LTR
+    if velocity == -1:
+        return DEFAULT_ARROW_UDG_RTL
+    raise room_error(None, f"arrow v must be -1 or 1, got {velocity}")
+
+
+def arrow_bake_defines(room: dict) -> dict[str, int]:
+    arrow = room["arrow"]
+    v = arrow["v"]
+    return {
+        "COOKED_X": arrow["x"] & 0xFF,
+        "COOKED_Y": arrow["y"] & 0xFF,
+        "COOKED_SOUND_X": arrow["sound"] & 0xFF,
+        "ARROW_V": 1 if v == 1 else 0xFF,
+        "ARROW_TILE": ARROW_CHR,
+        "ARROW_UPDATE_B": ARROW_UPDATE_B_ADDR,
+    }
+
+
+def build_arrow_sprite(room: dict) -> bytes:
+    return assemble_room_code(
+        "arrow_sprite_buffer.asm",
+        arrow_bake_defines(room),
+        ARROW_SPRITE_SLOT_BYTES,
+    )
+
+
+def build_arrow_update_b(room: dict) -> bytes:
+    return assemble_room_code(
+        "arrow_udg_buffer.asm",
+        arrow_bake_defines(room),
+        ARROW_UPDATE_B_BYTES,
+    )
+
+
 # py is head Y (single pixels); ramp_y runtime is feet Y (head + 16 on surface).
 RAMP_FEET_OFFSET = 16
 RAMP_BOUNDS_EXTEND = 4
@@ -1293,6 +1424,7 @@ def build_tail(room: dict) -> bytes:
     gdata = build_guardian_data(room)
     tail[0:META_SIZE] = meta
     tail[META_OFF_ROPE] = 1 if room.get("rope") else 0
+    tail[META_OFF_HAS_ARROW] = 1 if room.get("arrow") else 0
     off = TAIL_OFF_GUARDIAN_DATA
     tail[off : off + GUARDIAN_DATA_BYTES] = gdata
     return bytes(tail)
@@ -1360,20 +1492,31 @@ def build_room_image(room: dict, scan_key_row: int) -> bytes:
     stamp_hud_item(tiles)
 
     raw = room["guardiansprites"] or bytes(GUARDIAN_SPRITES_BYTES)
-    sprites = bytes(deinterleave_guardian_sprites(raw))
+    sprites = bytearray(deinterleave_guardian_sprites(raw))
+    if room.get("arrow"):
+        warn_arrow_sprite_conflict(room)
+        sprites[256:288] = build_arrow_sprite(room)
     player = player_bmp_for_room(room)
     hud_udg = build_hud_udg()
     udg = build_udg(room)
+    pad = bytearray(RUNTIME_UDG_PAD)
+    if room.get("arrow"):
+        off = (ARROW_CHR - GUARDIAN_CHR) * 8
+        arrow = room["arrow"]
+        udg_bytes = arrow.get("udg") or default_arrow_udg(arrow["v"])
+        pad[off : off + 8] = udg_bytes
+        code = build_arrow_update_b(room)
+        pad[off + 8 : off + 8 + len(code)] = code
     tail = build_tail(room)
     prefix = build_prefix(room, scan_key_row)
 
     blob = (
         prefix
-        + sprites
+        + bytes(sprites)
         + player
         + hud_udg
         + udg
-        + bytes(RUNTIME_UDG_PAD)
+        + bytes(pad)
         + tiles
         + tail
     )
@@ -1515,6 +1658,28 @@ def print_room_lint(indir: Path) -> int:
     return count
 
 
+def print_arrow_report(indir: Path) -> int:
+    """List arrow rooms and frame-8 guardian conflicts; return warning count."""
+    count = 0
+    for src in sorted(indir.glob("room*.txt")):
+        text = src.read_text(encoding="utf-8")
+        room = parse_room(text, source=src)
+        if not room.get("arrow"):
+            continue
+        title = room.get("title") or ""
+        head = f"{src.name} — {title}" if title else src.name
+        print(f"arrow: {head} v={room['arrow']['v']} y={room['arrow']['y']} "
+              f"x={room['arrow']['x']} sound={room['arrow']['sound']}")
+        if arrow_sprite_conflict(room):
+            print(
+                f"warning: {head}: guardian uses sprite frame 8; "
+                f"arrow_init clobbers frame 8 at ${ARROW_INIT_ADDR:04X}",
+                file=sys.stderr,
+            )
+            count += 1
+    return count
+
+
 def print_playable_summary(indir: Path) -> None:
     playable, need_work = playable_status(indir)
     total = len(playable) + len(need_work)
@@ -1559,7 +1724,32 @@ def main():
         action="store_true",
         help="warn on BLK @itemcolor, missing/blank @itemudg, or pickups far from F/W/ramp/belt",
     )
+    ap.add_argument(
+        "--arrow-report",
+        action="store_true",
+        help="list @arrow rooms and warn when guardians use sprite frame 8",
+    )
+    ap.add_argument(
+        "--emit-arrows",
+        action="store_true",
+        help="emit @arrow tags from Spectrum data into non-rope roomNN.txt files",
+    )
     args = ap.parse_args()
+    if args.emit_arrows:
+        from arrow_extract import emit_arrows
+
+        indir = Path(args.input or "rooms")
+        if not indir.is_dir():
+            ap.error(f"not a directory: {indir}")
+        emit_arrows(indir)
+        return
+    if args.arrow_report:
+        indir = Path(args.input or "rooms")
+        if not indir.is_dir():
+            ap.error(f"not a directory: {indir}")
+        if print_arrow_report(indir):
+            sys.exit(1)
+        return
     if args.count_items:
         indir = Path(args.input or "rooms")
         if not indir.is_dir():
