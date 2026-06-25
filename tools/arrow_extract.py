@@ -17,7 +17,6 @@ from mkroom import (  # noqa: E402
     ARROW_ENTITY_RTL,
     ARROW_TEMPLATE_SOUND,
     ARROW_TEMPLATE_X,
-    arrow_sprite_conflict,
     parse_room,
 )
 
@@ -126,12 +125,6 @@ def emit_arrows(rooms_dir: Path, *, dry_run: bool = False) -> None:
             room["arrow"] = {"y": y, "x": x, "v": v, "sound": sound}
         else:
             room["arrow"] = {"y": y, "x": x, "v": v, "sound": sound}
-        if arrow_sprite_conflict(room):
-            print(
-                f"warning: {path.name} — @arrow but guardian uses sprite frame 8; "
-                f"arrow_init clobbers frame 8 at $1B48",
-                file=sys.stderr,
-            )
         if dry_run:
             print(f"would write {path.name}: {arrow_line}")
         else:

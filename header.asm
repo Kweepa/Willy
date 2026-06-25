@@ -12,7 +12,7 @@ tile_color_bytes = 6
 tile_color_src = room_code_base + conveyor_prefix_bytes + do_belt_prefix_bytes
 guardian_sprites_base = tile_color_src + tile_color_bytes
 guardian_prefix_bytes = guardian_sprites_base - room_code_base
-; arrow_init + arrow_update_a @ guardian_sprites_base+256 ($1B48); arrow_update_b @ arrow_udg_addr+8 ($1DA8) — see defines.asm
+; arrow UDG @ chr 46 ($1D70); arrow_init + arrow_update @ chr 47+ ($1D78) — see defines.asm
 player_bmp = guardian_sprites_base + 288
 hud_udg_base = player_bmp + 256         ; chr 13-14 @ $1C68-$1C77
 runtime_udg_pad = $150                  ; 336 B ($1CB0-$1DFF); pins screen_base after load

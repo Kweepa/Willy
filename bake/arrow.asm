@@ -1,55 +1,24 @@
-; Build sources: bake/arrow_sprite_buffer.asm (init + update_a @ guardian_sprites_base+256),
-; bake/arrow_udg_buffer.asm (update_b @ arrow_udg_addr+8).
-;
-; so in a room if there are these lines:
-; @arrow y=<tile_y> x=<tile_x> v=[-1 or 1] sound=<value>
-; @arrowudg N,N,N,N,N,N,N,N
-; then place arrow_init + arrow_update_a where the last guardian sprite data usually is (guardian_sprites_base + 256)
-; and place the arrow udg data (8 bytes) and arrow_update_b in the last guardian udg location ($1c00 + 52*8)
-; and set a byte in the metadata to indicate that there's an arrow in the room
-;
-; in game, just these
-;
-;   in LoadRoom
-;		; 8 bytes
-;		lda meta_content_has_arrow
-;		beq +
-;		jsr arrow_init
-;	+
-;
-;	in gameloop, just after $900c <- 0
-;		; 8 bytes
-;		lda meta_content_has_arrow
-;		beq +
-;		jsr arrow_update
-;	+
-;
-; so the run-time cost is 16 bytes
-;
+; Per-room arrow bake — UDG @ chr 46, init + update @ chr 47+ ($1D78).
+; CLI: -DCOOKED_X=... -DCOOKED_Y=... -DCOOKED_SOUND_X=... -DARROW_V=1|$ff
+;      -DARROW_TILE=46 -DARROW_CODE_BYTES=88
 
-; =====================================
+!source "equates.asm"
 
-arrow_init
-	lda #cooked_x_value  ; <- compile time constant (got from room text file @arrow x=)
+ConvertXYToScreenAddr = $0392
+
+*= $0000
+arrow_init_bake
+	lda #COOKED_X  ; <- compile time constant (got from room text file @arrow x=)
 	sta arrow_x_zp
 	rts
-	
-; =====================================
 
-arrow_update_a
-
+arrow_update_bake
 	ldx left_right_ctr      ; every 4th frame (same cadence as conveyors / h-guardians)
 	beq +
 	rts
 +
-	; setup (x is 0 thanks to above check)
 	ldy #COOKED_Y  ; ConvertXY Y for tile row (@arrow y >> 3), baked in mkroom
 	jsr ConvertXYToScreenAddr
-	jmp arrow_update_b
-
-; =====================================
-
-arrow_update_b
 
 	ldy arrow_x_zp
 	cpy #24
@@ -58,25 +27,34 @@ arrow_update_b
 	; replace the tile
 	lda (map_ptr),y
 	and #$0f   ; mask out the random high nibble
-	ora #$10   ; bump up into the tile udg range
+	ora #$10   ; bump up to match the tile udgs
 	sta (scr_ptr),y
 +
 	; increment and play sound
+!if ARROW_V = 1 {
 	iny ; or dey, depending on direction (compile time instruction @arrow v= -1 or 1)
+}
+!if ARROW_V <> 1 {
+	dey ; or dey, depending on direction (compile time instruction @arrow v= -1 or 1)
+}
 	tya
 	and #127
 	tay
 	sty arrow_x_zp
-	cpy #cooked_launch_sound_x  ; <- compile time constant (@arrowsoundx)
+	cpy #COOKED_SOUND_X  ; <- compile time constant (@arrowsoundx)
 	bne +
-	lda #129  ; low sound
+	lda #129
 	sta $900c
 +
 	cpy #24
 	bcs +
 
 	; draw
-	lda #ARROW_TILE    ; see above, ARROW_TILE is 52
+	lda #ARROW_TILE
 	sta (scr_ptr),y
 +
 	rts
+
+!if * > ARROW_CODE_BYTES {
+	!error "arrow.asm size ", *, " exceeds ARROW_CODE_BYTES ", ARROW_CODE_BYTES
+}

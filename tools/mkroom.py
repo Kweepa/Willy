@@ -121,23 +121,13 @@ DEFAULT_HUD_ITEM_UDG = bytes([4, 4, 174, 174, 162, 66, 66, 238])
 DEFAULT_ARROW_UDG_LTR = bytes([0, 0, 194, 127, 194, 0, 0, 0])
 DEFAULT_ARROW_UDG_RTL = bytes([0, 0, 67, 254, 67, 0, 0, 0])
 GUARDIAN_CHR = 22
-ARROW_CHR = 52
-ARROW_SPRITE_SLOT_BYTES = 32
-ARROW_UPDATE_B_BYTES = 40
+ARROW_CHR = 46
+ARROW_CODE_BYTES = 88
 META_OFF_HAS_ARROW = 99
 UDG_BASE = 0x1C00
 RUNTIME_UDG_PAD_BASE = 0x1CB0
-GUARDIAN_SPRITES_BASE = (
-    IMAGE_LOAD
-    + ITEM_FLICKER_BYTES
-    + CONVEYOR_PREFIX_BYTES
-    + DO_BELT_SLOT_BYTES
-    + TILE_COLOR_BYTES
-)
-ARROW_INIT_ADDR = GUARDIAN_SPRITES_BASE + 256
-ARROW_UPDATE_A_ADDR = ARROW_INIT_ADDR + 5
 ARROW_UDG_ADDR = RUNTIME_UDG_PAD_BASE + (ARROW_CHR - GUARDIAN_CHR) * 8
-ARROW_UPDATE_B_ADDR = ARROW_UDG_ADDR + 8
+ARROW_CODE_ADDR = ARROW_UDG_ADDR + 8
 EMPTY_SCREEN_CHR = TILE_CHR_BASE + TILE_EMPTY
 ARROW_ENTITY_LTR = 60
 ARROW_ENTITY_RTL = 69
@@ -815,6 +805,11 @@ def validate_arrow_room(room: dict) -> None:
         return
     if room.get("rope"):
         raise room_error(room, "@arrow cannot be used with @rope in the same room")
+    if len(room["guardians"]) > 4:
+        raise room_error(
+            room,
+            "@arrow rooms allow at most 4 guardians (chr 46–57 reserved)",
+        )
 
 
 def grid_bytes(rows: list, name: str, room: dict | None = None) -> bytes:
@@ -1107,28 +1102,6 @@ def build_item_erase(room: dict) -> bytes:
     )
 
 
-def guardian_frame_indices(room: dict) -> set[int]:
-    used: set[int] = set()
-    for g in room["guardians"]:
-        used.update(range(g["fmin"], g["fmax"] + 1))
-    return used
-
-
-def arrow_sprite_conflict(room: dict) -> bool:
-    return 8 in guardian_frame_indices(room)
-
-
-def warn_arrow_sprite_conflict(room: dict) -> None:
-    if not room.get("arrow") or not arrow_sprite_conflict(room):
-        return
-    src = Path(room["_source"]).name if room.get("_source") else "room"
-    print(
-        f"warning: {src} — @arrow but guardian uses sprite frame 8 (f=8); "
-        f"arrow_init clobbers frame 8 at ${ARROW_INIT_ADDR:04X}",
-        file=sys.stderr,
-    )
-
-
 def default_arrow_udg(velocity: int) -> bytes:
     if velocity == 1:
         return DEFAULT_ARROW_UDG_LTR
@@ -1152,24 +1125,22 @@ def arrow_bake_defines(room: dict) -> dict[str, int]:
         "COOKED_SOUND_X": arrow["sound"] & 0xFF,
         "ARROW_V": 1 if v == 1 else 0xFF,
         "ARROW_TILE": ARROW_CHR,
-        "ARROW_UPDATE_B": ARROW_UPDATE_B_ADDR,
+        "ARROW_CODE_BYTES": ARROW_CODE_BYTES,
     }
 
 
-def build_arrow_sprite(room: dict) -> bytes:
-    return assemble_room_code(
-        "arrow_sprite_buffer.asm",
+def build_arrow(room: dict) -> bytes:
+    code = assemble_room_code(
+        "arrow.asm",
         arrow_bake_defines(room),
-        ARROW_SPRITE_SLOT_BYTES,
+        None,
     )
-
-
-def build_arrow_update_b(room: dict) -> bytes:
-    return assemble_room_code(
-        "arrow_udg_buffer.asm",
-        arrow_bake_defines(room),
-        ARROW_UPDATE_B_BYTES,
-    )
+    if len(code) > ARROW_CODE_BYTES:
+        raise room_error(
+            room,
+            f"arrow.asm size {len(code)} exceeds {ARROW_CODE_BYTES} bytes",
+        )
+    return code
 
 
 # py is head Y (single pixels); ramp_y runtime is feet Y (head + 16 on surface).
@@ -1499,9 +1470,6 @@ def build_room_image(room: dict, scan_key_row: int) -> bytes:
 
     raw = room["guardiansprites"] or bytes(GUARDIAN_SPRITES_BYTES)
     sprites = bytearray(deinterleave_guardian_sprites(raw))
-    if room.get("arrow"):
-        warn_arrow_sprite_conflict(room)
-        sprites[256:288] = build_arrow_sprite(room)
     player = player_bmp_for_room(room)
     hud_udg = build_hud_udg()
     udg = build_udg(room)
@@ -1511,7 +1479,7 @@ def build_room_image(room: dict, scan_key_row: int) -> bytes:
         arrow = room["arrow"]
         udg_bytes = arrow.get("udg") or default_arrow_udg(arrow["v"])
         pad[off : off + 8] = udg_bytes
-        code = build_arrow_update_b(room)
+        code = build_arrow(room)
         pad[off + 8 : off + 8 + len(code)] = code
     tail = build_tail(room)
     prefix = build_prefix(room, scan_key_row)
@@ -1664,9 +1632,8 @@ def print_room_lint(indir: Path) -> int:
     return count
 
 
-def print_arrow_report(indir: Path) -> int:
-    """List arrow rooms and frame-8 guardian conflicts; return warning count."""
-    count = 0
+def print_arrow_report(indir: Path) -> None:
+    """List arrow rooms."""
     for src in sorted(indir.glob("room*.txt")):
         text = src.read_text(encoding="utf-8")
         room = parse_room(text, source=src)
@@ -1676,14 +1643,6 @@ def print_arrow_report(indir: Path) -> int:
         head = f"{src.name} — {title}" if title else src.name
         print(f"arrow: {head} v={room['arrow']['v']} y={room['arrow']['y']} "
               f"x={room['arrow']['x']} sound={room['arrow']['sound']}")
-        if arrow_sprite_conflict(room):
-            print(
-                f"warning: {head}: guardian uses sprite frame 8; "
-                f"arrow_init clobbers frame 8 at ${ARROW_INIT_ADDR:04X}",
-                file=sys.stderr,
-            )
-            count += 1
-    return count
 
 
 def print_playable_summary(indir: Path) -> None:
@@ -1733,7 +1692,7 @@ def main():
     ap.add_argument(
         "--arrow-report",
         action="store_true",
-        help="list @arrow rooms and warn when guardians use sprite frame 8",
+        help="list @arrow rooms",
     )
     ap.add_argument(
         "--emit-arrows",
@@ -1753,8 +1712,7 @@ def main():
         indir = Path(args.input or "rooms")
         if not indir.is_dir():
             ap.error(f"not a directory: {indir}")
-        if print_arrow_report(indir):
-            sys.exit(1)
+        print_arrow_report(indir)
         return
     if args.count_items:
         indir = Path(args.input or "rooms")

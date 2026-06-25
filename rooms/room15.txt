@@ -49,7 +49,6 @@ WWWWWWWWWWWWWWWWWWWWWWWW
 
 @guardians
 x=4 y=48(48..104) v=4 f=8 YEL
-x=9 y=80(44..104) v=2 f=8 RED
 x=15 y=34(34..104) v=5 f=8 CYN
 x=20 y=64(40..104) v=1 f=8 GRN
 y=32 x=5(0..9) v=-1 f=0..7 GRN

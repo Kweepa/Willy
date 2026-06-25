@@ -23,3 +23,8 @@ belt_push_right = $01
 arrow_x_zp      = $d6          ; keep in sync with zp.asm
 scr_ptr         = $05          ; keep in sync with zp.asm
 map_ptr         = $15          ; keep in sync with zp.asm
+col_ptr         = $07          ; keep in sync with zp.asm
+
+tile_color_src  = $1a42        ; keep in sync with header.asm (6 B tile type colours 0-5)
+
+WHT = 1
