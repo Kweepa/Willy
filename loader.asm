@@ -10,8 +10,9 @@
 ;   +$010 AnimateConveyors 19 @ $1A12
 ;   +$023 DoBelt 29 @ $1A25
 ;   +$040 tile colours 6 @ $1A42
-;   +$046 guardian sprites 288 @ $1A48  (title room: TitleScreen code+msg in 544 B here)
-;   +$166 player_bmp 256 @ $1B68       (title room: logo UDGs span from $1C00)
+;   +$046 guardian sprites 288 @ $1A48  (normal rooms only)
+;   +$166 player_bmp 256 @ $1B68       (normal rooms only)
+;   title room: TitleScreen 510 B @ $1A02-$1BFF; logo UDGs @ $1C00
 ;   +$266 HUD UDG 16 @ $1C68 (chr 13-14)
 ;   +$276 tile UDG 56 @ $1C78 (chr 15-21)
 ;   +$280 runtime pad 336 ($1CB0-$1DFF)

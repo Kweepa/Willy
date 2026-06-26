@@ -37,18 +37,17 @@ TITLE_HOLD_FRAMES = 150         # 3 s @ 50 Hz (WaitForRasterLine)
 TITLE_SCROLL_FRAMES = 6         # ~8.3 chars/s @ 50 Hz
 TITLE_MESSAGE = (
     "+ Press SPACE to Start +"
-    " . . . . . "
-    "JET-SET WILLY by Matthew Smith (c) 1984 SOFTWARE PROJECTS Ltd"
-    " . . . . . "
+    " . . . "
+    "JET-SET WILLY by Matthew Smith (c)1984 SOFTWARE PROJECTS Ltd"
+    " . . . "
     "VIC-20 version by Steve McCrea 2026"
-    " . . . . . "
-    "Guide Willy to collect all the items around the house so Maria will let you get to your bed"
-    " . . . . . "
+    " . . . "
+    "Guide Willy to collect all the items around the house so Maria will let you go to bed"
+    " . . . "
 )
 META_OFF_ROPE = 16 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
 TAIL_OFF_GUARDIAN_DATA = META_OFF_ROPE + 1
 PLAYER_BMP_BYTES = 256
-TITLE_SCREEN_SLOT_BYTES = GUARDIAN_SPRITES_BYTES + PLAYER_BMP_BYTES  # r62 logo room
 NIGHTMARE_ROOM_ID = 29
 DEFAULT_PLAYER_BMP_PATH = (
     Path(__file__).resolve().parent.parent / "willy.txt"
@@ -74,6 +73,7 @@ LOGO_ORIGIN_ROW = 4
 LOGO_DEFAULT_PATH = BAKE_DIR / "jswlogo.png"
 LOGO_UDG_RAM = 0x1C00
 LOGO_UDG_OFF = LOGO_UDG_RAM - IMAGE_LOAD
+TITLE_SCREEN_SLOT_BYTES = LOGO_UDG_OFF  # r62: TitleScreen @ $1A02-$1BFF
 LOGO_UDG_MAX_BYTES = 0x1E00 - LOGO_UDG_RAM
 SCREEN_BASE = 0x1E00
 MAP_BASE = 0x9400
@@ -1038,7 +1038,7 @@ def title_screen_msg_bytes() -> bytes:
 
 
 def build_title_screen() -> tuple[bytes, int]:
-    """544-byte TitleScreen slot @ $1A48 in r62 (code + scroll text + in-slot scratch)."""
+    """TitleScreen @ $1A02 in r62 (510 B max; logo UDGs load at $1C00)."""
     msg = title_screen_msg_bytes()
     tmp_dir = BAKE_DIR / ".tmp"
     tmp_dir.mkdir(exist_ok=True)
@@ -1048,7 +1048,7 @@ def build_title_screen() -> tuple[bytes, int]:
         encoding="utf-8",
     )
     hud_row_off = (SCREEN_ROWS - 1) * WIDTH
-    title_org = IMAGE_LOAD + TITLE_SCREEN_OFF
+    title_org = IMAGE_LOAD
     data = assemble_room_code(
         "title_screen.asm",
         {
@@ -1546,17 +1546,15 @@ def build_logo_room_image(room: dict, scan_key_row: int) -> bytes:
 
     stamp_logo_hud_title(screen, room)
     tail = build_tail(room)
-    prefix = build_prefix(room, scan_key_row)
     title_screen, title_used = build_title_screen()
     print(
-        f"  title screen @ ${IMAGE_LOAD + TITLE_SCREEN_OFF:04X}: "
+        f"  title screen @ ${IMAGE_LOAD:04X}: "
         f"{title_used}/{TITLE_SCREEN_SLOT_BYTES} bytes used "
         f"({TITLE_SCREEN_SLOT_BYTES - title_used} free)"
     )
 
     blob = bytearray(ROOM_IMAGE_SIZE)
-    blob[0 : len(prefix)] = prefix
-    blob[TITLE_SCREEN_OFF : TITLE_SCREEN_OFF + len(title_screen)] = title_screen
+    blob[0 : len(title_screen)] = title_screen
     blob[LOGO_UDG_OFF : LOGO_UDG_OFF + len(udg_data)] = udg_data
     blob[SCREEN_BASE - IMAGE_LOAD : SCREEN_BASE - IMAGE_LOAD + TILE_BYTES] = screen
     blob[-TAIL_BYTES:] = tail
