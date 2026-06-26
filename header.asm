@@ -12,6 +12,8 @@ tile_color_bytes = 6
 tile_color_src = room_code_base + conveyor_prefix_bytes + do_belt_prefix_bytes
 guardian_sprites_base = tile_color_src + tile_color_bytes
 guardian_prefix_bytes = guardian_sprites_base - room_code_base
+TitleScreen = guardian_sprites_base   ; r62 only: scroll message + wait for space ($1A48)
+title_screen_slot_bytes = 544         ; guardian_sprites + player_bmp area in logo room
 ; arrow UDG @ chr 46 ($1D70); arrow_init + arrow_update @ chr 47+ ($1D78) — see defines.asm
 player_bmp = guardian_sprites_base + 288
 hud_udg_base = player_bmp + 256         ; chr 13-14 @ $1C68-$1C77

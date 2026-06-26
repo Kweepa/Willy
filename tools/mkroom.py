@@ -33,9 +33,22 @@ BAKE_DIR = Path(__file__).resolve().parent.parent / "bake"
 ACME = Path(r"\app\acme\acme.exe")
 JSW_LBL = Path(__file__).resolve().parent.parent / "jsw.lbl"
 GUARDIAN_SPRITES_BYTES = 288  # 9 frames x 32 bytes
+TITLE_HOLD_FRAMES = 150         # 3 s @ 50 Hz (WaitForRasterLine)
+TITLE_SCROLL_FRAMES = 6         # ~8.3 chars/s @ 50 Hz
+TITLE_MESSAGE = (
+    "+ Press SPACE to Start +"
+    " . . . . . "
+    "JET-SET WILLY by Matthew Smith (c) 1984 SOFTWARE PROJECTS Ltd"
+    " . . . . . "
+    "VIC-20 version by Steve McCrea 2026"
+    " . . . . . "
+    "Guide Willy to collect all the items around the house so Maria will let you get to your bed"
+    " . . . . . "
+)
 META_OFF_ROPE = 16 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
 TAIL_OFF_GUARDIAN_DATA = META_OFF_ROPE + 1
 PLAYER_BMP_BYTES = 256
+TITLE_SCREEN_SLOT_BYTES = GUARDIAN_SPRITES_BYTES + PLAYER_BMP_BYTES  # r62 logo room
 NIGHTMARE_ROOM_ID = 29
 DEFAULT_PLAYER_BMP_PATH = (
     Path(__file__).resolve().parent.parent / "willy.txt"
@@ -54,6 +67,7 @@ DO_BELT_SLOT_BYTES = 29
 GUARDIAN_PREFIX_BYTES = (
     ITEM_FLICKER_BYTES + CONVEYOR_PREFIX_BYTES + DO_BELT_SLOT_BYTES + TILE_COLOR_BYTES
 )
+TITLE_SCREEN_OFF = GUARDIAN_PREFIX_BYTES
 LOGO_ROOM_ID = 62
 LOGO_ORIGIN_COL = 4
 LOGO_ORIGIN_ROW = 4
@@ -919,15 +933,20 @@ def belt_byte(speed: int) -> int:
     return speed & 0xFF
 
 
-def load_scan_key_row() -> int:
-    """Resident ScanKeyRow address from jsw.lbl (assemble jsw.prg first)."""
+def load_resident_symbol(name: str) -> int:
+    """Resident routine address from jsw.lbl (assemble jsw.prg first)."""
     if not JSW_LBL.is_file():
         raise ValueError(f"missing {JSW_LBL}; assemble jsw.prg before mkroom")
+    pat = re.compile(rf"al C:([0-9a-f]+) \.{re.escape(name)}", re.I)
     for line in JSW_LBL.read_text(encoding="utf-8").splitlines():
-        m = re.match(r"al C:([0-9a-f]+) \.ScanKeyRow", line, re.I)
+        m = pat.match(line)
         if m:
             return int(m.group(1), 16)
-    raise ValueError(f"ScanKeyRow not found in {JSW_LBL}")
+    raise ValueError(f"{name} not found in {JSW_LBL}")
+
+
+def load_scan_key_row() -> int:
+    return load_resident_symbol("ScanKeyRow")
 
 
 def assemble_room_code(
@@ -1012,6 +1031,44 @@ def build_prefix(room: dict, scan_key_row: int) -> bytes:
         + build_do_belt(room, scan_key_row)
         + build_tile_colors(room)
     )
+
+
+def title_screen_msg_bytes() -> bytes:
+    return bytes(ascii_to_rom_screen(c) for c in TITLE_MESSAGE.upper())
+
+
+def build_title_screen() -> tuple[bytes, int]:
+    """544-byte TitleScreen slot @ $1A48 in r62 (code + scroll text + in-slot scratch)."""
+    msg = title_screen_msg_bytes()
+    tmp_dir = BAKE_DIR / ".tmp"
+    tmp_dir.mkdir(exist_ok=True)
+    msg_inc = tmp_dir / "title_msg.inc"
+    msg_inc.write_text(
+        "!byte " + ",".join(f"${b:02x}" for b in msg) + "\n",
+        encoding="utf-8",
+    )
+    hud_row_off = (SCREEN_ROWS - 1) * WIDTH
+    title_org = IMAGE_LOAD + TITLE_SCREEN_OFF
+    data = assemble_room_code(
+        "title_screen.asm",
+        {
+            "ORG": title_org,
+            "SCANKEYROW": load_resident_symbol("ScanKeyRow"),
+            "WAITFORRASTERLINE": load_resident_symbol("WaitForRasterLine"),
+            "SETCOLORS": load_resident_symbol("SetColors"),
+            "HUD_SCR": SCREEN_BASE + hud_row_off,
+            "HUD_COL": COLOR_BASE + hud_row_off,
+            "RED": VIC_COLOR["RED"],
+            "MSG_LEN": len(msg),
+            "HOLD_FRAMES": TITLE_HOLD_FRAMES,
+            "SCROLL_FRAMES": TITLE_SCROLL_FRAMES,
+        },
+        TITLE_SCREEN_SLOT_BYTES,
+    )
+    end = len(data)
+    while end > 0 and data[end - 1] == 0xEA:
+        end -= 1
+    return data, end
 
 
 def noop_stub(size: int) -> bytes:
@@ -1490,9 +1547,16 @@ def build_logo_room_image(room: dict, scan_key_row: int) -> bytes:
     stamp_logo_hud_title(screen, room)
     tail = build_tail(room)
     prefix = build_prefix(room, scan_key_row)
+    title_screen, title_used = build_title_screen()
+    print(
+        f"  title screen @ ${IMAGE_LOAD + TITLE_SCREEN_OFF:04X}: "
+        f"{title_used}/{TITLE_SCREEN_SLOT_BYTES} bytes used "
+        f"({TITLE_SCREEN_SLOT_BYTES - title_used} free)"
+    )
 
     blob = bytearray(ROOM_IMAGE_SIZE)
     blob[0 : len(prefix)] = prefix
+    blob[TITLE_SCREEN_OFF : TITLE_SCREEN_OFF + len(title_screen)] = title_screen
     blob[LOGO_UDG_OFF : LOGO_UDG_OFF + len(udg_data)] = udg_data
     blob[SCREEN_BASE - IMAGE_LOAD : SCREEN_BASE - IMAGE_LOAD + TILE_BYTES] = screen
     blob[-TAIL_BYTES:] = tail

@@ -7,18 +7,7 @@ SHOW_TITLE = 1
     lda #ROOM_TITLE
     sta map
     jsr LoadRoom
-
-    lda #RED
-    jsr SetColors
-
-title_wait
-    ldx #$ef                    ; space bar row
-    jsr ScanKeyRow
-    beq title_wait
-
-title_release_wait
-    jsr ScanKeyRow
-    bne title_release_wait
+    jsr TitleScreen
 }
 
     lda #ROOM_START
