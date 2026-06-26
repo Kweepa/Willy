@@ -164,7 +164,6 @@ vguard_count    = $4b          ; so they can be indexed by guard_axis
 
 last_py         = $4e
 belt_active     = $4f
-tmp_xadd        = $30
 
 align_tmp       = $58
 safe_transition_count = $59      ; room changes since last grounded safe snapshot

@@ -134,8 +134,6 @@ collide_active
 collide_body
     lda py
     sta last_py
-    lda xadd
-    sta tmp_xadd
     lda on_ground
     bne +
     sta belt_active
