@@ -35,3 +35,10 @@ try_fall_death
     sta dead
 +
     rts
+
+    ; takes A=note
+play_sound_at_default_volume
+    sta $900c
+    lda #10
+    sta $900e
+    rts

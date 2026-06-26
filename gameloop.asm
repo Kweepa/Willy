@@ -39,6 +39,9 @@ main_loop
     beq +
     sta fall_death_respawn
 +
+    ; reset volume (could have been jumping when we died)
+    ; due to above, A=0 already. plus due to below, the note will be set again quickly
+    jsr play_sound_at_default_volume
 
     ; death flash
     ldy #24

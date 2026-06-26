@@ -186,6 +186,8 @@ collide_body
     tax
     ldy jumpnotes,x
     sty $900c
+    lda #2
+    sta $900e
     ; end play jump sound
 +
 
@@ -503,7 +505,7 @@ HandleOverlapChar
 
     ; play item pickup sound
     lda #240
-    sta $900c
+    jsr play_sound_at_default_volume
 +
     pla
     tax

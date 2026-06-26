@@ -1,8 +1,9 @@
 PlayInGameMusic
 
 	; stop last frame's sound effects (moved from gameloop to decrease body of gameloop)
+	; also reset volume to 10 since jump may have changed it
 	lda #0
-	sta $900c
+	jsr play_sound_at_default_volume
 
 	; toggle music on a key
 	; ADGJL row ($FB): toggle music on rising edge only.

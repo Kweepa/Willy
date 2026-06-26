@@ -45,6 +45,8 @@ arrow_update_bake
 	bne +
 	lda #129
 	sta $900c
+	lda #10
+	sta $900e
 +
 	cpy #24
 	bcs +
