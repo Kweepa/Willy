@@ -36,9 +36,22 @@ LoadRoom
     jsr SetColors
 
     jsr FormatRoomName
-    jsr LoadRoomFile
 
-LoadRoomContinue
+; LoadRoomFile — KERNAL SETNAM/SETLFS/LOAD; fall through to LoadRoomContinue.
+; Title stick fire jmps here (room_name preset to RJY); map=62 early rts in Continue.
+LoadRoomFile
+    lda #3
+    ldx #<room_name
+    ldy #>room_name
+    jsr $ffbd                    ; SETNAM
+    lda #room_lfn
+    ldx #8                       ; device 8 (disk)
+    ldy #1                       ; secondary address 1
+    jsr $ffba                    ; SETLFS
+    lda #0                       ; LOAD to RAM (not VERIFY)
+    jsr $ffd5                    ; LOAD
+    sei
+
     lda meta_content_border
     sta $900f
 
@@ -117,18 +130,4 @@ LoadRoomContinue
     beq +
     jsr arrow_init
 +
-    rts
-
-LoadRoomFile
-    lda #3
-    ldx #<room_name
-    ldy #>room_name
-    jsr $ffbd                    ; SETNAM
-    lda #room_lfn
-    ldx #8                       ; device 8 (disk)
-    ldy #1                       ; secondary address 1
-    jsr $ffba                    ; SETLFS
-    lda #0                       ; LOAD to RAM (not VERIFY)
-    jsr $ffd5                    ; LOAD
-    sei
     rts

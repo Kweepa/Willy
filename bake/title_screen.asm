@@ -94,8 +94,7 @@ TitleScreen
     sta room_name+1
     lda #'Y'
     sta room_name+2
-    jsr LOADROOMFILE
-    rts
+    jmp LOADROOMFILE
 
 ; Z set = no fire, Z clear = fire pressed (bit 5 of $9111 active-low)
 .stick_fire_pressed

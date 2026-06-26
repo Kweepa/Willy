@@ -50,6 +50,8 @@ RAMP_UP_LEFT = $FF
 ; Quick endgame test: make_test_endgame.bat (--endgame-items-required 2).
 ROOM_MASTER_BED = 35
 ROOM_BATHROOM = 33
+; to test rope: room 31 (swimming pool)
+; to test arrow: room 36 (a bit of tree)
 ROOM_START = 33
 ROOM_TITLE = 62
 
