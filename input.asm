@@ -30,9 +30,14 @@ ScanKeyRow
 GetPlayerInput
     lda willy_hidden
     bne .player_input_done
-    lda #0
     sta jumpIsPressed
+
+    ldx #$bf ; Q/E/T etc
+    jsr ScanKeyRow
     sta leftIsPressed
+
+    ldx #$fd ; W/R/Y etc
+    jsr ScanKeyRow
     sta rightIsPressed
 
     lda on_ground
@@ -40,24 +45,26 @@ GetPlayerInput
     lda belt_active
     bne .player_input_try_jump
 .player_input_left
-    ldx #$bf ; Q/E/T etc
-    jsr ScanKeyRow
+    lda leftIsPressed
     beq .player_input_right
     lda #-1
     sta lastxmove
     sta xadd
-    sta leftIsPressed
 .player_input_right
-    ldx #$fd ; W/R/Y etc
-    jsr ScanKeyRow
+    lda rightIsPressed
     beq .player_input_try_jump
     lda #1
     sta lastxmove
     sta xadd
-    sta rightIsPressed
 .player_input_try_jump
     ldx #$ef
     jsr ScanKeyRow
     sta jumpIsPressed ; just needs to be non-zero
 .player_input_done
     rts
+!if GETPLAYERINPUT_PATCH_BYTES > * - GetPlayerInput {
+!fill GETPLAYERINPUT_PATCH_BYTES - (* - GetPlayerInput), $ea
+}
+!if * - GetPlayerInput > GETPLAYERINPUT_PATCH_BYTES {
+!error "GetPlayerInput exceeds GETPLAYERINPUT_PATCH_BYTES"
+}

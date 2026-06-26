@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build title-screen Moonlight Sonata -> VIC-20 appendix F.
 
-99 notes (33 triplets) + 255.
+84 notes (28 triplets) + 255 — loop ends after m7 (cut before m8/m9).
 
 Arrangements (set TITLE_ARRANGEMENT env or --arrangement):
   dual         — LH on $900a + RH on $900b via compressed triplet LUTs (default)
@@ -17,7 +17,8 @@ from __future__ import annotations
 import argparse
 import os
 
-TITLE_NOTE_COUNT = 99
+TITLE_NOTE_COUNT = 84
+TITLE_BAR_COUNT = TITLE_NOTE_COUNT // 3
 
 CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
@@ -45,7 +46,7 @@ ARRANGEMENT_SOURCES: dict[str, list[str]] = {
     ],
 }
 
-# Original ZX Spectrum Jet Set Willy title tune @ $85FB (99 bytes).
+# Original ZX Spectrum Jet Set Willy title tune @ $85FB (trimmed to 84 bytes / B28).
 JSW_SPEC_TUNE: list[int] = [
     0x51, 0x3C, 0x33, 0x51, 0x3C, 0x33, 0x51, 0x3C, 0x33, 0x51, 0x3C, 0x33,
     0x51, 0x3C, 0x33, 0x51, 0x3C, 0x33, 0x51, 0x3C, 0x33, 0x51, 0x3C, 0x33,
@@ -54,8 +55,6 @@ JSW_SPEC_TUNE: list[int] = [
     0x66, 0x51, 0x3C, 0x51, 0x3C, 0x33, 0x51, 0x3C, 0x33, 0x28, 0x3C, 0x28,
     0x28, 0x36, 0x2D, 0x51, 0x36, 0x2D, 0x51, 0x36, 0x2D, 0x28, 0x36, 0x28,
     0x28, 0x3C, 0x33, 0x51, 0x3C, 0x33, 0x26, 0x3C, 0x2D, 0x4C, 0x3C, 0x2D,
-    0x28, 0x40, 0x33, 0x51, 0x40, 0x33, 0x2D, 0x40, 0x36, 0x20, 0x40, 0x36,
-    0x3D, 0x79, 0x3D,
 ]
 
 # Richard Hallas tone chart (value, label); '#' = semitone between naturals.
@@ -107,8 +106,6 @@ BAR_LABELS: list[str] = [
     *["m5"] * 4,
     *["m6"] * 4,
     *["m7"] * 4,
-    *["m8"] * 4,
-    "m9",
 ]
 
 # VIC-20 Programmer's Reference Guide, appendix F (rows low -> high pitch).
@@ -182,13 +179,9 @@ LH_BASS_TRIPLETS: list[tuple[str, str, list[int]]] = [
     ( "m6", "G#", LH_BASS_OCTAVES),
     ( "m6", "C",  LH_BASS_OCTAVES),
     ( "m6", "G#", LH_BASS_OCTAVES),
-  # m7  LH C# then F# (RH return / F#m)
+  # m7  LH C# then F# (RH return / F#m) — loop ends after B28
     *(("m7", "C#", LH_BASS_OCTAVES),) * 2,
     *(("m7", "F#", LH_BASS_OCTAVES),) * 2,
-  # m8  LH E (E major area)
-    *(("m8", "E",  LH_BASS_OCTAVES),) * 4,
-  # m9  LH E (E major cadence)
-    ( "m9", "E",  LH_BASS_OCTAVES),
 ]
 
 # RH triplet arpeggios mm.1-9 (low -> high within each triplet).
@@ -215,15 +208,9 @@ RH_ARPEGGIO_TRIPLETS: list[tuple[str, list[str], list[int]]] = [
     ("m7", ["G#", "C#", "E"], [4, 5, 5]),
     ("m7", ["A", "C#", "F#"], [4, 5, 5]),
     ("m7", ["A", "C#", "F#"], [4, 5, 5]),
-    ("m8", ["G#", "B", "E"], [4, 4, 5]),
-    ("m8", ["G#", "B", "E"], [4, 4, 5]),
-    ("m8", ["F#", "B", "D#"], [4, 4, 5]),
-    ("m8", ["F#", "B", "D#"], [4, 4, 5]),
-    ("m9", ["G#", "B", "E"], [4, 4, 5]),
 ]
 
 DEFAULT_ARRANGEMENT = os.environ.get("TITLE_ARRANGEMENT", "dual")
-TITLE_BAR_COUNT = TITLE_NOTE_COUNT // 3
 
 
 def _build_hallas() -> dict[int, str]:
@@ -412,13 +399,21 @@ def triplet_table(
     return rows
 
 
+def title_triplet_ofs_entries(max_rh_voice: int) -> list[int]:
+    """Shared index×3 table for LH (voices 0–6) and RH (voices 0–max)."""
+    return [i * 3 for i in range(max_rh_voice + 1)]
+
+
 def asm_dual_lines() -> list[str]:
     lh_lut, lh_ids, rh_lut, rh_ids, bar_seq = build_dual_tables()
     lh_triplets = build_triplets_lh_bass()
     rh_triplets = build_triplets_rh_arpeggios()
+    max_rh_voice = max(rh_ids)
+    ofs = title_triplet_ofs_entries(max_rh_voice)
 
     lines = [
-        "; Moonlight dual: LH->$900a RH->$900b, 7+11 unique triplets, 33-bar seq.",
+        f"; Moonlight dual: LH->$900a RH->$900b, {len(lh_lut)}+{len(rh_lut)} unique triplets, "
+        f"{TITLE_BAR_COUNT}-bar seq.",
         "title_bar_seq",
     ]
     for i, (_packed, lh, rh) in enumerate(zip(bar_seq, lh_ids, rh_ids)):
@@ -436,6 +431,9 @@ def asm_dual_lines() -> list[str]:
         bar, pitches, octaves = rh_triplets[next(j for j, rid in enumerate(rh_ids) if rid == i)]
         score = ",".join(f"{p}{o}" for p, o in zip(pitches, octaves))
         lines.append(f"    !byte {a},{b},{c}      ; RH{i} {score}")
+    lines.append("")
+    lines.append("title_rh_ofs")
+    lines.append("    !byte " + ",".join(str(b) for b in ofs))
     return lines
 
 

@@ -20,6 +20,20 @@ belt_opp_left_xadd  = $ff
 belt_push_left  = $ff
 belt_push_right = $01
 
+leftIsPressed   = $12          ; keep in sync with zp.asm
+rightIsPressed  = $2d
+jumpIsPressed   = $0f
+on_ground       = $18
+ts              = $50
+
+; title screen scratch — keep in sync with zp.asm
+title_scroll_off    = $33
+title_phase         = $34
+title_hold_ctr      = $35
+title_scroll_ctr    = $d7
+title_music_step    = $d8
+title_mpack         = $d9
+
 arrow_x_zp      = $d6          ; keep in sync with zp.asm
 scr_ptr         = $05          ; keep in sync with zp.asm
 map_ptr         = $15          ; keep in sync with zp.asm

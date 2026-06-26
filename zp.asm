@@ -25,7 +25,8 @@
 ;   $EE-$F6   ingame_tune_pitch (9 B; WarmStart copy)
 ;   $37-$3C   draw_player_offsets (boot) — off $F5 KERNAL keyboard ptr during LOAD
 ;   $3D-$42   draw_player_chrs (boot) — off $F6 KERNAL keyboard ptr during LOAD
-;   $43-$45   music_index, music_delay, music_enabled ($FF on / $0 off)
+;   $33-$35   title scroll/hold scratch (title only)
+;   $D7-$D9   title_scroll_ctr / title_music_step / title_mpack (title only)
 ;   $4d       music_key_prev (last ADGJL scan mask; 0 = released)
 ;
 ; KERNAL clobber map — VIC-20 KERNAL (this build; not C64-only AAY labels):
@@ -139,6 +140,13 @@ stream_ptr      = $52
 stream_ptr_hi   = $53
 
 arr3            = $31
+
+title_scroll_off    = $33          ; title only (arr3 uses $31-$32)
+title_phase         = $34
+title_hold_ctr      = $35
+title_scroll_ctr    = $d7
+title_music_step    = $d8
+title_mpack         = $d9
 
 totalinairtime  = $51
 

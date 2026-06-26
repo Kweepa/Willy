@@ -58,9 +58,9 @@ GUARDIAN_RECORD_BYTES = 10
 MAX_GUARDIANS = 6
 TAIL_BYTES = 104
 META_SIZE = 16 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
-IMAGE_LOAD = 0x1A02
+IMAGE_LOAD = 0x1A05
 CONVEYOR_PREFIX_BYTES = 19
-DO_BELT_SLOT_BYTES = 29
+DO_BELT_SLOT_BYTES = 26
 GUARDIAN_PREFIX_BYTES = (
     ITEM_FLICKER_BYTES + CONVEYOR_PREFIX_BYTES + DO_BELT_SLOT_BYTES + TILE_COLOR_BYTES
 )
@@ -78,14 +78,14 @@ LOGO_ORIGIN_ROW = 4
 LOGO_DEFAULT_PATH = BAKE_DIR / "jswlogo.png"
 LOGO_UDG_RAM = 0x1C00
 LOGO_UDG_OFF = LOGO_UDG_RAM - IMAGE_LOAD
-TITLE_SCREEN_SLOT_BYTES = LOGO_UDG_OFF  # r62: TitleScreen @ $1A02-$1BFF
+TITLE_SCREEN_SLOT_BYTES = LOGO_UDG_OFF  # r62: TitleScreen @ $1A05-$1BFF
 LOGO_UDG_MAX_BYTES = 0x1E00 - LOGO_UDG_RAM
 SCREEN_BASE = 0x1E00
 MAP_BASE = 0x9400
 COLOR_BASE = 0x9600
 MAX_ITEMS = 1
 DEFAULT_SPAWN = (46, 104)
-ROOM_IMAGE_SIZE = 0x5FE           # 1534 bytes ($1A02-$1FFF); FlickerItem +16 at load base
+ROOM_IMAGE_SIZE = 0x5FB           # 1531 bytes ($1A05-$1FFF); FlickerItem +16 at load base
 HUD_UDG_BYTES = 16
 # Pad pins screen at $1E00: IMAGE_LOAD + flicker + code prefix + sprites + ... + pad == SCREEN_BASE
 RUNTIME_UDG_PAD = 0x150           # 336 bytes ($1CB0-$1DFF)
@@ -942,7 +942,7 @@ def load_resident_symbol(name: str) -> int:
     """Resident routine address from jsw.lbl (assemble jsw.prg first)."""
     if not JSW_LBL.is_file():
         raise ValueError(f"missing {JSW_LBL}; assemble jsw.prg before mkroom")
-    pat = re.compile(rf"al C:([0-9a-f]+) \.{re.escape(name)}", re.I)
+    pat = re.compile(rf"al C:([0-9a-f]+) \.{re.escape(name)}$", re.I)
     for line in JSW_LBL.read_text(encoding="utf-8").splitlines():
         m = pat.match(line)
         if m:
@@ -995,7 +995,7 @@ PICKUP_GOT_BASE = 0x100
 
 
 def build_item_flicker(room: dict) -> bytes:
-    """16 bytes at image_base ($1A02) — ACME bake/item_flicker.asm."""
+    """16 bytes at image_base ($1A05) — ACME bake/item_flicker.asm."""
     if room.get("logo") or not room["items"]:
         return noop_stub(ITEM_FLICKER_BYTES)
     col, row = room["items"][0]
@@ -1012,7 +1012,7 @@ def build_item_flicker(room: dict) -> bytes:
 
 
 def build_conveyor_animate(room: dict) -> bytes:
-    """19 bytes at room_code_base ($1A12) — ACME bake/animate_conveyors.asm."""
+    """19 bytes at room_code_base ($1A15) — ACME bake/animate_conveyors.asm."""
     return assemble_room_code(
         "animate_conveyors.asm",
         {"BELT": belt_byte(room["belt"])},
@@ -1020,20 +1020,20 @@ def build_conveyor_animate(room: dict) -> bytes:
     )
 
 
-def build_do_belt(room: dict, scan_key_row: int) -> bytes:
+def build_do_belt(room: dict) -> bytes:
     """DoBelt prefix slot — ACME bake/do_belt.asm."""
     return assemble_room_code(
         "do_belt.asm",
-        {"BELT": belt_byte(room["belt"]), "SCANKEYROW": scan_key_row},
+        {"BELT": belt_byte(room["belt"])},
         DO_BELT_SLOT_BYTES,
     )
 
 
-def build_prefix(room: dict, scan_key_row: int) -> bytes:
+def build_prefix(room: dict) -> bytes:
     return (
         build_item_flicker(room)
         + build_conveyor_animate(room)
-        + build_do_belt(room, scan_key_row)
+        + build_do_belt(room)
         + build_tile_colors(room)
     )
 
@@ -1043,7 +1043,14 @@ def title_screen_msg_bytes() -> bytes:
 
 
 def build_title_screen() -> tuple[bytes, int]:
-    """TitleScreen @ $1A02 in r62 (510 B max; logo UDGs load at $1C00)."""
+    """TitleScreen @ $1A05 in r62 (507 B max; logo UDGs load at $1C00)."""
+    import sys
+
+    repo = Path(__file__).resolve().parent.parent
+    if str(repo) not in sys.path:
+        sys.path.insert(0, str(repo))
+    from tools.title_tune_convert import TITLE_BAR_COUNT
+
     msg = title_screen_msg_bytes()
     tmp_dir = BAKE_DIR / ".tmp"
     tmp_dir.mkdir(exist_ok=True)
@@ -1061,6 +1068,9 @@ def build_title_screen() -> tuple[bytes, int]:
             "SCANKEYROW": load_resident_symbol("ScanKeyRow"),
             "WAITFORRASTER": load_resident_symbol("WaitForRaster"),
             "SETCOLORS": load_resident_symbol("SetColors"),
+            "LOADROOMFILE": load_resident_symbol("LoadRoomFile"),
+            "room_name": load_resident_symbol("room_name"),
+            "TITLE_BAR_COUNT": TITLE_BAR_COUNT,
             "HUD_SCR": SCREEN_BASE + hud_row_off,
             "HUD_COL": COLOR_BASE + hud_row_off,
             "RED": VIC_COLOR["RED"],
@@ -1074,6 +1084,39 @@ def build_title_screen() -> tuple[bytes, int]:
     while end > 0 and data[end - 1] == 0xEA:
         end -= 1
     return data, end
+
+
+def load_joystick_patch_bytes() -> int:
+    """Bytes from GetPlayerInput up to CopyDownGuardianData (no reloc)."""
+    start = load_resident_symbol("GetPlayerInput")
+    end = load_resident_symbol("CopyDownGuardianData")
+    return end - start
+
+
+def build_joystick_patch() -> bytes:
+    """RJY.prg — stick-only GetPlayerInput overlay at resident GetPlayerInput."""
+    org = load_resident_symbol("GetPlayerInput")
+    patch_bytes = load_joystick_patch_bytes()
+    body = assemble_room_code(
+        "joystick_input.asm",
+        {"PATCH_BYTES": patch_bytes},
+    )
+    over = len(body) - patch_bytes
+    if over > 0:
+        raise ValueError(
+            f"joystick_input.asm: {len(body)} bytes, need to lose {over} "
+            f"(slot is {patch_bytes} bytes at ${org:04X})"
+        )
+    return struct.pack("<H", org) + body
+
+
+def write_joystick_patch(out_path: Path) -> None:
+    data = build_joystick_patch()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_bytes(data)
+    print(
+        f"rjy -> {out_path.name} (rjy, {len(data)} bytes PRG @ ${data[0] | (data[1] << 8):04X})"
+    )
 
 
 def noop_stub(size: int) -> bytes:
@@ -1569,7 +1612,7 @@ def player_bmp_for_room(room: dict) -> bytes:
     return room["playerbmp"] or load_default_player_bmp()
 
 
-def build_logo_room_image(room: dict, scan_key_row: int) -> bytes:
+def build_logo_room_image(room: dict) -> bytes:
     """Title room: UDGs land at $1C00, screen at $1E00."""
     udg_data, screen = build_logo_payload(logo_png_path(room))
     if len(udg_data) > LOGO_UDG_MAX_BYTES:
@@ -1597,13 +1640,12 @@ def build_logo_room_image(room: dict, scan_key_row: int) -> bytes:
 
 def build_room_image(
     room: dict,
-    scan_key_row: int,
     endgame_items_required: int | None = None,
     rooms_dir: Path | None = None,
 ) -> bytes:
-    """RAM image loaded at $1A02 (1534 bytes)."""
+    """RAM image loaded at $1A05 (1531 bytes)."""
     if room.get("logo"):
-        return build_logo_room_image(room, scan_key_row)
+        return build_logo_room_image(room)
     tiles = bytearray(grid_bytes(room["tilemap"], "tilemap", room))
     stamp_hud_title(tiles, room)
     stamp_hud_men(tiles)
@@ -1633,7 +1675,7 @@ def build_room_image(
         hook = build_master_bed_hook(threshold)
         splice_master_bed_hook(sprites, pad, hook)
     tail = build_tail(room)
-    prefix = build_prefix(room, scan_key_row)
+    prefix = build_prefix(room)
 
     blob = (
         prefix
@@ -1652,12 +1694,11 @@ def build_room_image(
 
 def build_room_prg(
     room: dict,
-    scan_key_row: int,
     endgame_items_required: int | None = None,
     rooms_dir: Path | None = None,
 ) -> bytes:
     return struct.pack("<H", IMAGE_LOAD) + build_room_image(
-        room, scan_key_row, endgame_items_required, rooms_dir
+        room, endgame_items_required, rooms_dir
     )
 
 
@@ -1826,11 +1867,10 @@ def convert_file(
         room = parse_room(src.read_text(encoding="utf-8"), source=src)
     if rooms_dir is None:
         rooms_dir = src.parent
-    scan_key_row = load_scan_key_row()
     hook_override = (
         endgame_items_required if room["id"] == ROOM_MASTER_BED else None
     )
-    data = build_room_prg(room, scan_key_row, hook_override, rooms_dir)
+    data = build_room_prg(room, hook_override, rooms_dir)
     outstem.parent.mkdir(parents=True, exist_ok=True)
     outstem.write_bytes(data)
     print(
@@ -1936,6 +1976,7 @@ def main():
         if errors:
             print(f"\n{len(errors)} room(s) failed", file=sys.stderr)
             sys.exit(1)
+        write_joystick_patch(outdir / "rjy")
         print_playable_summary(indir)
         print_room_lint(indir)
         return

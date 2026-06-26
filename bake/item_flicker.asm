@@ -1,4 +1,4 @@
-; Per-room item colour flash — 16-byte slot @ image_base ($1A02).
+; Per-room item colour flash — 16-byte slot @ image_base ($1A05).
 ; CLI: -DPICKUP_GOT=... -DCOL_ADDR=... -DSLOT_BYTES=16
 
 !source "equates.asm"

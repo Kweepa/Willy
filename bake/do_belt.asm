@@ -1,5 +1,5 @@
 ; Per-room conveyor collision — fixed prefix slot after AnimateConveyors.
-; CLI: -DBELT=... -DSCANKEYROW=$.... -DSLOT_BYTES=29
+; CLI: -DBELT=... -DSLOT_BYTES=26
 
 !source "equates.asm"
 
@@ -9,8 +9,7 @@ DoBelt
     ; @belt -1 pushes left: oppose key is right (belt_opp_right / index 0)
     lda belt_active
     bne +
-    ldx #belt_opp_right_row
-    jsr SCANKEYROW
+    lda rightIsPressed
     beq ++
     lda #belt_opp_right_xadd
     sta xadd
@@ -30,8 +29,7 @@ DoBelt
     ; @belt 1 pushes right: oppose key is left (belt_opp_left / index 3)
     lda belt_active
     bne +
-    ldx #belt_opp_left_row
-    jsr SCANKEYROW
+    lda leftIsPressed
     beq ++
     lda #belt_opp_left_xadd
     sta xadd

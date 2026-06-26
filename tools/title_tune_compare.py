@@ -22,12 +22,15 @@ def main() -> None:
     if arrangement == "dual":
         lh_lut, _lh_ids, rh_lut, _rh_ids, bar_seq = build_dual_tables()
         assert len(bar_seq) == TITLE_BAR_COUNT
-        assert len(lh_lut) == 7
-        assert len(rh_lut) == 11
+        assert TITLE_BAR_COUNT == 28
+        assert TITLE_NOTE_COUNT == 84
         data_bytes = len(bar_seq) + len(lh_lut) * 3 + len(rh_lut) * 3
+        max_rh = max(_rh_ids)
+        ofs_bytes = max_rh + 1
         print(
             f"OK: dual {TITLE_BAR_COUNT} bars, {TITLE_NOTE_COUNT} ticks, "
-            f"{data_bytes} bytes tune data"
+            f"{len(lh_lut)} LH + {len(rh_lut)} RH triplets, "
+            f"{data_bytes + ofs_bytes} bytes tune data"
         )
         return
     triplets = build_triplets(arrangement)

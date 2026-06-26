@@ -52,8 +52,21 @@ def collect_room_files(room_dir: Path) -> List[Tuple[int, Path]]:
     return sorted(rooms)
 
 
+def collect_extra_prgs(room_dir: Path) -> List[Tuple[str, Path]]:
+    """Non-numeric PRG staging files (e.g. rjy joystick patch)."""
+    extras: List[Tuple[str, Path]] = []
+    rjy = room_dir / "rjy"
+    if rjy.is_file():
+        extras.append(("rjy", rjy))
+    return extras
+
+
 def build_with_c1541(
-    c1541: Path, d64: Path, prg: Optional[Path], rooms: List[Tuple[int, Path]]
+    c1541: Path,
+    d64: Path,
+    prg: Optional[Path],
+    rooms: List[Tuple[int, Path]],
+    extras: List[Tuple[str, Path]],
 ) -> None:
     if d64.exists():
         d64.unlink()
@@ -72,8 +85,14 @@ def build_with_c1541(
     for room_id, room in rooms:
         name = room_dos_name(room_id)
         cmd.extend(["-write", str(room), f"{name},p"])
+    for dos_name, path in extras:
+        cmd.extend(["-write", str(path), f"{dos_name},p"])
     subprocess.check_call(cmd)
-    print(f"Wrote {d64} via {c1541} ({len(rooms)} room files)")
+    print(
+        f"Wrote {d64} via {c1541} ({len(rooms)} room files"
+        + (f", {len(extras)} extra" if extras else "")
+        + ")"
+    )
 
 
 # MinimalD64 class below
@@ -150,14 +169,25 @@ class MinimalD64:
         path.write_bytes(self.data)
 
 
-def build_pure_python(d64: Path, prg: Optional[Path], rooms: List[Tuple[int, Path]]) -> None:
+def build_pure_python(
+    d64: Path,
+    prg: Optional[Path],
+    rooms: List[Tuple[int, Path]],
+    extras: List[Tuple[str, Path]],
+) -> None:
     d = MinimalD64()
     if prg and prg.exists():
         d.add_file("jsw", prg.read_bytes(), file_type=0x82)
     for room_id, room in rooms:
         d.add_file(room_dos_name(room_id), room.read_bytes(), file_type=0x82)
+    for dos_name, path in extras:
+        d.add_file(dos_name, path.read_bytes(), file_type=0x82)
     d.save(d64)
-    print(f"Wrote {d64} (pure Python, {len(rooms)} room files)")
+    print(
+        f"Wrote {d64} (pure Python, {len(rooms)} room files"
+        + (f", {len(extras)} extra" if extras else "")
+        + ")"
+    )
 
 
 def main():
@@ -175,6 +205,7 @@ def main():
 
     room_dir = Path(args.rooms)
     rooms = collect_room_files(room_dir)
+    extras = collect_extra_prgs(room_dir)
     if not rooms:
         print("No room PRG files found; run mkroom.py --all first", file=sys.stderr)
         sys.exit(1)
@@ -183,10 +214,10 @@ def main():
     prg = Path(args.prg)
     c1541 = find_c1541(args.c1541)
     if c1541:
-        build_with_c1541(c1541, d64, prg if prg.exists() else None, rooms)
+        build_with_c1541(c1541, d64, prg if prg.exists() else None, rooms, extras)
     else:
         print("c1541 not found; using pure-Python D64 writer", file=sys.stderr)
-        build_pure_python(d64, prg if prg.exists() else None, rooms)
+        build_pure_python(d64, prg if prg.exists() else None, rooms, extras)
 
 
 if __name__ == "__main__":

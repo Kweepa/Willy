@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools.title_tune_convert import (  # noqa: E402
     BAR_LABELS,
     CHROMATIC,
+    TITLE_BAR_COUNT,
     build_dual_tables,
     build_triplets_jsw,
     build_triplets_lh_bass,
@@ -83,7 +84,7 @@ def main() -> None:
 
     print("=== BAR-BY-BAR AUDIT ===\n")
     flagged: list[int] = []
-    for bi in range(33):
+    for bi in range(TITLE_BAR_COUNT):
         lh_pitch = lh_t[bi][1][0]
         lh_o = lh_t[bi][2]
         rh_p, rh_o = rh_t[bi][1], rh_t[bi][2]
@@ -103,11 +104,11 @@ def main() -> None:
             print(f"    JSW ref: {fmt_notes(jsw_p, jsw_o)}")
             print()
 
-    print(f"Flagged {len(flagged)}/33 bars: {flagged}\n")
+    print(f"Flagged {len(flagged)}/{TITLE_BAR_COUNT} bars: {flagged}\n")
 
     print("=== ALL UNIQUE LH/RH PAIRINGS ===")
     pairs: dict[tuple[int, int], list[int]] = {}
-    for bi in range(33):
+    for bi in range(TITLE_BAR_COUNT):
         key = (lh_ids[bi], rh_ids[bi])
         pairs.setdefault(key, []).append(bi + 1)
     for (lh, rh), bars in sorted(pairs.items()):
@@ -131,7 +132,7 @@ def main() -> None:
             print(f"      ! {msg}")
 
     print("\n=== RH [4,4,4] VOICINGS ===")
-    for bi in range(33):
+    for bi in range(TITLE_BAR_COUNT):
         if rh_t[bi][2] == [4, 4, 4]:
             print(
                 f"  B{bi + 1:02d} {BAR_LABELS[bi]}  "

@@ -1,18 +1,18 @@
 ;
-; LoadRoom - KERNAL LOAD R00 PRG to image_base ($1A02), then:
+; LoadRoom - KERNAL LOAD R00 PRG to image_base ($1A05), then:
 ;   paint color RAM from tile_color_src lookup (tile types 0-5)
 ;   paint map_base ($9400): store tile type 0-5 (low nybble of screen chr 16-21);
 ;     map_base is VIC colour RAM — only low nybble valid; read with AND #$0f
 ;   draw item chr 15 separately (DrawItem) — not in tilemap
 ;
-; PRG image layout (1534 bytes at $1A02, ends $1FFF):
-;   +$000 FlickerItem 16 @ $1A02
-;   +$010 AnimateConveyors 19 @ $1A12
-;   +$023 DoBelt 29 @ $1A25
+; PRG image layout (1531 bytes at $1A05, ends $1FFF):
+;   +$000 FlickerItem 16 @ $1A05
+;   +$010 AnimateConveyors 19 @ $1A15
+;   +$023 DoBelt 26 @ $1A28
 ;   +$040 tile colours 6 @ $1A42
 ;   +$046 guardian sprites 288 @ $1A48  (normal rooms only)
 ;   +$166 player_bmp 256 @ $1B68       (normal rooms only)
-;   title room: TitleScreen 510 B @ $1A02-$1BFF; logo UDGs @ $1C00
+;   title room: TitleScreen 507 B @ $1A05-$1BFF; logo UDGs @ $1C00
 ;   +$266 HUD UDG 16 @ $1C68 (chr 13-14)
 ;   +$276 tile UDG 56 @ $1C78 (chr 15-21)
 ;   +$280 runtime pad 336 ($1CB0-$1DFF)
@@ -36,19 +36,9 @@ LoadRoom
     jsr SetColors
 
     jsr FormatRoomName
+    jsr LoadRoomFile
 
-    lda #3
-    ldx #<room_name
-    ldy #>room_name
-    jsr $ffbd                    ; SETNAM — filename length in A, ptr in XY
-    lda #room_lfn
-    ldx #8                       ; device 8 (disk)
-    ldy #1                       ; secondary address 1
-    jsr $ffba                    ; SETLFS — logical file number in A, device in X, SA in Y
-    lda #0                       ; LOAD to RAM (not VERIFY)
-    jsr $ffd5                    ; LOAD — uses SETNAM/SETLFS; loads file to RAM
-    sei                          ; KERNAL LOAD leaves IRQs enabled
-
+LoadRoomContinue
     lda meta_content_border
     sta $900f
 
@@ -127,4 +117,18 @@ LoadRoom
     beq +
     jsr arrow_init
 +
+    rts
+
+LoadRoomFile
+    lda #3
+    ldx #<room_name
+    ldy #>room_name
+    jsr $ffbd                    ; SETNAM
+    lda #room_lfn
+    ldx #8                       ; device 8 (disk)
+    ldy #1                       ; secondary address 1
+    jsr $ffba                    ; SETLFS
+    lda #0                       ; LOAD to RAM (not VERIFY)
+    jsr $ffd5                    ; LOAD
+    sei
     rts

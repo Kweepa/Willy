@@ -77,28 +77,28 @@ Lines starting with `#` or `;` are comments; `#` may also appear mid-line. Blank
 
 ## Binary layout (output of `mkroom.py`)
 
-PRG loads at **`$1A02`** (1534 bytes image, ends `$1FFF`; 2-byte load address + 1534 = 1536-byte PRG):
+PRG loads at **`$1A05`** (1531 bytes image, ends `$1FFF`; 2-byte load address + 1531 = 1535-byte PRG):
 
 | Offset | Address | Size | Content |
 |--------|---------|------|---------|
-| 0 | `$1A02` | 16 | `FlickerItem` (baked prefix; `jsr` from gameloop) |
-| 16 | `$1A12` | 19 | `AnimateConveyors` |
-| 35 | `$1A25` | 29 | `DoBelt` |
-| 64 | `$1A42` | 6 | Tile colours (types 0–5) |
-| 70 | `$1A48` | 288 | Guardian sprites (column-major from `@guardiansprites`) |
-| 358 | `$1B68` | 256 | `player_bmp` |
-| 614 | `$1C68` | 16 | HUD UDG bytes (chr 13=men, chr 14=items) |
-| 630 | `$1C78` | 56 | Tile UDG bytes (chr 15=item, chr 16–21=tiles 0–5) |
-| 686 | `$1CB0` | 336 | Runtime UDG pad (zeros; guardian + player UDG workspace) |
-| 1022 | `$1E00` | 408 | 24×17 screen (row 16 = HUD + title; item not baked in) |
-| 1430 | `$1F98` | 104 | Meta tail (see below) |
+| 0 | `$1A05` | 16 | `FlickerItem` (baked prefix; `jsr` from gameloop) |
+| 16 | `$1A15` | 19 | `AnimateConveyors` |
+| 35 | `$1A28` | 26 | `DoBelt` |
+| 61 | `$1A42` | 6 | Tile colours (types 0–5) |
+| 67 | `$1A48` | 288 | Guardian sprites (column-major from `@guardiansprites`) |
+| 355 | `$1B68` | 256 | `player_bmp` |
+| 611 | `$1C68` | 16 | HUD UDG bytes (chr 13=men, chr 14=items) |
+| 627 | `$1C78` | 56 | Tile UDG bytes (chr 15=item, chr 16–21=tiles 0–5) |
+| 683 | `$1CB0` | 336 | Runtime UDG pad (zeros; guardian + player UDG workspace) |
+| 1019 | `$1E00` | 408 | 24×17 screen (row 16 = HUD + title; item not baked in) |
+| 1427 | `$1F98` | 104 | Meta tail (see below) |
 
 **r35 (Master Bedroom) only:** `master_bed_hook` is baked at guardian UDG slots 1–5 (`$1CE0`, up to 240 B in the pad); overflow continues in unused sprite frames 4–7 (`$1AC8`, up to 160 B). `gameloop.asm` calls it when `map == ROOM_MASTER_BED` (after erase, before `MoveGuardians`). The hook zeros `meta_content_guardians` when items are complete; `ending_pending` lives in meta spare byte +100.
 
 ### Item pickup runtime
 
 - **`@itemcolor`** — baked into `FlickerItem` as the item cell colour address; `FlickerItem` cycles colour every frame (`inx` / `and #7`). Not written by `item_draw`.
-- **`FlickerItem`** — 16-byte prefix at `$1A02`; noop (`rts` + pad) when the room has no `+` pickup.
+- **`FlickerItem`** — 16-byte prefix at `$1A05`; noop (`rts` + pad) when the room has no `+` pickup.
 - **`item_draw`** — 11 bytes at meta **+16**: `lda #15` / `sta screen` / `lda #TILE_ITEM` / `sta map` / `rts`. `LoadRoom` calls `jsr item_draw` when `pickup_got` for this room is clear.
 - **`item_erase`** — 11 bytes at meta **+27**: `lda #empty_col` / `sta colour` / `lda #TILE_EMPTY` / `sta map` / `rts` (on pickup).
 
