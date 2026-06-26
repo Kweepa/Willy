@@ -90,6 +90,20 @@ WarmStart
     dex
     bpl -
 
+    ldx #ingame_tune_pitch_rom_bytes - 1
+-
+    lda ingame_tune_pitch_rom,x
+    sta ingame_tune_pitch,x
+    dex
+    bpl -
+
+    ldx #ingame_tune_idx_rom_bytes - 1
+-
+    lda ingame_tune_idx_rom,x
+    sta INGAME_TUNE_SEQ,x
+    dex
+    bpl -
+
     jmp start_game
 
 ; Copy draw_player tables to $37/$3D (off KERNAL keyboard ptr $F5/$F6 during LOAD).

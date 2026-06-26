@@ -16,6 +16,7 @@ main_loop
     jsr GetPlayerInput
     lda #0
     sta $900c
+    jsr PlayInGameMusic
     lda meta_content_has_arrow
     beq +
     jsr arrow_update

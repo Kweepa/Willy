@@ -15,6 +15,7 @@
 !source "input.asm"
 !source "guardians.asm"
 !source "endgame.asm"
+!source "music.asm"
 
 !set ROPE_TEST = 0
 !source "rope_draw.asm"
@@ -22,6 +23,7 @@
 
 prg_end = *
 
+!source "ingame_tune.asm"
 !source "warm.asm"
 !source "runtime_const.asm"
 !source "relocated_code.asm"

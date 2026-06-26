@@ -22,8 +22,10 @@
 ;   $DC-$E1   cell_off_2x3 (boot)
 ;   $E2-$E7   lr_touch_a/b/c (boot)
 ;   $E8-$ED   draw_vguard_chrs (boot)
+;   $EE-$F6   ingame_tune_pitch (9 B; WarmStart copy)
 ;   $37-$3C   draw_player_offsets (boot) — off $F5 KERNAL keyboard ptr during LOAD
 ;   $3D-$42   draw_player_chrs (boot) — off $F6 KERNAL keyboard ptr during LOAD
+;   $43-$44   music_index, music_delay
 ;
 ; KERNAL clobber map — VIC-20 KERNAL (this build; not C64-only AAY labels):
 ;
@@ -144,6 +146,9 @@ rasterline      = $36
 draw_player_offsets = $37
 draw_player_chrs    = $3d
 
+music_index     = $43
+music_delay     = $44
+
 jumpIsPressed   = $0f          ; was $3C — freed $37-$42 for draw tables
 leftIsPressed   = $12
 rightIsPressed  = $2d
@@ -212,6 +217,7 @@ lr_touch_a          = $e2
 lr_touch_b          = $e4
 lr_touch_c          = $e6
 draw_vguard_chrs    = $e8
+ingame_tune_pitch   = $ee        ; 9 B VIC freq table; copied at WarmStart
 
 left_right_ctr  = $46          ; moved off $9D so rope_old_screen_pos clears $90-$93
 up_down_ctr     = $47

@@ -34,6 +34,7 @@ SIZE_OVERRIDES: dict[str, int] = {
     "draw_vguard_chrs": 6,
     "draw_player_offsets": 6,
     "draw_player_chrs": 6,
+    "ingame_tune_pitch": 9,
 }
 
 # Aliases / sub-fields — skip duplicate overlap reports.
@@ -214,6 +215,8 @@ def check_boot_boundary(regions: list[Region]) -> list[str]:
     errors: list[str] = []
     for r in regions:
         if r.virtual or r.name == "boot_zp_room_pack":
+            continue
+        if r.name in ("ingame_tune_pitch",):
             continue
         if r.start <= BOOT_PACK_END and r.end > BOOT_PACK_END and r.start >= 0xDC:
             errors.append(

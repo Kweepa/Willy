@@ -90,6 +90,7 @@ hud_items_scr = screen_base + hud_row_off + 22
 hud_items_col = color_base + hud_row_off + 22
 map_base = $9400
 color_base = $9600
+INGAME_TUNE_SEQ = $95c0          ; 64 B index seq; map_base tail; mask low nybble on read
 guardian_data_bytes = 60
 max_guardians = 6
 

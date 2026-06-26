@@ -31,6 +31,8 @@ title_release_wait
     sta xadd
     sta edge_skip_draw
     sta fall_death_respawn
+    sta music_index
+    sta music_delay
     ldx #pickup_got_last - pickup_got
 -
     sta pickup_got,x
