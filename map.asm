@@ -52,6 +52,7 @@ DrawMap
     sta py
     lda safe_map
     sta map
+    jsr SaveSpawn
     lda #0
     sta fall_death_respawn
     beq ++
