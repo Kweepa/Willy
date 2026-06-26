@@ -39,6 +39,6 @@ try_fall_death
     ; takes A=note
 play_sound_at_default_volume
     sta $900c
-    lda #10
+    lda #2
     sta $900e
     rts
