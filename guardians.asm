@@ -10,40 +10,6 @@ CopyDownGuardianData
     bpl -
     rts
 
-EraseGuardians
-    lda meta_content_guardians
-    beq erase_guardians_done
-    lda #0
-    sta guardian_index
-erase_guardian_loop
-    jsr CopyDownGuardianData
-    ldx hx
-    ldy hy
-    jsr ConvertXYToScreenAddr
-    ldx #3
-    lda hy
-    and #7
-    beq +
-    inx
-    inx
-+
-    ; erase_block
--
-    ldy cell_off_2x3,x
-    lda #TILE_CHR_BASE
-    sta (scr_ptr),y
-    lda #WHITE
-    sta (col_ptr),y
-    dex
-    bpl -
-
-    inc guardian_index
-    lda guardian_index
-    cmp meta_content_guardians
-    bne erase_guardian_loop
-erase_guardians_done
-    rts
-
 GetHorizontalGuardianFrame
     lda hx
     and #$03

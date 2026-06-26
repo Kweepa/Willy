@@ -25,7 +25,8 @@
 ;   $EE-$F6   ingame_tune_pitch (9 B; WarmStart copy)
 ;   $37-$3C   draw_player_offsets (boot) — off $F5 KERNAL keyboard ptr during LOAD
 ;   $3D-$42   draw_player_chrs (boot) — off $F6 KERNAL keyboard ptr during LOAD
-;   $43-$44   music_index, music_delay
+;   $43-$45   music_index, music_delay, music_enabled ($FF on / $0 off)
+;   $4d       music_key_prev (last ADGJL scan mask; 0 = released)
 ;
 ; KERNAL clobber map — VIC-20 KERNAL (this build; not C64-only AAY labels):
 ;
@@ -148,6 +149,8 @@ draw_player_chrs    = $3d
 
 music_index     = $43
 music_delay     = $44
+music_enabled   = $45          ; $FF = in-game music on, $0 = off
+music_key_prev  = $4d          ; last ADGJL scan mask (0 = released)
 
 jumpIsPressed   = $0f          ; was $3C — freed $37-$42 for draw tables
 leftIsPressed   = $12

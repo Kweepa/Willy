@@ -14,21 +14,26 @@ SHOW_TITLE = 1
     sta map
     lda #8
     sta men
-    lda #0
-    sta items_collected
-    sta willy_hidden
-    sta xadd
-    sta edge_skip_draw
-    sta fall_death_respawn
-    sta music_index
-    sta music_delay
+
+    ldx #$ff
+    stx music_enabled
+    inx ; x now 0
+    stx music_key_prev
+    stx items_collected
+    stx willy_hidden
+    stx xadd
+    stx edge_skip_draw
+    stx fall_death_respawn
+    stx music_index
+    stx music_delay
+    inx ; x now 1
+    sta initial_room_load       ; first room load uses @spawn from meta
+
     ldx #pickup_got_last - pickup_got
 -
     sta pickup_got,x
     dex
     bpl -
-    lda #1
-    sta initial_room_load       ; first room load uses @spawn from meta
 	rts
 
 DrawMap

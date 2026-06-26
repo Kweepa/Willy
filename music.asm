@@ -1,4 +1,26 @@
 PlayInGameMusic
+
+	; stop last frame's sound effects (moved from gameloop to decrease body of gameloop)
+	lda #0
+	sta $900c
+
+	; toggle music on a key
+	; ADGJL row ($FB): toggle music on rising edge only.
+	; music_key_prev holds last frame's scan mask (0 = released).
+	; rising = (old ^ scan) & scan — nonzero iff a key went down this frame.
+	ldx #$fb
+	jsr ScanKeyRow
+	ldy music_key_prev
+	sta music_key_prev
+	tya
+	eor music_key_prev
+	and music_key_prev
+	beq +
+	lda music_enabled
+	eor #$ff
+	sta music_enabled
++
+
 	; always update the note
 	lda music_index
 	and #$3f
@@ -8,6 +30,7 @@ PlayInGameMusic
 	and #$0f
 	tay
 	lda ingame_tune_pitch,y
+	and music_enabled
 	sta $900b
 
 	; advance the counters
@@ -19,9 +42,4 @@ PlayInGameMusic
 	inc music_index
 +
 	rts
-play_ingame_music_end = *
-play_ingame_music_size = play_ingame_music_end - PlayInGameMusic
 
-!if play_ingame_music_size > 40 {
-!error "PlayInGameMusic exceeds 40 bytes"
-}

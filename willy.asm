@@ -337,31 +337,6 @@ hit_above
     sta newy
     jmp collide_jmp_move_up_down
 
-ErasePlayer
-    lda willy_hidden
-    bne erase_player_done
-    ldx px
-    ldy py
-    jsr ConvertXYToScreenAddr
-	ldx #5
--
-	ldy cell_off_2x3,x
-	lda (map_ptr),y
-	and #$0f
-	cmp #TILE_ITEM
-	bne +
-	lda #ITEM_CHR
-	sta (scr_ptr),y
-	bne ++
-+
-	ora #$10
-	sta (scr_ptr),y
-++
-	dex
-	bpl -
-erase_player_done
-    rts
-
 DrawPlayerEntry
     lda dead
     bne +
@@ -561,3 +536,5 @@ kill_player
     sta dead
 dont_kill_player
     rts
+
+
