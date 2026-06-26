@@ -66,6 +66,13 @@ GUARDIAN_PREFIX_BYTES = (
 )
 TITLE_SCREEN_OFF = GUARDIAN_PREFIX_BYTES
 LOGO_ROOM_ID = 62
+ROOM_MASTER_BED = 35
+MASTER_BED_PAD_HOOK_OFF = 48       # guardian UDG slots 1-5 within runtime_udg_pad
+MASTER_BED_SPRITE_HOOK_OFF = 128   # sprite frames 4-7 within guardian_sprites
+MASTER_BED_HOOK_BYTES = 240
+MASTER_BED_HOOK_EXT_BYTES = 160
+MASTER_BED_HOOK_MAX_BYTES = MASTER_BED_HOOK_BYTES + MASTER_BED_HOOK_EXT_BYTES
+MASTER_BED_HOOK_ORG = 0x1CE0
 LOGO_ORIGIN_COL = 4
 LOGO_ORIGIN_ROW = 4
 LOGO_DEFAULT_PATH = BAKE_DIR / "jswlogo.png"
@@ -1238,6 +1245,35 @@ def build_arrow(room: dict) -> bytes:
     return code
 
 
+def build_master_bed_hook(endgame_items_required: int) -> bytes:
+    """r35 only — Maria / ending hook @ $1CE0 (overflow $1AC8)."""
+    data = assemble_room_code(
+        "master_bedroom.asm",
+        {
+            "ORG": MASTER_BED_HOOK_ORG,
+            "ENDGAME_ITEMS_REQUIRED": endgame_items_required,
+        },
+    )
+    if len(data) > MASTER_BED_HOOK_MAX_BYTES:
+        raise ValueError(
+            f"master_bedroom.asm: size {len(data)} > {MASTER_BED_HOOK_MAX_BYTES}"
+        )
+    return data
+
+
+def splice_master_bed_hook(
+    sprites: bytearray, pad: bytearray, hook: bytes
+) -> None:
+    if len(hook) > MASTER_BED_HOOK_BYTES:
+        overflow = hook[MASTER_BED_HOOK_BYTES :]
+        sprites[MASTER_BED_SPRITE_HOOK_OFF : MASTER_BED_SPRITE_HOOK_OFF + len(overflow)] = (
+            overflow
+        )
+    pad[MASTER_BED_PAD_HOOK_OFF : MASTER_BED_PAD_HOOK_OFF + min(MASTER_BED_HOOK_BYTES, len(hook))] = (
+        hook[:MASTER_BED_HOOK_BYTES]
+    )
+
+
 # py is head Y (single pixels); ramp_y runtime is feet Y (head + 16 on surface).
 RAMP_FEET_OFFSET = 16
 RAMP_BOUNDS_EXTEND = 4
@@ -1559,7 +1595,12 @@ def build_logo_room_image(room: dict, scan_key_row: int) -> bytes:
     return bytes(blob)
 
 
-def build_room_image(room: dict, scan_key_row: int) -> bytes:
+def build_room_image(
+    room: dict,
+    scan_key_row: int,
+    endgame_items_required: int | None = None,
+    rooms_dir: Path | None = None,
+) -> bytes:
     """RAM image loaded at $1A02 (1534 bytes)."""
     if room.get("logo"):
         return build_logo_room_image(room, scan_key_row)
@@ -1581,6 +1622,16 @@ def build_room_image(room: dict, scan_key_row: int) -> bytes:
         pad[off : off + 8] = udg_bytes
         code = build_arrow(room)
         pad[off + 8 : off + 8 + len(code)] = code
+    if room["id"] == ROOM_MASTER_BED:
+        if rooms_dir is None:
+            raise room_error(room, "rooms_dir required for master bedroom hook bake")
+        threshold = (
+            endgame_items_required
+            if endgame_items_required is not None
+            else count_items(rooms_dir)
+        )
+        hook = build_master_bed_hook(threshold)
+        splice_master_bed_hook(sprites, pad, hook)
     tail = build_tail(room)
     prefix = build_prefix(room, scan_key_row)
 
@@ -1599,8 +1650,15 @@ def build_room_image(room: dict, scan_key_row: int) -> bytes:
     return blob
 
 
-def build_room_prg(room: dict, scan_key_row: int) -> bytes:
-    return struct.pack("<H", IMAGE_LOAD) + build_room_image(room, scan_key_row)
+def build_room_prg(
+    room: dict,
+    scan_key_row: int,
+    endgame_items_required: int | None = None,
+    rooms_dir: Path | None = None,
+) -> bytes:
+    return struct.pack("<H", IMAGE_LOAD) + build_room_image(
+        room, scan_key_row, endgame_items_required, rooms_dir
+    )
 
 
 def room_dos_name(room_id: int) -> str:
@@ -1757,11 +1815,22 @@ def print_playable_summary(indir: Path) -> None:
             print(f"  room {room_id:2d} — {name} ({filename})")
 
 
-def convert_file(src: Path, outstem: Path, room: dict | None = None) -> None:
+def convert_file(
+    src: Path,
+    outstem: Path,
+    room: dict | None = None,
+    endgame_items_required: int | None = None,
+    rooms_dir: Path | None = None,
+) -> None:
     if room is None:
         room = parse_room(src.read_text(encoding="utf-8"), source=src)
+    if rooms_dir is None:
+        rooms_dir = src.parent
     scan_key_row = load_scan_key_row()
-    data = build_room_prg(room, scan_key_row)
+    hook_override = (
+        endgame_items_required if room["id"] == ROOM_MASTER_BED else None
+    )
+    data = build_room_prg(room, scan_key_row, hook_override, rooms_dir)
     outstem.parent.mkdir(parents=True, exist_ok=True)
     outstem.write_bytes(data)
     print(
@@ -1783,6 +1852,13 @@ def main():
         "--count-items",
         action="store_true",
         help="print total '+' pickup count for rooms dir (for -DITEMS_REQUIRED)",
+    )
+    ap.add_argument(
+        "--endgame-items-required",
+        type=int,
+        metavar="N",
+        dest="endgame_items_required",
+        help="r35 master_bed_hook threshold only (does not affect pickup_got)",
     )
     ap.add_argument(
         "--lint",
@@ -1837,13 +1913,20 @@ def main():
         indir = Path(args.input or "rooms")
         outdir = Path(args.output or "rooms/out")
         errors: list[tuple[Path, str]] = []
+        endgame_override = args.endgame_items_required
         for src in sorted(indir.glob("room*.txt")):
             text = ""
             room = None
             try:
                 text = src.read_text(encoding="utf-8")
                 room = parse_room(text, source=src)
-                convert_file(src, outdir / str(room["id"]), room=room)
+                convert_file(
+                    src,
+                    outdir / str(room["id"]),
+                    room=room,
+                    endgame_items_required=endgame_override,
+                    rooms_dir=indir,
+                )
             except (ValueError, OSError) as e:
                 errors.append((src, str(e)))
                 print(
@@ -1864,7 +1947,13 @@ def main():
     try:
         text = src.read_text(encoding="utf-8")
         room = parse_room(text, source=src)
-        convert_file(src, Path(args.output), room=room)
+        convert_file(
+            src,
+            Path(args.output),
+            room=room,
+            endgame_items_required=args.endgame_items_required,
+            rooms_dir=src.parent,
+        )
     except (ValueError, OSError) as e:
         print(format_build_error(src, e, text=text or None, room=room), file=sys.stderr)
         sys.exit(1)

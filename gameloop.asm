@@ -10,6 +10,11 @@ main_loop
     beq +
     jsr rope_pre_draw
 +
+    lda map
+    cmp #ROOM_MASTER_BED
+    bne +
+    jsr master_bed_hook
++
     jsr MoveGuardians
     jsr GetPlayerInput
     ; stopping last frame's sound effects folded into PlayInGameMusic

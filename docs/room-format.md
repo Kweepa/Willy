@@ -93,6 +93,8 @@ PRG loads at **`$1A02`** (1534 bytes image, ends `$1FFF`; 2-byte load address + 
 | 1022 | `$1E00` | 408 | 24×17 screen (row 16 = HUD + title; item not baked in) |
 | 1430 | `$1F98` | 104 | Meta tail (see below) |
 
+**r35 (Master Bedroom) only:** `master_bed_hook` is baked at guardian UDG slots 1–5 (`$1CE0`, up to 240 B in the pad); overflow continues in unused sprite frames 4–7 (`$1AC8`, up to 160 B). `gameloop.asm` calls it when `map == ROOM_MASTER_BED` (after erase, before `MoveGuardians`). The hook zeros `meta_content_guardians` when items are complete; `ending_pending` lives in meta spare byte +100.
+
 ### Item pickup runtime
 
 - **`@itemcolor`** — baked into `FlickerItem` as the item cell colour address; `FlickerItem` cycles colour every frame (`inx` / `and #7`). Not written by `item_draw`.

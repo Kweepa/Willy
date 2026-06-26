@@ -26,14 +26,17 @@ SHOW_TITLE = 1
     stx fall_death_respawn
     stx music_index
     stx music_delay
-    inx ; x now 1
-    sta initial_room_load       ; first room load uses @spawn from meta
 
-    ldx #pickup_got_last - pickup_got
+    txa
+    ldy #pickup_got_last - pickup_got
 -
-    sta pickup_got,x
-    dex
+    sta pickup_got,y
+    dey
     bpl -
+
+    inx ; x now 1
+    stx initial_room_load       ; first room load uses @spawn from meta
+
 	rts
 
 DrawMap

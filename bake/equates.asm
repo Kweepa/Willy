@@ -27,4 +27,24 @@ col_ptr         = $07          ; keep in sync with zp.asm
 
 tile_color_src  = $1a42        ; keep in sync with header.asm (6 B tile type colours 0-5)
 
+; master_bedroom.asm — keep in sync with zp.asm / header.asm
+px                  = $10
+items_collected     = $19
+g_frame             = $25
+map                 = $5b
+use_room_spawn      = $5f
+willy_hidden        = $66
+meta_content_guardians = $1f98 ; meta_content_src
+ending_pending      = $1ffc    ; meta_content_spare
+guardian_data_base  = $1fbf    ; meta_content_guardian_data
+g_off_frame         = 5
+g_off_fmin          = 6
+g_off_fctl          = 7          ; vertical frame wrap mask (0/1/3)
+FCTL_IDLE           = 1          ; f=0..1 bob
+FCTL_LOCK           = 0          ; f=N..N — inc then and #0 keeps g_frame at 0
+
+ROOM_BATHROOM       = 33
+ENDING_TRIGGER_PX   = 20
+MASTER_BED_HOOK_BYTES = 240
+
 WHT = 1

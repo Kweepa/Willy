@@ -44,10 +44,10 @@ RAMP_NONE = 0
 RAMP_UP_RIGHT = 1
 RAMP_UP_LEFT = $FF
 
-; Endgame: collect ITEMS_REQUIRED pickups, enter master bedroom (Maria vanishes),
+; Endgame: collect all pickups, enter master bedroom (Maria vanishes),
 ; walk to ENDING_TRIGGER_PX, then teleport to bathroom for the toilet ending.
-; ITEMS_REQUIRED is set at assemble time: make.bat counts '+' in rooms/*.txt
-; and passes -DITEMS_REQUIRED=N to ACME.
+; r35 master_bed_hook threshold: count_items at bake time (see mkroom.py).
+; Quick endgame test: make_test_endgame.bat (--endgame-items-required 2).
 ROOM_MASTER_BED = 35
 ROOM_BATHROOM = 33
 ROOM_START = 33

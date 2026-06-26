@@ -89,15 +89,6 @@ LoadRoom
     bne +
     rts
 +
-    ; check for endgame - turn off Maria if conditions are met
-    cmp #ROOM_MASTER_BED
-    bne +
-    lda items_collected
-    cmp #ITEMS_REQUIRED
-    bcc +
-    lda #0
-    sta meta_content_guardians
-+
 
     ; paint screen colours
     ldy #0
