@@ -41,7 +41,7 @@ TITLE_MESSAGE = (
     "++"
     "VIC-20 port by Steve McCrea 2026"
     "++"
-    "Collect all the items around the house so Maria lets you go to bed"
+    "Collect all the items around the house so Maria will let you get to bed"
 )
 META_OFF_ROPE = 16 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
 TAIL_OFF_GUARDIAN_DATA = META_OFF_ROPE + 1
