@@ -26,7 +26,13 @@ room_name
     !text "R00"
 
 LoadRoom
+
+     ; shut off music and sound effects
     lda #0
+    sta $900b
+    sta $900c
+
+    ; needs the A=0 from the previous section
     jsr SetColors
 
     jsr FormatRoomName
@@ -45,10 +51,6 @@ LoadRoom
 
     lda meta_content_border
     sta $900f
-
-     ; shut off sound effects
-    ldx #0
-    stx $900c
 
     ; minimal rope/conveyor/ramp clear
     stx belt_active
