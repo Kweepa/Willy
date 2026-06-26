@@ -33,17 +33,15 @@ BAKE_DIR = Path(__file__).resolve().parent.parent / "bake"
 ACME = Path(r"\app\acme\acme.exe")
 JSW_LBL = Path(__file__).resolve().parent.parent / "jsw.lbl"
 GUARDIAN_SPRITES_BYTES = 288  # 9 frames x 32 bytes
-TITLE_HOLD_FRAMES = 150         # 3 s @ 50 Hz (WaitForRasterLine)
+TITLE_HOLD_FRAMES = 150         # 3 s @ 50 Hz (WaitForRaster)
 TITLE_SCROLL_FRAMES = 6         # ~8.3 chars/s @ 50 Hz
 TITLE_MESSAGE = (
-    "+ Press SPACE to Start +"
-    " . . . "
-    "JET-SET WILLY by Matthew Smith (c)1984 SOFTWARE PROJECTS Ltd"
-    " . . . "
-    "VIC-20 version by Steve McCrea 2026"
-    " . . . "
-    "Guide Willy to collect all the items around the house so Maria will let you go to bed"
-    " . . . "
+    "++Press SPACE to Start++"
+    "JET-SET WILLY by Matthew Smith 1984"
+    "++"
+    "VIC-20 port by Steve McCrea 2026"
+    "++"
+    "Collect all the items around the house so Maria lets you go to bed"
 )
 META_OFF_ROPE = 16 + ITEM_DRAW_BYTES + ITEM_ERASE_BYTES
 TAIL_OFF_GUARDIAN_DATA = META_OFF_ROPE + 1
@@ -1054,7 +1052,7 @@ def build_title_screen() -> tuple[bytes, int]:
         {
             "ORG": title_org,
             "SCANKEYROW": load_resident_symbol("ScanKeyRow"),
-            "WAITFORRASTERLINE": load_resident_symbol("WaitForRasterLine"),
+            "WAITFORRASTER": load_resident_symbol("WaitForRaster"),
             "SETCOLORS": load_resident_symbol("SetColors"),
             "HUD_SCR": SCREEN_BASE + hud_row_off,
             "HUD_COL": COLOR_BASE + hud_row_off,
