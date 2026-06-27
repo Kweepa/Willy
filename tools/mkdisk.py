@@ -61,12 +61,21 @@ def collect_extra_prgs(room_dir: Path) -> List[Tuple[str, Path]]:
     return extras
 
 
+def resolve_loader(path: Optional[Path]) -> Optional[Path]:
+    """1541-side USR binary (repo-root LOADER by default)."""
+    if path is None:
+        return None
+    p = path if path.is_absolute() else Path.cwd() / path
+    return p if p.is_file() else None
+
+
 def build_with_c1541(
     c1541: Path,
     d64: Path,
     prg: Optional[Path],
     rooms: List[Tuple[int, Path]],
     extras: List[Tuple[str, Path]],
+    loader: Optional[Path],
 ) -> None:
     if d64.exists():
         d64.unlink()
@@ -87,10 +96,17 @@ def build_with_c1541(
         cmd.extend(["-write", str(room), f"{name},p"])
     for dos_name, path in extras:
         cmd.extend(["-write", str(path), f"{dos_name},p"])
+    if loader is not None:
+        cmd.extend(["-write", str(loader), "loader,u"])
     subprocess.check_call(cmd)
+    extra_bits = []
+    if extras:
+        extra_bits.append(f"{len(extras)} extra PRG")
+    if loader is not None:
+        extra_bits.append("loader")
     print(
         f"Wrote {d64} via {c1541} ({len(rooms)} room files"
-        + (f", {len(extras)} extra" if extras else "")
+        + (f", {', '.join(extra_bits)}" if extra_bits else "")
         + ")"
     )
 
@@ -174,6 +190,7 @@ def build_pure_python(
     prg: Optional[Path],
     rooms: List[Tuple[int, Path]],
     extras: List[Tuple[str, Path]],
+    loader: Optional[Path],
 ) -> None:
     d = MinimalD64()
     if prg and prg.exists():
@@ -182,10 +199,17 @@ def build_pure_python(
         d.add_file(room_dos_name(room_id), room.read_bytes(), file_type=0x82)
     for dos_name, path in extras:
         d.add_file(dos_name, path.read_bytes(), file_type=0x82)
+    if loader is not None:
+        d.add_file("loader", loader.read_bytes(), file_type=0x81)
     d.save(d64)
+    extra_bits = []
+    if extras:
+        extra_bits.append(f"{len(extras)} extra PRG")
+    if loader is not None:
+        extra_bits.append("loader")
     print(
         f"Wrote {d64} (pure Python, {len(rooms)} room files"
-        + (f", {len(extras)} extra" if extras else "")
+        + (f", {', '.join(extra_bits)}" if extra_bits else "")
         + ")"
     )
 
@@ -195,6 +219,11 @@ def main():
     ap.add_argument("--out", default="jsw.d64")
     ap.add_argument("--prg", default="jsw.prg")
     ap.add_argument("--rooms", default="rooms/out", help="directory with numeric room PRG files")
+    ap.add_argument(
+        "--loader",
+        default="LOADER",
+        help="1541-side USR binary to include (default: LOADER; omit file to skip)",
+    )
     ap.add_argument(
         "--c1541",
         type=Path,
@@ -206,6 +235,7 @@ def main():
     room_dir = Path(args.rooms)
     rooms = collect_room_files(room_dir)
     extras = collect_extra_prgs(room_dir)
+    loader = resolve_loader(Path(args.loader) if args.loader else None)
     if not rooms:
         print("No room PRG files found; run mkroom.py --all first", file=sys.stderr)
         sys.exit(1)
@@ -214,10 +244,14 @@ def main():
     prg = Path(args.prg)
     c1541 = find_c1541(args.c1541)
     if c1541:
-        build_with_c1541(c1541, d64, prg if prg.exists() else None, rooms, extras)
+        build_with_c1541(
+            c1541, d64, prg if prg.exists() else None, rooms, extras, loader
+        )
     else:
         print("c1541 not found; using pure-Python D64 writer", file=sys.stderr)
-        build_pure_python(d64, prg if prg.exists() else None, rooms, extras)
+        build_pure_python(
+            d64, prg if prg.exists() else None, rooms, extras, loader
+        )
 
 
 if __name__ == "__main__":
