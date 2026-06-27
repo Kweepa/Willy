@@ -97,10 +97,9 @@ TitleScreen
     jmp LOADROOMFILE
 
 ; Z set = no fire, Z clear = fire pressed (bit 5 of $9111 active-low)
+; don't need to set the DDR for joystick FIRE read. was cargo cult programming.
+; will be correct on boot, and can interfere with drive ops.
 .stick_fire_pressed
-    lda #0
-    sta $9113
-    sta $9122
     lda $9111
     and #$20
     eor #$20

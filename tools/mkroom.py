@@ -36,7 +36,7 @@ GUARDIAN_SPRITES_BYTES = 288  # 9 frames x 32 bytes
 TITLE_HOLD_FRAMES = 150         # 3 s @ 50 Hz (WaitForRaster)
 TITLE_SCROLL_FRAMES = 6         # ~8.3 chars/s @ 50 Hz
 TITLE_MESSAGE = (
-    "++Press SPACE to Start++"
+    "+SPACE or FIRE to Start+"
     "JET-SET WILLY by Matthew Smith 1984"
     "++"
     "VIC-20 port by Steve McCrea 2026"

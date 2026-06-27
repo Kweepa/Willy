@@ -55,8 +55,8 @@ ROOM_BATHROOM = 33
 ROOM_START = 33
 ROOM_TITLE = 62
 
-; RJY.prg overlay at GetPlayerInput; keyboard slot padded with $EA to this size.
-GETPLAYERINPUT_PATCH_BYTES = 63
+; RJY.prg overlay at GetPlayerInput; keyboard slot padded with $EA to this size (62 B).
+GETPLAYERINPUT_PATCH_BYTES = 62
 ENDING_TRIGGER_PX = 20
 
 ; 1 = emit border colour writes for raster timing bars; 0 = no code/size cost

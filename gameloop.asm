@@ -44,7 +44,7 @@ main_loop
     jsr play_sound_at_default_volume
 
     ; death flash
-    ldy #24
+    ldy #25
     lda #(WHITE + 8)
     ldx #0
 -

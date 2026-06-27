@@ -1,4 +1,4 @@
-; Stick-only GetPlayerInput for RJY.prg — must fit PATCH_BYTES (63 B resident slot).
+; Stick-only GetPlayerInput for RJY.prg — must fit PATCH_BYTES (62 B resident slot).
 
 !source "equates.asm"
 
@@ -11,9 +11,11 @@ GetPlayerInput
     bne .stick_done
     sta jumpIsPressed ; A = willy_hidden = 0
 
-    ; 6 bytes
-    sta $9113    ; A is still 0
-    sta $9122    ; set data direction to read (input mode)
+    ; 5 bytes
+    ; $9111 (CIA2 port B): passive read OK for left/fire — do not touch $9113 (IEC).
+    ; $9120 bit 7 (CIA1 port A): needs DDR bit 7 input; keyboard ScanKeyRow uses $FF.
+    lda #$7f
+    sta $9122
 
     ; 9 bytes
     lda $9120            ; bit 7 of $9120 == 0 means right
