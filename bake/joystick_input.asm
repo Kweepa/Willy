@@ -12,8 +12,9 @@ GetPlayerInput
     sta jumpIsPressed ; A = willy_hidden = 0
 
     ; 5 bytes
-    ; $9111 (CIA2 port B): passive read OK for left/fire — do not touch $9113 (IEC).
-    ; $9120 bit 7 (CIA1 port A): needs DDR bit 7 input; keyboard ScanKeyRow uses $FF.
+    ; VIA direction
+    ; $9111: passive read OK for left/fire — do not touch $9113 (IEC).
+    ; $9120: needs DDR bit 7 input; keyboard ScanKeyRow uses $FF.
     lda #$7f
     sta $9122
 
