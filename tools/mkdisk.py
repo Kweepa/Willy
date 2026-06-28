@@ -62,7 +62,7 @@ def collect_extra_prgs(room_dir: Path) -> List[Tuple[str, Path]]:
 
 
 def resolve_loader(path: Optional[Path]) -> Optional[Path]:
-    """1541-side USR binary (repo-root LOADER by default)."""
+    """1541-side loader binary (repo-root LOADER by default)."""
     if path is None:
         return None
     p = path if path.is_absolute() else Path.cwd() / path
@@ -97,7 +97,7 @@ def build_with_c1541(
     for dos_name, path in extras:
         cmd.extend(["-write", str(path), f"{dos_name},p"])
     if loader is not None:
-        cmd.extend(["-write", str(loader), "loader,u"])
+        cmd.extend(["-write", str(loader), "loader,p"])
     subprocess.check_call(cmd)
     extra_bits = []
     if extras:
@@ -200,7 +200,7 @@ def build_pure_python(
     for dos_name, path in extras:
         d.add_file(dos_name, path.read_bytes(), file_type=0x82)
     if loader is not None:
-        d.add_file("loader", loader.read_bytes(), file_type=0x81)
+        d.add_file("loader", loader.read_bytes(), file_type=0x82)
     d.save(d64)
     extra_bits = []
     if extras:
@@ -222,7 +222,7 @@ def main():
     ap.add_argument(
         "--loader",
         default="LOADER",
-        help="1541-side USR binary to include (default: LOADER; omit file to skip)",
+        help="1541-side loader binary to include (default: LOADER; omit file to skip)",
     )
     ap.add_argument(
         "--c1541",
